@@ -1,6 +1,6 @@
 # MacroPal — Personal Fitness & Macro Tracker
 
-**Status:** Draft v0.1
+**Status:** Draft v0.2
 **Author:** Luigi Lozano
 **Last updated:** 2026-09-01
 
@@ -11,7 +11,7 @@
 A personal, private, iOS-only app that combines:
 
 1. **Macro/nutrition tracking** — MyFitnessPal-style food and macro logging.
-2. **Body tracking** — weight and body measurements (waist, chest, arms, etc.) logged consistently over time, optionally with progress photos.
+2. **Body tracking** — weight logged consistently against a goal weight you can revise anytime (reaching it, or recomposing at the same weight, are both just editing the goal), optionally with progress photos.
 3. **Workout tracking** — logging training sessions (exercises, sets, reps, weight).
 4. **An analysis engine** ("the coach") — not a chatbot. It doesn't wait to be asked questions; it runs automatically against your logged data and proactively surfaces decisions and adjustments (e.g. "your weight has been flat for 2 weeks on a deficit — recommend lowering calories by 150/day" or "bench volume has stalled for 3 weeks — recommend a deload").
 
@@ -21,7 +21,7 @@ This is a **personal-use app first**. It will also live on GitHub as a public bu
 
 **Goals**
 - Track macros/calories daily with minimal friction.
-- Track body measurements + weight on a consistent schedule and visualize trends.
+- Track weight consistently against a goal weight you can revise anytime — e.g. after reaching it, or to redefine the goal mid-phase for a recomposition (same weight, different composition target).
 - Log workouts (strength-training focus) and track progressive overload over time.
 - Have an automated engine that periodically reviews your data and produces concrete, explainable recommendations — not generic chat responses.
 - Ship something you actually use, iterating in small phases, with visible progress in git.
@@ -61,6 +61,7 @@ These are the entities you'll model as SwiftData `@Model` classes. Field lists a
 - `sex: Sex` (for BMR/TDEE calculation formulas only)
 - `activityLevel: ActivityLevel` (sedentary → very active)
 - `goal: Goal` (cut / maintain / bulk)
+- `goalWeightKg: Double` — mutable. Change it anytime: reached it → set a new one; want to recomp at the same weight → just edit this field, no separate tracking needed.
 - `calorieTarget: Int`
 - `proteinTargetG / carbTargetG / fatTargetG: Int`
 
@@ -70,8 +71,8 @@ These are the entities you'll model as SwiftData `@Model` classes. Field lists a
 - `DailyNutritionSummary` (computed, not stored) — sum of entries for a day vs. targets.
 
 ### 4.3 Body tracking
-- `BodyMeasurement` — `date`, `weightKg`, and optional fields: `waistCm`, `chestCm`, `hipCm`, `armCm`, `thighCm`, `bodyFatPercent` (if measured), `notes`.
-- `ProgressPhoto` (optional/stretch) — `date`, local file reference, `angle` (front/side/back).
+- `WeightEntry` — `date`, `weightKg`, optional `notes`. That's it — no waist/chest/arm/hip measurements, no body-fat %. Goal tracking is handled by the single `goalWeightKg` field on `UserProfile` (§4.1): reach it and set a new one, or edit it directly for a recomposition phase, without a separate measurement system.
+- `ProgressPhoto` (optional/stretch) — `date`, local file reference, `angle` (front/side/back). Unaffected by this simplification if you still want it later.
 
 ### 4.4 Workouts
 - `Exercise` — a reusable exercise definition: `name`, `muscleGroup`, `equipment`.
@@ -87,16 +88,15 @@ These are the entities you'll model as SwiftData `@Model` classes. Field lists a
 - Log a food entry manually (name + macros, no database/barcode yet).
 - Set and edit daily macro targets.
 - Daily summary screen: eaten vs. target, remaining macros.
-- Log a body measurement entry (weight at minimum).
+- Log a weight entry. Set/update your goal weight at any time (reaching it, or revising it for a recomposition phase, are both just editing this field).
 - Log a workout session (exercise, sets, reps, weight).
-- Basic history list views for each (nutrition log, measurements, workouts).
+- Basic history list views for each (nutrition log, weight, workouts).
 - All data persisted locally via SwiftData.
 
 **Definition of done:** you can use the app for a full real day — log food, log a lift session, log your weight — without opening Xcode.
 
 ### Phase 2 — Trends & Visualization
-- Weight trend chart (raw + rolling 7-day average — raw daily weight is noisy).
-- Measurement trend charts per body part.
+- Weight trend chart (raw + rolling 7-day average — raw daily weight is noisy), with your current goal weight shown as a reference line.
 - Macro adherence chart (e.g. last 14 days, calories vs. target).
 - Workout progression chart per exercise (top set weight over time, estimated 1RM).
 
@@ -107,7 +107,7 @@ This is "the coach." It runs on-demand (button: "Analyze my progress") and/or au
 - **Under-eating protein:** if 7-day average protein intake < 90% of target → flag it with specific foods/servings needed to close the gap.
 - **Strength stall:** if top-set weight for a lift hasn't increased in N consecutive sessions (e.g. 4) at the same rep range → suggest a deload week or an accessory-volume change.
 - **Missed logging streak:** if no food log or no weigh-in for X days → surface a gentle "you've gone quiet" nudge (this is about consistency, one of your stated goals).
-- **Measurement vs. scale weight divergence:** if scale weight is flat/up but waist is trending down → note recomposition is likely happening (reassurance rule — important for a cutting phase).
+- **Goal weight reached:** when current weight crosses `goalWeightKg` → surface an insight prompting a decision: set a new goal weight (continue cutting/bulking), switch to maintenance, or hold this weight and shift into a recomposition phase.
 
 Each rule should be its own small, testable Swift function: `(historicalData) -> Insight?`. This keeps the engine explainable and lets you unit-test each rule independently — no ML model, no black box.
 
@@ -180,9 +180,8 @@ Suggested pace for a beginner working solo: treat each phase as its own multi-we
 
 ## 10. Open Questions (revisit as you go)
 - Do you want a food database (even a small built-in common-foods list) in Phase 1, or purely manual macro entry to start?
-- Units: kg/cm vs lb/in — pick one as the internal storage unit (recommend metric internally, display toggle later) to avoid conversion bugs.
+- Units: kg/lb — pick one as the internal storage unit (recommend metric internally, display toggle later) to avoid conversion bugs.
 - How often should the analysis engine auto-run — on app open, daily, weekly, or manual button only for v1?
-- Is body-fat % something you'll measure (calipers/scan) or should the app estimate it from measurements (less accurate, avoid over-engineering v1)?
 
 ## 11. Glossary (for reference while learning)
 - **SwiftUI:** Apple's declarative UI framework — you describe *what* the UI should look like for a given state, and it re-renders automatically when state changes.
