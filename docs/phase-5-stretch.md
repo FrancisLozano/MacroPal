@@ -8,10 +8,13 @@ Optional features to pick from once the core app (Phases 1–3) is something you
 
 ## Candidates
 - [ ] Barcode scanning for food lookup (via a public nutrition database API)
-- [ ] Apple Health integration (import weight/workouts, export data)
-- [ ] Step count via HealthKit (read-only import, no manual entry UI — rides along with the Apple Health integration above)
 - [ ] Progress photos with side-by-side comparison view
 - [ ] Home-screen widget showing today's macro remaining
+
+
+## Candidates (Requiring Yearly-Payment)
+- [ ] Apple Health integration (import weight/workouts, export data)
+- [ ] Step count via HealthKit (read-only import, no manual entry UI — rides along with the Apple Health integration above)
 - [ ] Apple Watch companion for logging sets during a workout
 - [ ] iCloud sync via SwiftData + CloudKit (multi-device, still single-user)
 
