@@ -14,6 +14,8 @@ enum InsightAnalyzer {
         LoggingStreakRule.evaluate,
         WeightPlateauRule.evaluate,
         StrengthStallRule.evaluate,
+        ProteinIntakeRule.evaluate,
+        GoalWeightReachedRule.evaluate,
     ]
 
     /// Runs every rule against `snapshot`, skipping any candidate that would duplicate an
