@@ -22,6 +22,11 @@ struct WorkoutHistoryView: View {
                 )
             } else {
                 List {
+                    Section {
+                        NavigationLink("Exercise Progress") {
+                            ExerciseProgressView()
+                        }
+                    }
                     ForEach(sessions) { session in
                         NavigationLink {
                             WorkoutSessionDetailView(session: session)

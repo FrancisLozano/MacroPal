@@ -8,13 +8,13 @@
 Make the app usable for a full real day — log food, log a lift session, log your weight — without opening Xcode.
 
 ## Scope
-- Log a food entry manually (name + macros, no database/barcode yet)
-- Set and edit daily macro targets
-- Daily summary screen: eaten vs. target, remaining macros
-- Log a weight entry; set/update your goal weight at any time (reaching it, or revising it for a recomposition phase, are both just editing this field)
-- Log a workout session (exercise, sets, reps, weight)
-- Basic history list views for each (nutrition log, weight, workouts)
-- All data persisted locally via SwiftData
+- [x] Log a food entry manually (name + macros, no database/barcode yet)
+- [x] Set and edit daily macro targets
+- [x] Daily summary screen: eaten vs. target, remaining macros
+- [x] Log a weight entry; set/update your goal weight at any time (reaching it, or revising it for a recomposition phase, are both just editing this field)
+- [x] Log a workout session (exercise, sets, reps, weight)
+- [x] Basic history list views for each (nutrition log, weight, workouts)
+- [x] All data persisted locally via SwiftData
 
 ## Definition of Done
 You can use the app for a full real day — log food, log a lift session, log your weight — without opening Xcode.

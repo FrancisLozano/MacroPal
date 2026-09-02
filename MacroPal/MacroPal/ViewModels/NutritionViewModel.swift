@@ -13,6 +13,20 @@ struct MacroTotals {
     var fatG: Double = 0
 }
 
+enum CalorieAdherenceStatus: String {
+    case under = "Under"
+    case onTarget = "On Target"
+    case over = "Over"
+}
+
+struct DailyCalorieTotal: Identifiable {
+    let date: Date
+    let caloriesKcal: Double
+    let status: CalorieAdherenceStatus
+
+    var id: Date { date }
+}
+
 @Observable
 final class NutritionViewModel {
     /// Logs a new `FoodEntry`, snapshotting macros from `foodItem` scaled to `servingSizeG`
@@ -67,5 +81,35 @@ final class NutritionViewModel {
             carbG: Double(profile.carbTargetG) - totals.carbG,
             fatG: Double(profile.fatTargetG) - totals.fatG
         )
+    }
+
+    /// Zero-fills every day in the trailing `days`-day window ending on `referenceDate`, so
+    /// even a sparsely-logged history produces a sensible-looking series rather than gaps.
+    func calorieAdherence(
+        for entries: [FoodEntry],
+        calorieTarget: Int,
+        days: Int = 14,
+        referenceDate: Date = .now,
+        calendar: Calendar = .current
+    ) -> [DailyCalorieTotal] {
+        let byDay = Dictionary(grouping: entries) { calendar.startOfDay(for: $0.date) }
+        let endDay = calendar.startOfDay(for: referenceDate)
+        let target = Double(calorieTarget)
+
+        return (0..<days).reversed().compactMap { offset -> DailyCalorieTotal? in
+            guard let day = calendar.date(byAdding: .day, value: -offset, to: endDay) else { return nil }
+            let calories = (byDay[day] ?? []).map(\.caloriesKcal).reduce(0, +)
+            let status: CalorieAdherenceStatus
+            if target <= 0 {
+                status = .onTarget
+            } else if calories < target * 0.9 {
+                status = .under
+            } else if calories > target * 1.1 {
+                status = .over
+            } else {
+                status = .onTarget
+            }
+            return DailyCalorieTotal(date: day, caloriesKcal: calories, status: status)
+        }
     }
 }

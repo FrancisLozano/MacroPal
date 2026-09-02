@@ -9,6 +9,11 @@ import SwiftData
 struct FoodHistoryView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \FoodEntry.date, order: .reverse) private var entries: [FoodEntry]
+    @Query private var profiles: [UserProfile]
+
+    private let viewModel = NutritionViewModel()
+
+    private var profile: UserProfile? { profiles.first }
 
     private var entriesByDay: [(day: Date, entries: [FoodEntry])] {
         let grouped = Dictionary(grouping: entries) { Calendar.current.startOfDay(for: $0.date) }
@@ -27,6 +32,14 @@ struct FoodHistoryView: View {
                 )
             } else {
                 List {
+                    if let profile {
+                        Section {
+                            MacroAdherenceChart(
+                                dailyTotals: viewModel.calorieAdherence(for: entries, calorieTarget: profile.calorieTarget),
+                                calorieTarget: profile.calorieTarget
+                            )
+                        }
+                    }
                     ForEach(entriesByDay, id: \.day) { group in
                         Section(group.day.formatted(date: .abbreviated, time: .omitted)) {
                             ForEach(group.entries) { entry in
@@ -64,5 +77,5 @@ struct FoodHistoryView: View {
     NavigationStack {
         FoodHistoryView()
     }
-    .modelContainer(for: FoodEntry.self, inMemory: true)
+    .modelContainer(for: [FoodEntry.self, UserProfile.self], inMemory: true)
 }

@@ -14,6 +14,8 @@ struct WeightHistoryView: View {
     @State private var isPresentingLogSheet = false
     @State private var isPresentingGoalWeightSheet = false
 
+    private let viewModel = WeightViewModel()
+
     private var profile: UserProfile? { profiles.first }
 
     var body: some View {
@@ -26,6 +28,14 @@ struct WeightHistoryView: View {
                 )
             } else {
                 List {
+                    if let profile {
+                        Section {
+                            WeightTrendChart(
+                                points: viewModel.trendPoints(for: entries),
+                                goalWeightKg: profile.goalWeightKg
+                            )
+                        }
+                    }
                     if let profile {
                         Section {
                             Button {
