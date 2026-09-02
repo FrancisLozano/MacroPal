@@ -222,11 +222,18 @@ private struct NewFoodItemView: View {
         self.onCreate = onCreate
         self.barcode = prefill?.barcode
         _name = State(initialValue: prefill?.name ?? "")
-        _caloriesText = State(initialValue: prefill.map { $0.caloriesPer100g == 0 ? "" : String($0.caloriesPer100g) } ?? "")
-        _proteinText = State(initialValue: prefill.map { $0.proteinG == 0 ? "" : String($0.proteinG) } ?? "")
-        _carbText = State(initialValue: prefill.map { $0.carbG == 0 ? "" : String($0.carbG) } ?? "")
-        _fatText = State(initialValue: prefill.map { $0.fatG == 0 ? "" : String($0.fatG) } ?? "")
-        _servingSizeText = State(initialValue: prefill.map { String($0.defaultServingSizeG) } ?? "100")
+        // Always show the real number, including 0 — Open Food Facts genuinely reports 0
+        // for some macros, and hiding it as a blank field both misleads (looks like
+        // nothing was fetched) and fails validation (an empty field can't Save).
+        _caloriesText = State(initialValue: prefill.map { Self.formatMacro($0.caloriesPer100g) } ?? "")
+        _proteinText = State(initialValue: prefill.map { Self.formatMacro($0.proteinG) } ?? "")
+        _carbText = State(initialValue: prefill.map { Self.formatMacro($0.carbG) } ?? "")
+        _fatText = State(initialValue: prefill.map { Self.formatMacro($0.fatG) } ?? "")
+        _servingSizeText = State(initialValue: prefill.map { Self.formatMacro($0.defaultServingSizeG) } ?? "100")
+    }
+
+    private static func formatMacro(_ value: Double) -> String {
+        String(format: "%g", value)
     }
 
     private var isValid: Bool {

@@ -7,7 +7,7 @@
 Optional features to pick from once the core app (Phases 1–3) is something you actually use daily. Not a sequential checklist — cherry-pick what's actually useful.
 
 ## Candidates
-- [ ] Barcode scanning for food lookup (via a public nutrition database API)
+- [x] Barcode scanning for food lookup (via a public nutrition database API)
 - [ ] Progress photos with side-by-side comparison view
 - [ ] Home-screen widget showing today's macro remaining
 
@@ -28,4 +28,6 @@ Out of scope: offline caching/pre-fetching, non-food barcode symbologies, editin
 
 Definition of done: scanning a real barcode on a physical device either finds a match (locally or via Open Food Facts) and lets you save it as a `FoodItem`, or shows a clear "not found" / "connection failed" state — distinguished from each other. Live camera scanning needs a real device to verify; the network/parsing/local-lookup logic is unit-tested and Simulator-verifiable independent of the camera.
 
-**Implementation status:** code complete — network client, JSON decoding (verified against the real Open Food Facts API, not just hardcoded fixtures), local-catalog lookup, and the full UI flow (scan → loading → found/not-found/failed states) are all built and covered by 7 new unit tests (37 total passing). The Simulator correctly falls back to a "Scanner Unavailable" alert since it has no camera. **Not yet verified:** an actual live barcode scan on a physical device — check off the box above once you've tried it on your phone.
+**Implementation status:** done and verified on a physical device (a real iPhone, not the Simulator). Network client, JSON decoding, local-catalog lookup, and the full UI flow (scan → loading → found/not-found/failed states) are covered by 7 unit tests (37 total passing) plus a live end-to-end scan.
+
+One bug found and fixed during device testing: the review form was hiding legitimate `0` macro values as blank text fields (meant to distinguish "never entered" from "entered as zero" for manual entry, but Open Food Facts genuinely reports 0 for some products' macros) — this made a successful scan look like nothing had been fetched, and blank fields also failed form validation. Fixed by always showing the real number, including zero.
