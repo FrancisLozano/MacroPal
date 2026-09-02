@@ -19,6 +19,7 @@ struct MacroPalApp: App {
             Exercise.self,
             WorkoutSession.self,
             WorkoutSetEntry.self,
+            Insight.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

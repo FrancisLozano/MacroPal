@@ -25,6 +25,11 @@ struct RootView: View {
             .tabItem { Label("Workouts", systemImage: "dumbbell") }
 
             NavigationStack {
+                InsightsView()
+            }
+            .tabItem { Label("Insights", systemImage: "sparkles") }
+
+            NavigationStack {
                 ProfileView()
             }
             .tabItem { Label("Profile", systemImage: "person.circle") }
@@ -35,7 +40,7 @@ struct RootView: View {
 #Preview {
     RootView()
         .modelContainer(
-            for: [UserProfile.self, FoodItem.self, FoodEntry.self, WeightEntry.self, Exercise.self, WorkoutSession.self, WorkoutSetEntry.self],
+            for: [UserProfile.self, FoodItem.self, FoodEntry.self, WeightEntry.self, Exercise.self, WorkoutSession.self, WorkoutSetEntry.self, Insight.self],
             inMemory: true
         )
 }

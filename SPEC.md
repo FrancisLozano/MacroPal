@@ -80,7 +80,7 @@ These are the entities you'll model as SwiftData `@Model` classes. Field lists a
 - `WorkoutSetEntry` — reference to `Exercise`, `setNumber`, `weightKg`, `reps`, `rpe` (rate of perceived exertion, optional).
 
 ### 4.5 Analysis engine
-- `Insight` — a generated recommendation: `dateGenerated`, `category` (nutrition/body/training), `severity` (info/suggestion/action-needed), `message`, `supportingMetric` (e.g. "avg weight change: -0.1kg/wk over 14 days"), `acknowledged: Bool`.
+- `Insight` — a generated recommendation: `dateGenerated`, `category` (nutrition/body/training), `severity` (info/suggestion/action-needed), `message`, `supportingMetric` (e.g. "avg weight change: -0.1kg/wk over 14 days"), `status` (pending/applied/dismissed), `ruleIdentifier` (which rule produced it, used to dedup re-runs), `relatedExerciseName` (optional, for rules that can fire once per exercise). `status` replaces an earlier single `acknowledged: Bool` — a Bool can't distinguish "applied" from "dismissed," both of which the interaction model (Phase 3) requires.
 
 ## 5. Roadmap & Phase Docs
 

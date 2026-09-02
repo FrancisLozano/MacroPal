@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct WorkoutSessionDetailView: View {
     let session: WorkoutSession
