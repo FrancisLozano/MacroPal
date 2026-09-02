@@ -1,6 +1,6 @@
 # Phase 1 — MVP: Manual Tracking Core
 
-**Status:** Not started
+**Status:** Complete
 **Depends on:** [Phase 0](phase-0-setup.md)
 **Spec reference:** see [SPEC.md §4](../SPEC.md#4-core-domain-concepts-data-model) for the data model (`UserProfile`, `FoodItem`, `FoodEntry`, `WeightEntry`, `Exercise`, `WorkoutSession`, `WorkoutSetEntry`).
 

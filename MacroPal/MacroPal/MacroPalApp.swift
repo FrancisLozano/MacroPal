@@ -12,7 +12,13 @@ import SwiftData
 struct MacroPalApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            UserProfile.self,
+            FoodItem.self,
+            FoodEntry.self,
+            WeightEntry.self,
+            Exercise.self,
+            WorkoutSession.self,
+            WorkoutSetEntry.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -25,7 +31,7 @@ struct MacroPalApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
         }
         .modelContainer(sharedModelContainer)
     }
