@@ -8,7 +8,6 @@ Optional features to pick from once the core app (Phases 1–3) is something you
 
 ## Candidates
 - [x] Barcode scanning for food lookup (via a public nutrition database API)
-- [ ] Progress photos with side-by-side comparison view
 - [ ] Home-screen widget showing today's macro remaining
 
 

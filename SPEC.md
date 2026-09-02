@@ -11,7 +11,7 @@
 A personal, private, iOS-only app that combines:
 
 1. **Macro/nutrition tracking** — MyFitnessPal-style food and macro logging.
-2. **Body tracking** — weight logged consistently against a goal weight you can revise anytime (reaching it, or recomposing at the same weight, are both just editing the goal), optionally with progress photos.
+2. **Body tracking** — weight logged consistently against a goal weight you can revise anytime (reaching it, or recomposing at the same weight, are both just editing the goal).
 3. **Workout tracking** — logging training sessions (exercises, sets, reps, weight).
 4. **An analysis engine** ("the coach") — not a chatbot. It doesn't wait to be asked questions; it runs automatically against your logged data and proactively surfaces decisions and adjustments (e.g. "your weight has been flat for 2 weeks on a deficit — recommend lowering calories by 150/day" or "bench volume has stalled for 3 weeks — recommend a deload").
 
@@ -71,8 +71,7 @@ These are the entities you'll model as SwiftData `@Model` classes. Field lists a
 - `DailyNutritionSummary` (computed, not stored) — sum of entries for a day vs. targets.
 
 ### 4.3 Body tracking
-- `WeightEntry` — `date`, `weightKg`, optional `notes`. That's it — no waist/chest/arm/hip measurements, no body-fat %. Goal tracking is handled by the single `goalWeightKg` field on `UserProfile` (§4.1): reach it and set a new one, or edit it directly for a recomposition phase, without a separate measurement system.
-- `ProgressPhoto` (optional/stretch) — `date`, local file reference, `angle` (front/side/back). Unaffected by this simplification if you still want it later.
+- `WeightEntry` — `date`, `weightKg`, optional `notes`. That's it — no waist/chest/arm/hip measurements, no body-fat %, no progress photos. Goal tracking is handled by the single `goalWeightKg` field on `UserProfile` (§4.1): reach it and set a new one, or edit it directly for a recomposition phase, without a separate measurement system.
 
 ### 4.4 Workouts
 - `Exercise` — a reusable exercise definition: `name`, `muscleGroup`, `equipment`.
