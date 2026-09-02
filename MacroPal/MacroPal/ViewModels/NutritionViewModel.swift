@@ -112,4 +112,31 @@ final class NutritionViewModel {
             return DailyCalorieTotal(date: day, caloriesKcal: calories, status: status)
         }
     }
+
+    /// Local-catalog-only barcode lookup. Used both as an instant-select shortcut when a
+    /// barcode has already been scanned/created before, and as a pre-check before hitting
+    /// the network.
+    func findFoodItem(byBarcode barcode: String, in context: ModelContext) -> FoodItem? {
+        var descriptor = FetchDescriptor<FoodItem>(predicate: #Predicate { $0.barcode == barcode })
+        descriptor.fetchLimit = 1
+        return (try? context.fetch(descriptor))?.first
+    }
+
+    /// Looks up `barcode` via Open Food Facts and maps a match into a new, uninserted
+    /// `FoodItem` — the caller (a review screen) decides whether to actually save it, so an
+    /// abandoned scan never orphans a catalog entry. Returns `nil` for a genuine "not
+    /// found"; throws for network/decoding failures.
+    func fetchFoodItemFromNetwork(barcode: String, client: OpenFoodFactsClient) async throws -> FoodItem? {
+        guard let product = try await client.lookupProduct(barcode: barcode) else { return nil }
+        let nutriments = product.nutriments
+        return FoodItem(
+            name: product.productName ?? "Unknown Item",
+            caloriesPer100g: nutriments?.energyKcalPer100g ?? 0,
+            proteinG: nutriments?.proteinsPer100g ?? 0,
+            carbG: nutriments?.carbohydratesPer100g ?? 0,
+            fatG: nutriments?.fatPer100g ?? 0,
+            defaultServingSizeG: 100,
+            barcode: barcode
+        )
+    }
 }
