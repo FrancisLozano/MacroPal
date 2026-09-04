@@ -5,6 +5,7 @@
 
 import Foundation
 import SwiftData
+import WidgetKit
 
 struct MacroTotals {
     var calories: Double = 0
@@ -51,6 +52,11 @@ final class NutritionViewModel {
             foodItem: foodItem
         )
         context.insert(entry)
+        // Explicit save before reloading — SwiftData's autosave is opportunistic, not
+        // immediate, and the widget extension opens its own fresh read of the shared
+        // store, so an unsaved insert would be invisible to it at reload time.
+        try? context.save()
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     func searchFoodItems(matching query: String, in context: ModelContext) -> [FoodItem] {

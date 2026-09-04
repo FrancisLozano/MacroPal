@@ -5,6 +5,7 @@
 
 import SwiftUI
 import SwiftData
+import WidgetKit
 
 struct FoodHistoryView: View {
     @Environment(\.modelContext) private var modelContext
@@ -70,6 +71,8 @@ struct FoodHistoryView: View {
         for index in offsets {
             modelContext.delete(entries[index])
         }
+        try? modelContext.save()
+        WidgetCenter.shared.reloadAllTimelines()
     }
 }
 

@@ -21,7 +21,13 @@ struct MacroPalApp: App {
             WorkoutSetEntry.self,
             Insight.self,
         ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        // Stored in the App Group container (not the app's private sandbox) so the
+        // MacroPalWidgetExtension can read the same on-disk store to build its timeline.
+        guard let groupURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.francislozano.MacroPal") else {
+            fatalError("Could not find App Group container for group.francislozano.MacroPal")
+        }
+        let storeURL = groupURL.appendingPathComponent("MacroPal.sqlite")
+        let modelConfiguration = ModelConfiguration(schema: schema, url: storeURL)
 
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])

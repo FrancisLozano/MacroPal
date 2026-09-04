@@ -5,6 +5,7 @@
 
 import SwiftUI
 import SwiftData
+import WidgetKit
 
 /// Fetches the singleton `UserProfile` (creating it on first launch) and hands it to
 /// `ProfileFormView` for live editing.
@@ -28,6 +29,7 @@ struct ProfileView: View {
 }
 
 private struct ProfileFormView: View {
+    @Environment(\.modelContext) private var modelContext
     @Bindable var profile: UserProfile
 
     private let viewModel = ProfileViewModel()
@@ -115,6 +117,13 @@ private struct ProfileFormView: View {
                     Text(macroHint)
                 }
             }
+        }
+        .onDisappear {
+            // Macro target fields are live-bound with no discrete "save" step, so refresh
+            // the widget when leaving the tab rather than on every keystroke. Explicit
+            // save first since autosave is opportunistic, not immediate.
+            try? modelContext.save()
+            WidgetCenter.shared.reloadAllTimelines()
         }
     }
 }
