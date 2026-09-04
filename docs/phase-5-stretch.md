@@ -40,4 +40,4 @@ Setup required a few one-time manual steps in Xcode (creating the extension targ
 
 One real bug found and fixed: `WidgetCenter.shared.reloadAllTimelines()` was being called immediately after `context.insert()`/`context.delete()` with no explicit save — SwiftData's autosave is opportunistic, not immediate, so the widget's fresh read of the shared store could run before the write actually reached disk, showing stale data. Fixed by calling `context.save()` explicitly before every reload trigger.
 
-**Implementation status:** done and verified in the iOS Simulator (widgets, unlike the barcode scanner's camera, render fully in the Simulator — no physical device required). Confirmed: both widget sizes render correctly, remaining-calorie math and macro-percentage math match the app's own Nutrition tab, and the widget updates promptly after logging food.
+**Implementation status:** done and verified in both the iOS Simulator and on a physical iPhone. Confirmed: both widget sizes render correctly, remaining-calorie math and macro-percentage math match the app's own Nutrition tab, and the widget updates promptly after logging food.
