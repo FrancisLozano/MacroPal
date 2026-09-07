@@ -1,8 +1,8 @@
 # MacroPal — Personal Fitness & Macro Tracker
 
-**Status:** Draft v0.3
+**Status:** Draft v0.4
 **Author:** Luigi Lozano
-**Last updated:** 2026-09-01
+**Last updated:** 2026-09-06
 
 ---
 
