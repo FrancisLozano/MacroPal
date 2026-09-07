@@ -47,7 +47,7 @@ These non-goals can move to "later" if priorities change — noted in §5 Roadma
 | Local persistence | **SwiftData** (iOS 17+) | Apple's modern local database framework, built for SwiftUI, far less boilerplate than Core Data. Falls back to Core Data if you need iOS 16 support. |
 | Data storage location | On-device only | No backend to host, no auth to build, fully private. Can add iCloud sync (via SwiftData + CloudKit) later almost for free. |
 | Analysis engine (v1) | Plain Swift, rule-based | Deterministic, debuggable, free, works offline. See [docs/phase-3-analysis-engine.md](docs/phase-3-analysis-engine.md). |
-| Analysis engine (v2, stretch) | LLM API call (e.g. Claude API) for narrative explanations | Turns rule-engine output into a readable written recommendation. Optional, added after v1 rules work. |
+| Analysis engine (v2, stretch) | ~~LLM API call (e.g. Claude API) for narrative explanations~~ | Skipped — pay-per-token API cost conflicts with the goal of a free app with no ongoing costs. See [docs/phase-4-llm-layer.md](docs/phase-4-llm-layer.md). |
 | Charts | Swift Charts (native, iOS 16+) | Native, no third-party dependency, integrates with SwiftUI. |
 | Version control | Git + GitHub | Public repo to show progress; private local data never touches git (see §7). |
 
@@ -91,14 +91,14 @@ Each phase has its own doc under [`docs/`](docs/) with detailed scope, interacti
 | 1 | [phase-1-mvp.md](docs/phase-1-mvp.md) | MVP manual tracking — usable for a full real day. |
 | 2 | [phase-2-trends.md](docs/phase-2-trends.md) | Trends & charts. |
 | 3 | [phase-3-analysis-engine.md](docs/phase-3-analysis-engine.md) | Rule-based analysis engine — at least 3 rules implemented and unit-tested. |
-| 4 | [phase-4-llm-layer.md](docs/phase-4-llm-layer.md) | LLM narrative layer (optional). |
-| 5+ | [phase-5-stretch.md](docs/phase-5-stretch.md) | Stretch features, pick as desired. |
+| 4 | [phase-4-llm-layer.md](docs/phase-4-llm-layer.md) | ~~LLM narrative layer~~ — skipped, requires paid pay-per-use API access. |
+| 5+ | [phase-5-stretch.md](docs/phase-5-stretch.md) | Stretch features, pick as desired. Free candidates (barcode scanning, home-screen widget) are done; the remaining candidates require a paid Apple Developer account and are skipped. |
 
 Suggested pace for a beginner working solo: treat each phase as its own multi-week milestone; don't start Phase 2 until Phase 1 is something you're actually using daily.
 
 ## 6. Non-Functional Requirements
 - **Offline-first:** the app must be fully usable with no network connection (all v1–v3 features have zero network dependency).
-- **Privacy:** all personal health data stays on-device unless/until you explicitly add iCloud sync or an LLM call — and even then, only summarized/derived data should ever leave the device, never raw logs, if you add Phase 4.
+- **Privacy:** all personal health data stays on-device. iCloud sync and the LLM narrative layer (Phase 4) are both skipped (see §5), so this holds unconditionally rather than as a caveat.
 - **Performance:** lists (food log, workout history) should use lazy loading; don't load your entire history into memory on every screen.
 - **Data durability:** local backups matter since there's no server — rely on iCloud device backup at minimum; consider a manual export-to-JSON/CSV feature early (cheap to build, cheap insurance).
 
@@ -128,7 +128,7 @@ Since this is going on git for others to see progress:
     README.md           -- short project pitch + screenshots + current phase status
     .gitignore          -- standard Xcode .gitignore (ignore .xcuserdata, DerivedData, etc.)
   ```
-- **Secrets:** if/when Phase 4 adds an LLM API key, put it in a git-ignored `Secrets.swift` or `.xcconfig` file — never commit an API key.
+- **Secrets:** not currently applicable — Phase 4 (the only feature that would need an API key) is skipped. If that changes, put the key in a git-ignored `Secrets.swift` or `.xcconfig` file — never commit an API key.
 - **Branching:** simple enough to work directly on `main` with small, frequent commits per phase/feature; open a branch only if you're trying something risky you might discard.
 - **README.md** should track current phase (1 through 5) and a short changelog/screenshot so visitors can see progress at a glance.
 - **Editing this spec:** this file (and the per-phase docs in `docs/`) are living documents, not a frozen contract. When you disagree with something here, edit it directly and commit the change with a message explaining *why* (e.g. `"Drop iCloud sync from Phase 5 — not worth the complexity yet"`), not just `"update spec"`. `git log SPEC.md` then becomes a running history of how the requirements evolved. Bump the `Status`/`Last updated` header on any meaningful pass. Move open questions (§8) into GitHub Issues once you want to track them individually, so decisions get closed out instead of the prose getting cluttered.

@@ -1,6 +1,6 @@
 # Phase 5 — Nice-to-Haves / Stretch
 
-**Status:** Not started
+**Status:** In progress — 2 of 6 candidates done (see below); remaining candidates require a paid Apple Developer account
 **Depends on:** [Phase 1](phase-1-mvp.md) at minimum; individual items may depend on later phases too.
 
 ## Goal
@@ -11,11 +11,15 @@ Optional features to pick from once the core app (Phases 1–3) is something you
 - [x] Home-screen widget showing today's macro remaining
 
 
-## Candidates (Requiring Yearly-Payment)
-- [ ] Apple Health integration (import weight/workouts, export data)
-- [ ] Step count via HealthKit (read-only import, no manual entry UI — rides along with the Apple Health integration above)
-- [ ] Apple Watch companion for logging sets during a workout
-- [ ] iCloud sync via SwiftData + CloudKit (multi-device, still single-user)
+## Candidates (Requiring Yearly-Payment) — Skipped
+The four items below all require enrolling in the Apple Developer Program ($99/yr) to use
+their entitlements (HealthKit, WatchKit, or CloudKit) on a real device. Since the goal is a
+free personal app with no ongoing costs, none of these will be built, and no further work is
+planned on them.
+- [ ] ~~Apple Health integration (import weight/workouts, export data)~~ — needs HealthKit entitlement
+- [ ] ~~Step count via HealthKit (read-only import, no manual entry UI)~~ — needs HealthKit entitlement; also rode along with the Apple Health integration above
+- [ ] ~~Apple Watch companion for logging sets during a workout~~ — needs a paid account to run a WatchKit companion target on a real device
+- [ ] ~~iCloud sync via SwiftData + CloudKit (multi-device, still single-user)~~ — needs the CloudKit entitlement, which requires a paid account
 
 ## Definition of Done
 Defined per feature when you pick one — write a short scope note in this file before starting it.

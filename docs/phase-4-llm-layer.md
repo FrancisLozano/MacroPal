@@ -1,8 +1,15 @@
 # Phase 4 — Analysis Engine v2: LLM Narrative Layer (Optional)
 
-**Status:** Not started
+**Status:** Skipped — out of scope for this project
 **Depends on:** [Phase 3](phase-3-analysis-engine.md)
 **Spec reference:** see [SPEC.md §7](../SPEC.md#7-repository--git-workflow) for keeping API keys out of git.
+
+## Why skipped
+Unlike Phase 5's yearly-fee candidates (Apple Developer Program), this phase's cost is
+pay-per-use: a Claude API key billed per token. Since the goal is a free personal app with no
+ongoing costs, this phase won't be built. The rule-based engine from
+[Phase 3](phase-3-analysis-engine.md) remains the only analysis layer — its structured
+`Insight` output is used as-is, without an LLM rephrasing it into prose.
 
 ## Goal
 Make the rule engine's output read like a written plan instead of raw data — without letting the LLM invent numeric recommendations on its own.
