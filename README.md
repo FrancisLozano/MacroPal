@@ -24,3 +24,6 @@ as requirements change, so `git log` on any of them doubles as a history of how 
 - [x] [Phase 5 — Stretch features](docs/phase-5-stretch.md) — free candidates (barcode
       scanning, home-screen widget) done; remaining candidates skipped, require a paid Apple
       Developer account
+
+Now in ongoing daily use — see [docs/usability-notes.md](docs/usability-notes.md) for the
+running dogfooding log (what's working, what isn't, what to improve next).
