@@ -43,8 +43,8 @@ actually improving or just accumulating complaints.
 
 | Metric | Count |
 |---|---|
-| Total entries logged | 0 |
-| Open | 0 |
+| Total entries logged | 3 |
+| Open | 3 |
 | Triaged (in Backlog) | 0 |
 | Done | 0 |
 | Won't Fix | 0 |
@@ -63,5 +63,31 @@ Priority scale: **P1** (actively annoying, fix soon) / **P2** (worth doing, no r
 **P3** (nice-to-have, may never happen).
 
 ## Log
+
+### 2026-09-07 — SUGGESTION — General UI
+
+Related to the space complaint above: condense protein, carbs, and fat into a single compact
+row instead of three separate full-size blocks. Keep calories as its own prominent/full-width
+row since it's the primary number people scan for. Add a way to filter/toggle the view between
+"calories + protein only" and "calories + protein + carbs + fat" so people who only care about
+protein aren't forced to look at the full breakdown every time.
+
+**Status:** Open
+
+### 2026-09-07 — DISLIKE — General UI
+
+The nutrition section takes up too much vertical space — the progress bars don't need to
+fill all the excess area they're currently given. Would like a more compact layout that
+leaves room for other content on screen without scrolling as much.
+
+**Status:** Open
+
+### 2026-09-07 — LIKE — General UI
+
+Like the nutrition breakdown — calories, protein, carbs, and fat each shown with how much is
+remaining. The individual progress bars per macro make it easy to see at a glance which ones
+are on track vs. which need attention, without having to do the subtraction yourself.
+
+**Status:** Open
 
 *(newest first — add new entries above this line)*
