@@ -245,10 +245,11 @@ struct DailySummaryView: View {
     private func macroStat(name: String, color: Color, eaten: Double, target: Double, remaining: Double, hideDot: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: 1) {
             HStack {
-                Circle()
-                    .fill(color)
-                    .frame(width: 8, height: 8)
-                    .opacity(hideDot ? 0 : 1)
+                if !hideDot {
+                    Circle()
+                        .fill(color)
+                        .frame(width: 8, height: 8)
+                }
                 Text(name)
                     .font(.subheadline)
                     .fontWeight(.medium)
