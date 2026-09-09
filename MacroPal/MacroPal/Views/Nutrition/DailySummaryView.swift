@@ -116,6 +116,7 @@ struct DailySummaryView: View {
                 }
             }
         }
+        .scrollIndicators(.hidden)
     }
 
     private func deleteEntries(at offsets: IndexSet) {
