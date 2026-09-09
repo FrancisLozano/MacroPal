@@ -13,6 +13,7 @@ struct DailySummaryView: View {
     @Query private var profiles: [UserProfile]
 
     @State private var isPresentingLogSheet = false
+    @AppStorage("nutritionShowFullMacros") private var showFullMacros = true
 
     private let viewModel = NutritionViewModel()
 
@@ -33,11 +34,29 @@ struct DailySummaryView: View {
                 let totals = viewModel.dailyTotals(for: todaysEntries)
                 let remaining = viewModel.remaining(totals: totals, profile: profile)
 
-                Section("Today") {
+                Section {
                     macroRow(name: "Calories", eaten: totals.calories, target: Double(profile.calorieTarget), remaining: remaining.calories, unit: "kcal")
-                    macroRow(name: "Protein", eaten: totals.proteinG, target: Double(profile.proteinTargetG), remaining: remaining.proteinG, unit: "g")
-                    macroRow(name: "Carbs", eaten: totals.carbG, target: Double(profile.carbTargetG), remaining: remaining.carbG, unit: "g")
-                    macroRow(name: "Fat", eaten: totals.fatG, target: Double(profile.fatTargetG), remaining: remaining.fatG, unit: "g")
+                    if showFullMacros {
+                        compactMacroRow([
+                            (name: "Protein", eaten: totals.proteinG, target: Double(profile.proteinTargetG), unit: "g"),
+                            (name: "Carbs", eaten: totals.carbG, target: Double(profile.carbTargetG), unit: "g"),
+                            (name: "Fat", eaten: totals.fatG, target: Double(profile.fatTargetG), unit: "g"),
+                        ])
+                    } else {
+                        compactMacroRow([
+                            (name: "Protein", eaten: totals.proteinG, target: Double(profile.proteinTargetG), unit: "g"),
+                        ])
+                    }
+                } header: {
+                    HStack {
+                        Text("Today")
+                        Spacer()
+                        Button(showFullMacros ? "Show Less" : "Show More") {
+                            showFullMacros.toggle()
+                        }
+                        .font(.caption)
+                        .textCase(nil)
+                    }
                 }
             }
 
@@ -113,6 +132,30 @@ struct DailySummaryView: View {
                 .foregroundStyle(remaining >= 0 ? Color.secondary : Color.red)
         }
         .padding(.vertical, 4)
+    }
+
+    private func compactMacroRow(_ macros: [(name: String, eaten: Double, target: Double, unit: String)]) -> some View {
+        HStack(alignment: .top, spacing: 20) {
+            ForEach(macros, id: \.name) { macro in
+                compactMacroColumn(name: macro.name, eaten: macro.eaten, target: macro.target, unit: macro.unit)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    private func compactMacroColumn(name: String, eaten: Double, target: Double, unit: String) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(name)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Text("\(Int(eaten))/\(Int(target))\(unit)")
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+            ProgressView(value: min(eaten, target), total: max(target, 1))
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
