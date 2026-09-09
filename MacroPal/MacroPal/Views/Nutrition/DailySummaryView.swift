@@ -35,26 +35,27 @@ struct DailySummaryView: View {
                 let remaining = viewModel.remaining(totals: totals, profile: profile)
 
                 Section {
-                    macroRow(name: "Calories", eaten: totals.calories, target: Double(profile.calorieTarget), remaining: remaining.calories, unit: "kcal")
-                    if showFullMacros {
-                        compactMacroRow([
-                            (name: "Protein", eaten: totals.proteinG, target: Double(profile.proteinTargetG), unit: "g"),
-                            (name: "Carbs", eaten: totals.carbG, target: Double(profile.carbTargetG), unit: "g"),
-                            (name: "Fat", eaten: totals.fatG, target: Double(profile.fatTargetG), unit: "g"),
-                        ])
-                    } else {
-                        compactMacroRow([
-                            (name: "Protein", eaten: totals.proteinG, target: Double(profile.proteinTargetG), unit: "g"),
-                        ])
+                    HStack(alignment: .center, spacing: 20) {
+                        calorieRing(totals: totals, profile: profile)
+                        VStack(alignment: .leading, spacing: 12) {
+                            macroStat(name: "Protein", color: Self.proteinColor, eaten: totals.proteinG, target: Double(profile.proteinTargetG), remaining: remaining.proteinG)
+                            if showFullMacros {
+                                macroStat(name: "Carbs", color: Self.carbColor, eaten: totals.carbG, target: Double(profile.carbTargetG), remaining: remaining.carbG)
+                                macroStat(name: "Fat", color: Self.fatColor, eaten: totals.fatG, target: Double(profile.fatTargetG), remaining: remaining.fatG)
+                            }
+                        }
                     }
+                    .padding(.vertical, 8)
                 } header: {
                     HStack {
                         Text("Today")
                         Spacer()
-                        Button(showFullMacros ? "Show Less" : "Show More") {
+                        Button {
                             showFullMacros.toggle()
+                        } label: {
+                            Image(systemName: showFullMacros ? "chart.pie.fill" : "chart.pie")
                         }
-                        .font(.caption)
+                        .accessibilityLabel(showFullMacros ? "Show protein only" : "Show all macros")
                         .textCase(nil)
                     }
                 }
@@ -116,46 +117,96 @@ struct DailySummaryView: View {
         WidgetCenter.shared.reloadAllTimelines()
     }
 
-    @ViewBuilder
-    private func macroRow(name: String, eaten: Double, target: Double, remaining: Double, unit: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(name)
-                    .font(.headline)
-                Spacer()
-                Text("\(Int(eaten)) / \(Int(target)) \(unit)")
+    // Matches the colors already used for these macros in the home-screen widget, so the
+    // color coding reads the same across the app.
+    private static let proteinColor = Color.orange
+    private static let carbColor = Color.green
+    private static let fatColor = Color.purple
+    private static let ringLineWidth: CGFloat = 10
+    private static let ringDiameter: CGFloat = 100
+
+    /// A single calorie ring whose filled arc is itself split into colored segments —
+    /// one per macro, sized by that macro's share of calories eaten today — rather than a
+    /// plain single-color fill. In protein-only mode the non-protein calories collapse
+    /// into one neutral segment instead of three colored ones.
+    private func calorieRing(totals: MacroTotals, profile: UserProfile) -> some View {
+        let target = Double(profile.calorieTarget)
+        let fraction = target > 0 ? min(1, max(0, totals.calories / target)) : 0
+        let remainingCalories = target - totals.calories
+        let breakdown = viewModel.macroCalorieBreakdown(for: totals)
+
+        let segments: [(color: Color, length: Double)]
+        if showFullMacros {
+            segments = [
+                (Self.proteinColor, breakdown.proteinPercent * fraction),
+                (Self.carbColor, breakdown.carbPercent * fraction),
+                (Self.fatColor, breakdown.fatPercent * fraction),
+            ]
+        } else {
+            segments = [
+                (Self.proteinColor, breakdown.proteinPercent * fraction),
+                (Color.secondary.opacity(0.35), (1 - breakdown.proteinPercent) * fraction),
+            ]
+        }
+
+        return ZStack {
+            Circle()
+                .stroke(Color.secondary.opacity(0.15), lineWidth: Self.ringLineWidth)
+            ringSegments(segments)
+            VStack(spacing: 2) {
+                Text("\(Int(abs(remainingCalories)))")
+                    .font(.title2.bold())
+                    .minimumScaleFactor(0.6)
+                    .lineLimit(1)
+                Text(remainingCalories >= 0 ? "kcal left" : "kcal over")
+                    .font(.caption2)
                     .foregroundStyle(.secondary)
             }
-            ProgressView(value: min(eaten, target), total: max(target, 1))
-            Text(remaining >= 0 ? "\(Int(remaining)) \(unit) remaining" : "\(Int(-remaining)) \(unit) over")
-                .font(.caption)
+        }
+        .frame(width: Self.ringDiameter, height: Self.ringDiameter)
+    }
+
+    private func ringSegments(_ segments: [(color: Color, length: Double)]) -> some View {
+        ForEach(Array(ringSegmentRanges(segments).enumerated()), id: \.offset) { _, segment in
+            Circle()
+                .trim(from: segment.start, to: max(segment.start, segment.end))
+                .stroke(segment.color, style: StrokeStyle(lineWidth: Self.ringLineWidth, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+        }
+    }
+
+    /// Converts consecutive segment lengths (each a fraction of the full circle) into
+    /// absolute start/end trim values, so segments draw back-to-back around the ring
+    /// instead of all starting from zero.
+    private func ringSegmentRanges(_ segments: [(color: Color, length: Double)]) -> [(color: Color, start: Double, end: Double)] {
+        var ranges: [(color: Color, start: Double, end: Double)] = []
+        var cumulative: Double = 0
+        for segment in segments {
+            let end = min(1, cumulative + segment.length)
+            ranges.append((segment.color, cumulative, end))
+            cumulative = end
+        }
+        return ranges
+    }
+
+    private func macroStat(name: String, color: Color, eaten: Double, target: Double, remaining: Double) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            HStack {
+                Circle()
+                    .fill(color)
+                    .frame(width: 8, height: 8)
+                Text(name)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                Spacer()
+                Text("\(Int(eaten))/\(Int(target))g")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            Text(remaining >= 0 ? "\(Int(remaining))g remaining" : "\(Int(-remaining))g over")
+                .font(.caption2)
                 .foregroundStyle(remaining >= 0 ? Color.secondary : Color.red)
         }
-        .padding(.vertical, 4)
-    }
-
-    private func compactMacroRow(_ macros: [(name: String, eaten: Double, target: Double, unit: String)]) -> some View {
-        HStack(alignment: .top, spacing: 20) {
-            ForEach(macros, id: \.name) { macro in
-                compactMacroColumn(name: macro.name, eaten: macro.eaten, target: macro.target, unit: macro.unit)
-            }
-        }
-        .padding(.vertical, 4)
-    }
-
-    private func compactMacroColumn(name: String, eaten: Double, target: Double, unit: String) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text(name)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Text("\(Int(eaten))/\(Int(target))\(unit)")
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-            ProgressView(value: min(eaten, target), total: max(target, 1))
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

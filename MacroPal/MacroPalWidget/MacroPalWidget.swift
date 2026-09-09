@@ -124,12 +124,12 @@ struct MacroPalWidgetEntryView: View {
     // Descriptive breakdown of what today's eaten calories came from — not tied to
     // targets, so it stays meaningful even if someone hasn't set targets that match how
     // they actually want to eat.
-    private var totalMacroCalories: Double {
-        entry.eaten.carbG * 4 + entry.eaten.fatG * 9 + entry.eaten.proteinG * 4
+    private var breakdown: MacroCalorieBreakdown {
+        NutritionViewModel().macroCalorieBreakdown(for: entry.eaten)
     }
-    private var carbPercent: Double { totalMacroCalories > 0 ? (entry.eaten.carbG * 4) / totalMacroCalories : 0 }
-    private var fatPercent: Double { totalMacroCalories > 0 ? (entry.eaten.fatG * 9) / totalMacroCalories : 0 }
-    private var proteinPercent: Double { totalMacroCalories > 0 ? (entry.eaten.proteinG * 4) / totalMacroCalories : 0 }
+    private var carbPercent: Double { breakdown.carbPercent }
+    private var fatPercent: Double { breakdown.fatPercent }
+    private var proteinPercent: Double { breakdown.proteinPercent }
 
     private var remainingCalories: Double { entry.target.calories - entry.eaten.calories }
     private var calorieFraction: Double {

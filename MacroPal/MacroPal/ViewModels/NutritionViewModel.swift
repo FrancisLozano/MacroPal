@@ -28,6 +28,15 @@ struct DailyCalorieTotal: Identifiable {
     var id: Date { date }
 }
 
+/// What fraction of eaten calories came from each macro, weighted by each macro's
+/// calories-per-gram (protein/carb = 4 kcal/g, fat = 9 kcal/g) rather than by gram weight —
+/// so e.g. fat doesn't look under-represented just because it takes fewer grams to matter.
+struct MacroCalorieBreakdown {
+    let proteinPercent: Double
+    let carbPercent: Double
+    let fatPercent: Double
+}
+
 @Observable
 final class NutritionViewModel {
     /// Logs a new `FoodEntry`, snapshotting macros from `foodItem` scaled to `servingSizeG`
@@ -78,6 +87,21 @@ final class NutritionViewModel {
             totals.carbG += entry.carbG
             totals.fatG += entry.fatG
         }
+    }
+
+    func macroCalorieBreakdown(for totals: MacroTotals) -> MacroCalorieBreakdown {
+        let proteinCals = totals.proteinG * 4
+        let carbCals = totals.carbG * 4
+        let fatCals = totals.fatG * 9
+        let totalCals = proteinCals + carbCals + fatCals
+        guard totalCals > 0 else {
+            return MacroCalorieBreakdown(proteinPercent: 0, carbPercent: 0, fatPercent: 0)
+        }
+        return MacroCalorieBreakdown(
+            proteinPercent: proteinCals / totalCals,
+            carbPercent: carbCals / totalCals,
+            fatPercent: fatCals / totalCals
+        )
     }
 
     func remaining(totals: MacroTotals, profile: UserProfile) -> MacroTotals {
