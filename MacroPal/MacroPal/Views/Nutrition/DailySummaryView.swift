@@ -174,6 +174,12 @@ struct DailySummaryView: View {
                 .rotationEffect(.degrees(180))
             halfRingSegments(segments)
         }
+        // A Circle sized to fill its frame gets stroked lineWidth/2 *past* that frame's
+        // edge on every side. Insetting by lineWidth/2 here shrinks the circle so the
+        // stroke's outer edge lands exactly on the frame boundary instead of past it —
+        // otherwise .clipped() below (meant only to hide the bottom half) also slices the
+        // left/right ends of the visible arc off.
+        .padding(Self.ringLineWidth / 2)
         .frame(width: Self.ringDiameter, height: Self.ringDiameter, alignment: .top)
         .frame(height: Self.ringDiameter / 2 + Self.ringLineWidth, alignment: .top)
         .clipped()
