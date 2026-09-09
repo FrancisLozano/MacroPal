@@ -14,6 +14,7 @@ struct DailySummaryView: View {
 
     @State private var isPresentingLogSheet = false
     @AppStorage("nutritionShowFullMacros") private var showFullMacros = true
+    @State private var showTotalCalories = false
 
     private let viewModel = NutritionViewModel()
 
@@ -68,7 +69,7 @@ struct DailySummaryView: View {
                 let remaining = viewModel.remaining(totals: totals, profile: profile)
 
                 Section {
-                    macroStat(name: "Protein", color: Self.proteinColor, eaten: totals.proteinG, target: Double(profile.proteinTargetG), remaining: remaining.proteinG)
+                    macroStat(name: "Protein", color: Self.proteinColor, eaten: totals.proteinG, target: Double(profile.proteinTargetG), remaining: remaining.proteinG, hideDot: !showFullMacros)
                     if showFullMacros {
                         macroStat(name: "Carbs", color: Self.carbColor, eaten: totals.carbG, target: Double(profile.carbTargetG), remaining: remaining.carbG)
                         macroStat(name: "Fat", color: Self.fatColor, eaten: totals.fatG, target: Double(profile.fatTargetG), remaining: remaining.fatG)
@@ -132,8 +133,9 @@ struct DailySummaryView: View {
     private static let proteinColor = Color.orange
     private static let carbColor = Color.green
     private static let fatColor = Color.purple
-    private static let ringLineWidth: CGFloat = 16
-    private static let ringDiameter: CGFloat = 260
+    private static let ringLineWidth: CGFloat = 20
+    private static let ringDiameter: CGFloat = 284
+    private static let soloColor = Color.blue
 
     /// The calorie gauge, standalone on the screen background (no card) so it isn't
     /// squeezed into the same box as the macro list below it.
@@ -145,8 +147,9 @@ struct DailySummaryView: View {
 
     /// A half-circle calorie gauge whose filled arc is itself split into colored segments —
     /// one per macro, sized by that macro's share of calories eaten today — rather than a
-    /// plain single-color fill. In protein-only mode the non-protein calories collapse into
-    /// one neutral segment instead of three colored ones.
+    /// plain single-color fill. In protein-only mode, orange no longer means anything
+    /// without the other macros to contrast against, so the whole eaten-calories fraction
+    /// fills in one solid accent color instead of a protein slice plus a leftover one.
     private func calorieHalfRing(totals: MacroTotals, profile: UserProfile) -> some View {
         let target = Double(profile.calorieTarget)
         let fraction = target > 0 ? min(1, max(0, totals.calories / target)) : 0
@@ -161,32 +164,48 @@ struct DailySummaryView: View {
                 (Self.fatColor, breakdown.fatPercent * fraction),
             ]
         } else {
-            segments = [
-                (Self.proteinColor, breakdown.proteinPercent * fraction),
-                (Color.secondary.opacity(0.35), (1 - breakdown.proteinPercent) * fraction),
-            ]
+            segments = [(Self.soloColor, fraction)]
         }
 
-        return VStack(spacing: 8) {
-            ZStack {
-                Circle()
-                    .trim(from: 0, to: 0.5)
-                    .stroke(Color.secondary.opacity(0.15), lineWidth: Self.ringLineWidth)
-                    .rotationEffect(.degrees(180))
-                halfRingSegments(segments)
-            }
-            .frame(width: Self.ringDiameter, height: Self.ringDiameter, alignment: .top)
-            .frame(height: Self.ringDiameter / 2 + Self.ringLineWidth, alignment: .top)
-            .clipped()
+        return ZStack {
+            Circle()
+                .trim(from: 0, to: 0.5)
+                .stroke(Color.secondary.opacity(0.15), lineWidth: Self.ringLineWidth)
+                .rotationEffect(.degrees(180))
+            halfRingSegments(segments)
+        }
+        .frame(width: Self.ringDiameter, height: Self.ringDiameter, alignment: .top)
+        .frame(height: Self.ringDiameter / 2 + Self.ringLineWidth, alignment: .top)
+        .clipped()
+        .overlay(alignment: .bottom) {
+            calorieReadout(remainingCalories: remainingCalories, target: target)
+        }
+    }
 
-            VStack(spacing: 2) {
-                Text("\(Int(abs(remainingCalories)))")
-                    .font(.system(size: 44, weight: .bold))
-                    .minimumScaleFactor(0.6)
-                    .lineLimit(1)
-                Text(remainingCalories >= 0 ? "kcal left" : "kcal over")
+    /// Shares the ring's own hollow interior instead of taking extra space below it —
+    /// anchored to the half-circle's flat baseline via the `.bottom` overlay alignment.
+    private func calorieReadout(remainingCalories: Double, target: Double) -> some View {
+        let isOver = !showTotalCalories && remainingCalories < 0
+        let value = showTotalCalories ? Int(target.rounded()) : Int(abs(remainingCalories).rounded())
+        let caption = showTotalCalories ? "kcal / day" : (remainingCalories >= 0 ? "kcal left" : "kcal over")
+
+        return VStack(spacing: 2) {
+            Text("\(value)")
+                .font(.system(size: 44, weight: .bold))
+                .minimumScaleFactor(0.6)
+                .lineLimit(1)
+            HStack(spacing: 5) {
+                Text(caption)
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(isOver ? Color.red : Color.secondary)
+                Button {
+                    showTotalCalories.toggle()
+                } label: {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(.caption)
+                        .foregroundStyle(Color.secondary)
+                }
+                .accessibilityLabel(showTotalCalories ? "Show calories remaining" : "Show total daily calories")
             }
         }
     }
@@ -217,12 +236,13 @@ struct DailySummaryView: View {
         return ranges
     }
 
-    private func macroStat(name: String, color: Color, eaten: Double, target: Double, remaining: Double) -> some View {
+    private func macroStat(name: String, color: Color, eaten: Double, target: Double, remaining: Double, hideDot: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: 1) {
             HStack {
                 Circle()
                     .fill(color)
                     .frame(width: 8, height: 8)
+                    .opacity(hideDot ? 0 : 1)
                 Text(name)
                     .font(.subheadline)
                     .fontWeight(.medium)
