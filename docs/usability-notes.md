@@ -42,7 +42,7 @@ actually improving or just accumulating complaints.
 | Likes | 1 |
 | Dislikes | 13 |
 | Suggestions | 7 |
-| Triaged (in Backlog) | 0 |
+| Triaged (in Backlog) | 13 |
 | Done | 0 |
 | Won't Fix | 0 |
 
@@ -54,7 +54,19 @@ guidance for open questions), so they don't just rot in a markdown table.
 
 | Priority | Item | Source | Status |
 |---|---|---|---|
-| — | *(none yet)* | — | — |
+| P1 | Delete a logged food entry | Dislikes → Nutrition (2026-09-08) | Triaged |
+| P1 | Weight-entry date auto-fills to today | Suggestions → Body (2026-09-08) | Triaged |
+| P1 | Redesign nutrition summary (compact macro row, calorie kept prominent, filter toggle for calories+protein vs. full macros) | Dislikes → General UI (2026-09-07) + Suggestions → General UI (2026-09-07) + Suggestions → Nutrition (2026-09-08, macro filter) | Triaged |
+| P1 | Redesign Workouts page (visual appeal + faster set logging) | Dislikes → Workouts (2026-09-08, "lacks visual appeal...") | Triaged |
+| P2 | Food database integration (search/brands, not manual-only) | Dislikes → Nutrition (2026-09-08, "no brands...") + Suggestions → Nutrition (2026-09-08, "larger variety...") | Triaged |
+| P2 | Redesign food history (show calories vs. target, show macros per entry, scale better with more entries) | Dislikes → Nutrition (2026-09-08, three food-history entries) | Triaged |
+| P2 | Fold Body page into another page instead of standalone | Dislikes → Body (2026-09-08) | Triaged |
+| P2 | Replace Insights page with contextual info icons at point of relevance | Dislikes → Insights (2026-09-08) + Suggestions → Insights (2026-09-08) | Triaged |
+| P2 | Add oz as a serving-size unit alongside grams | Dislikes → Nutrition (2026-09-08, "serving size is only in grams") | Triaged |
+| P2 | Daily logged-food list scales better as more foods are added | Dislikes → Nutrition (2026-09-08, "day's logged-food list...") | Triaged |
+| P2 | Clicking a macro shows which foods contributed to it | Suggestions → Nutrition (2026-09-08) | Triaged |
+| P2 | Split Profile page into subpages to reduce visual overload | Dislikes → General UI (2026-09-08, "Profile page needs subpages") | Triaged |
+| P3 | Nicer-looking exercise graph / add a workout-progress graphic | Dislikes → Workouts (2026-09-08, "exercise graph doesn't look good") + Suggestions → Workouts (2026-09-08, workout-progress graphic) | Triaged |
 
 Priority scale: **P1** (actively annoying, fix soon) / **P2** (worth doing, no rush) /
 **P3** (nice-to-have, may never happen). Status: `Triaged` → `In Progress` → `Done` (link the
