@@ -43,7 +43,7 @@ actually improving or just accumulating complaints.
 | Dislikes | 13 |
 | Suggestions | 7 |
 | Triaged (in Backlog) | 13 |
-| Done | 0 |
+| Done | 1 |
 | Won't Fix | 0 |
 
 ## Backlog (triaged)
@@ -54,7 +54,7 @@ guidance for open questions), so they don't just rot in a markdown table.
 
 | Priority | Item | Source | Status |
 |---|---|---|---|
-| P1 | Delete a logged food entry | Dislikes → Nutrition (2026-09-08) | Triaged |
+| P1 | Delete a logged food entry | Dislikes → Nutrition (2026-09-08) | Done (58cb5d0) |
 | P1 | Weight-entry date auto-fills to today | Suggestions → Body (2026-09-08) | Triaged |
 | P1 | Redesign nutrition summary (compact macro row, calorie kept prominent, filter toggle for calories+protein vs. full macros) | Dislikes → General UI (2026-09-07) + Suggestions → General UI (2026-09-07) + Suggestions → Nutrition (2026-09-08, macro filter) | Triaged |
 | P1 | Redesign Workouts page (visual appeal + faster set logging) | Dislikes → Workouts (2026-09-08, "lacks visual appeal...") | Triaged |
