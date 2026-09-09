@@ -44,6 +44,7 @@ actually improving or just accumulating complaints.
 | Suggestions | 7 |
 | Triaged (in Backlog) | 13 |
 | Done | 1 |
+| No change needed | 1 |
 | Won't Fix | 0 |
 
 ## Backlog (triaged)
@@ -55,7 +56,7 @@ guidance for open questions), so they don't just rot in a markdown table.
 | Priority | Item | Source | Status |
 |---|---|---|---|
 | P1 | Delete a logged food entry | Dislikes → Nutrition (2026-09-08) | Done (58cb5d0) |
-| P1 | Weight-entry date auto-fills to today | Suggestions → Body (2026-09-08) | Triaged |
+| P1 | Weight-entry date auto-fills to today | Suggestions → Body (2026-09-08) | No change needed — verified `LogWeightEntryView` already defaults `date` to `.now`; logged a real entry without touching the date field and it saved correctly dated today |
 | P1 | Redesign nutrition summary (compact macro row, calorie kept prominent, filter toggle for calories+protein vs. full macros) | Dislikes → General UI (2026-09-07) + Suggestions → General UI (2026-09-07) + Suggestions → Nutrition (2026-09-08, macro filter) | Triaged |
 | P1 | Redesign Workouts page (visual appeal + faster set logging) | Dislikes → Workouts (2026-09-08, "lacks visual appeal...") | Triaged |
 | P2 | Food database integration (search/brands, not manual-only) | Dislikes → Nutrition (2026-09-08, "no brands...") + Suggestions → Nutrition (2026-09-08, "larger variety...") | Triaged |
@@ -70,7 +71,8 @@ guidance for open questions), so they don't just rot in a markdown table.
 
 Priority scale: **P1** (actively annoying, fix soon) / **P2** (worth doing, no rush) /
 **P3** (nice-to-have, may never happen). Status: `Triaged` → `In Progress` → `Done` (link the
-commit) → `Won't Fix` (say why — same spirit as SPEC.md §7's "edit and explain why" convention).
+commit) / `No change needed` (verified the behavior already exists — say how you checked) /
+`Won't Fix` (say why — same spirit as SPEC.md §7's "edit and explain why" convention).
 
 ## Likes
 
