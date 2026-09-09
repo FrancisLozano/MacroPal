@@ -43,7 +43,7 @@ actually improving or just accumulating complaints.
 | Dislikes | 13 |
 | Suggestions | 7 |
 | Triaged (in Backlog) | 13 |
-| Done | 1 |
+| Done | 2 |
 | No change needed | 1 |
 | Won't Fix | 0 |
 
@@ -57,7 +57,7 @@ guidance for open questions), so they don't just rot in a markdown table.
 |---|---|---|---|
 | P1 | Delete a logged food entry | Dislikes → Nutrition (2026-09-08) | Done (58cb5d0) |
 | P1 | Weight-entry date auto-fills to today | Suggestions → Body (2026-09-08) | No change needed — verified `LogWeightEntryView` already defaults `date` to `.now`; logged a real entry without touching the date field and it saved correctly dated today |
-| P1 | Redesign nutrition summary (compact macro row, calorie kept prominent, filter toggle for calories+protein vs. full macros) | Dislikes → General UI (2026-09-07) + Suggestions → General UI (2026-09-07) + Suggestions → Nutrition (2026-09-08, macro filter) | Triaged |
+| P1 | Redesign nutrition summary (compact macro row, calorie kept prominent, filter toggle for calories+protein vs. full macros) | Dislikes → General UI (2026-09-07) + Suggestions → General UI (2026-09-07) + Suggestions → Nutrition (2026-09-08, macro filter) | Done (00a444b) |
 | P1 | Redesign Workouts page (visual appeal + faster set logging) | Dislikes → Workouts (2026-09-08, "lacks visual appeal...") | Triaged |
 | P2 | Food database integration (search/brands, not manual-only) | Dislikes → Nutrition (2026-09-08, "no brands...") + Suggestions → Nutrition (2026-09-08, "larger variety...") | Triaged |
 | P2 | Redesign food history (show calories vs. target, show macros per entry, scale better with more entries) | Dislikes → Nutrition (2026-09-08, three food-history entries) | Triaged |
