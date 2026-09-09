@@ -5,6 +5,7 @@
 
 import SwiftUI
 import SwiftData
+import WidgetKit
 
 struct DailySummaryView: View {
     @Environment(\.modelContext) private var modelContext
@@ -58,6 +59,7 @@ struct DailySummaryView: View {
                                 .foregroundStyle(.secondary)
                         }
                     }
+                    .onDelete(perform: deleteEntries)
                 }
             }
 
@@ -85,6 +87,14 @@ struct DailySummaryView: View {
         .task {
             _ = UserProfile.current(in: modelContext)
         }
+    }
+
+    private func deleteEntries(at offsets: IndexSet) {
+        for index in offsets {
+            modelContext.delete(todaysEntries[index])
+        }
+        try? modelContext.save()
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     @ViewBuilder
