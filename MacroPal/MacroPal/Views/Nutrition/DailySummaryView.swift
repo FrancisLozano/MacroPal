@@ -204,19 +204,19 @@ struct DailySummaryView: View {
                 }
                 Spacer()
                 Text(meal.defaultTimeWindow.displayText)
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
             HStack(alignment: .firstTextBaseline) {
                 Text(foodSummary(for: entries))
-                    .font(.subheadline)
+                    .font(.caption2)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .truncationMode(.tail)
                 Spacer()
                 if !entries.isEmpty {
                     Text("\(Int(entries.reduce(0) { $0 + $1.caloriesKcal })) kcal")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
             }
