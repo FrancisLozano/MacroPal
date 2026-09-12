@@ -59,7 +59,6 @@ struct DailySummaryView: View {
                 DatePicker(
                     "Select a day",
                     selection: $selectedDate,
-                    in: ...Date.now,
                     displayedComponents: .date
                 )
                 .datePickerStyle(.graphical)
@@ -104,7 +103,8 @@ struct DailySummaryView: View {
     }
 
     /// "‹ [Today / weekday, date] ›" — tapping the date opens a calendar picker to jump
-    /// straight to any day; the chevrons step one day at a time. Can't navigate past today.
+    /// straight to any day; the chevrons step one day at a time, in either direction —
+    /// future days are fair game too, e.g. for planning a meal ahead of time.
     private var dateChevronRow: some View {
         HStack {
             Button {
@@ -135,15 +135,14 @@ struct DailySummaryView: View {
             } label: {
                 Image(systemName: "chevron.right")
             }
-            .disabled(isToday)
         }
         .padding(.horizontal)
     }
 
-    /// A row of the trailing 7 days (ending today) for one-tap jumps to a nearby day, with a
-    /// small dot on any day that has at least one logged entry. Always the same 7 fixed slots
-    /// regardless of `selectedDate` — only each circle's selected/dot state changes — so this
-    /// never changes shape the way a List row/section can.
+    /// A row of 7 days centered on today — 3 back, today, 3 ahead — for one-tap jumps to a
+    /// nearby day (past or future), with a small dot on any day that has at least one logged
+    /// entry. Always the same 7 fixed slots regardless of `selectedDate` — only each circle's
+    /// selected/dot state changes — so this never changes shape the way a List row/section can.
     private var weekStrip: some View {
         HStack {
             ForEach(visibleWeekDays, id: \.self) { day in
@@ -155,8 +154,8 @@ struct DailySummaryView: View {
 
     private var visibleWeekDays: [Date] {
         let today = Calendar.current.startOfDay(for: .now)
-        return (0..<7).reversed().compactMap {
-            Calendar.current.date(byAdding: .day, value: -$0, to: today)
+        return (-3...3).compactMap {
+            Calendar.current.date(byAdding: .day, value: $0, to: today)
         }
     }
 
@@ -201,8 +200,7 @@ struct DailySummaryView: View {
 
     private func changeDay(by delta: Int) {
         guard let newDate = Calendar.current.date(byAdding: .day, value: delta, to: selectedDate) else { return }
-        let today = Calendar.current.startOfDay(for: .now)
-        selectedDate = min(newDate, today)
+        selectedDate = newDate
     }
 
     /// A floating card in the bottom-right corner (rather than a toolbar item) for logging
