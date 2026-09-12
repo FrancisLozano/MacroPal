@@ -17,6 +17,7 @@ struct DailySummaryView: View {
     @State private var selectedMeal: MealType = MealType.current()
     @State private var mealScrollPosition: MealType?
     @State private var isPresentingMealInfo = false
+    @State private var todayDateText = Self.formattedToday()
 
     private let viewModel = NutritionViewModel()
 
@@ -33,6 +34,8 @@ struct DailySummaryView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            header
+
             if let profile {
                 calorieHeader(profile: profile)
                     .padding(.top, 12)
@@ -41,15 +44,10 @@ struct DailySummaryView: View {
 
             macroList(profile: profile)
         }
-        .navigationTitle("Nutrition")
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    isPresentingLogSheet = true
-                } label: {
-                    Label("Log Food", systemImage: "plus")
-                }
-            }
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
+        .overlay(alignment: .bottomTrailing) {
+            logFoodButton
         }
         .sheet(isPresented: $isPresentingLogSheet) {
             NavigationStack {
@@ -63,7 +61,46 @@ struct DailySummaryView: View {
             let current = MealType.current()
             selectedMeal = current
             mealScrollPosition = current
+            todayDateText = Self.formattedToday()
         }
+    }
+
+    /// A custom header (rather than the system nav title/subtitle) so "Nutrition" and
+    /// today's date can run bigger than the fixed system title/subtitle sizes allow.
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("Nutrition")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+            Text(todayDateText)
+                .font(.title3)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal)
+        .padding(.top, 8)
+    }
+
+    /// A floating card in the bottom-right corner (rather than a toolbar item) for logging
+    /// food — a more prominent, thumb-reachable "add" affordance.
+    private var logFoodButton: some View {
+        Button {
+            isPresentingLogSheet = true
+        } label: {
+            Image(systemName: "plus")
+                .font(.title2.weight(.semibold))
+                .foregroundStyle(.white)
+                .frame(width: 56, height: 56)
+                .background(Color.accentColor, in: Circle())
+                .shadow(color: .black.opacity(0.25), radius: 6, y: 3)
+        }
+        .accessibilityLabel("Log Food")
+        .padding(.trailing, 20)
+        .padding(.bottom, 20)
+    }
+
+    private static func formattedToday() -> String {
+        Date.now.formatted(date: .long, time: .omitted)
     }
 
     /// The macro breakdown list and the rest of the screen — kept as a plain `List` (its
@@ -101,14 +138,14 @@ struct DailySummaryView: View {
                     .listRowInsets(EdgeInsets())
             } header: {
                 HStack {
-                    Text("Log Today")
+                    Text("Logged Today")
                     Spacer()
                     Button {
                         isPresentingMealInfo = true
                     } label: {
                         Image(systemName: "info.circle")
                     }
-                    .accessibilityLabel("About Log Today")
+                    .accessibilityLabel("About Logged Today")
                     .textCase(nil)
                     .popover(isPresented: $isPresentingMealInfo) {
                         Text("Log food under whichever card matches when you actually ate — not necessarily right now. Breakfast, Lunch, and Dinner together cover the whole day, so a snack at 4 PM still counts under Lunch and a meal after 9 PM still counts under Dinner. The card shown here just defaults to the current time; swipe to pick a different one.")

@@ -24,10 +24,8 @@ struct RootView: View {
             }
             .tabItem { Label("Workouts", systemImage: "dumbbell") }
 
-            NavigationStack {
-                InsightsView()
-            }
-            .tabItem { Label("Insights", systemImage: "sparkles") }
+            // Insights tab removed for now — revisit later (per project backlog: replace
+            // with contextual info icons at point of relevance instead of its own tab).
 
             NavigationStack {
                 ProfileView()
