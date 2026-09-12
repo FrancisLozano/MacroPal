@@ -5,7 +5,6 @@
 
 import SwiftUI
 import SwiftData
-import WidgetKit
 
 struct DailySummaryView: View {
     @Environment(\.modelContext) private var modelContext
@@ -15,6 +14,9 @@ struct DailySummaryView: View {
     @State private var isPresentingLogSheet = false
     @AppStorage("nutritionShowFullMacros") private var showFullMacros = true
     @State private var showTotalCalories = false
+    @State private var selectedMeal: MealType = MealType.current()
+    @State private var mealScrollPosition: MealType?
+    @State private var isPresentingMealInfo = false
 
     private let viewModel = NutritionViewModel()
 
@@ -51,11 +53,16 @@ struct DailySummaryView: View {
         }
         .sheet(isPresented: $isPresentingLogSheet) {
             NavigationStack {
-                LogFoodEntryView()
+                LogFoodEntryView(initialMealType: selectedMeal)
             }
         }
         .task {
             _ = UserProfile.current(in: modelContext)
+        }
+        .onAppear {
+            let current = MealType.current()
+            selectedMeal = current
+            mealScrollPosition = current
         }
     }
 
@@ -89,25 +96,29 @@ struct DailySummaryView: View {
                 }
             }
 
-            Section("Logged Today") {
-                if todaysEntries.isEmpty {
-                    Text("Nothing logged yet.")
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(todaysEntries) { entry in
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(entry.nameSnapshot)
-                                Text(entry.mealType.displayName)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            Text("\(Int(entry.caloriesKcal)) kcal")
-                                .foregroundStyle(.secondary)
-                        }
+            Section {
+                mealCarousel
+                    .listRowInsets(EdgeInsets())
+            } header: {
+                HStack {
+                    Text("Log Today")
+                    Spacer()
+                    Button {
+                        isPresentingMealInfo = true
+                    } label: {
+                        Image(systemName: "info.circle")
                     }
-                    .onDelete(perform: deleteEntries)
+                    .accessibilityLabel("About Log Today")
+                    .textCase(nil)
+                    .popover(isPresented: $isPresentingMealInfo) {
+                        Text("Log food under whichever card matches when you actually ate — not necessarily right now. Breakfast, Lunch, and Dinner together cover the whole day, so a snack at 4 PM still counts under Lunch and a meal after 9 PM still counts under Dinner. The card shown here just defaults to the current time; swipe to pick a different one.")
+                            .font(.subheadline)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding()
+                            .frame(maxWidth: 320)
+                            .presentationCompactAdaptation(.sheet)
+                            .presentationDetents([.fraction(0.3)])
+                    }
                 }
             }
 
@@ -120,12 +131,111 @@ struct DailySummaryView: View {
         .scrollIndicators(.hidden)
     }
 
-    private func deleteEntries(at offsets: IndexSet) {
-        for index in offsets {
-            modelContext.delete(todaysEntries[index])
+    private static let loggableMealTypes: [MealType] = [.breakfast, .lunch, .dinner]
+    private static let mealCardHeight: CGFloat = 68
+    /// Matches the default List row's own leading/trailing margin (measured against the
+    /// Protein row), reproduced by hand here since `mealCarousel`'s row insets are zeroed.
+    private static let rowInset: CGFloat = 16
+
+    /// A manually-paged `ScrollView` rather than `TabView(.page)` — the latter ignores an
+    /// explicit `.frame(height:)` on this SDK and expands to fill all available vertical
+    /// space instead of respecting a fixed card height, even with `.clipped()` added.
+    ///
+    /// `mealScrollPosition` is a plain `@State` synced to `selectedMeal` via `onChange`
+    /// rather than a computed `Binding` wired directly to `selectedMeal` — the latter fights
+    /// the live drag gesture every frame (it kept re-asserting the old position), which
+    /// made the carousel impossible to swipe at all.
+    ///
+    /// Row insets are zeroed (`.listRowInsets(EdgeInsets())`) so the horizontal `ScrollView`
+    /// spans the row's full width — with the default (non-zero) insets in place, the List's
+    /// own row-level gesture handling wins over the ScrollView's pan and swiping stops
+    /// working entirely. `mealCard` restores the usual List row's leading/trailing margin
+    /// itself (`Self.rowInset`) purely for visual alignment with rows like Protein, and has
+    /// no background of its own — no nested card look.
+    private var mealCarousel: some View {
+        VStack(spacing: 0) {
+            ScrollView(.horizontal) {
+                LazyHStack(spacing: 0) {
+                    ForEach(Self.loggableMealTypes) { meal in
+                        mealCard(meal)
+                            .containerRelativeFrame(.horizontal)
+                    }
+                }
+                .scrollTargetLayout()
+            }
+            .scrollTargetBehavior(.paging)
+            .scrollPosition(id: $mealScrollPosition)
+            .onChange(of: mealScrollPosition) { _, newValue in
+                if let newValue {
+                    selectedMeal = newValue
+                }
+            }
+            .scrollIndicators(.hidden)
+            .frame(height: Self.mealCardHeight)
+
+            pageDots
+                .padding(.vertical, 8)
         }
-        try? modelContext.save()
-        WidgetCenter.shared.reloadAllTimelines()
+    }
+
+    private var pageDots: some View {
+        HStack(spacing: 6) {
+            ForEach(Self.loggableMealTypes) { meal in
+                Circle()
+                    .fill(meal == selectedMeal ? Color.primary : Color.secondary.opacity(0.3))
+                    .frame(width: 6, height: 6)
+            }
+        }
+    }
+
+    /// One swipeable page: meal name/icon + suggested time window on top, with a food
+    /// summary (what's logged so far) under the name and that meal's total calories under
+    /// the time — a compact two-line row rather than a per-entry list, so it stays a fixed,
+    /// small size regardless of how much has been logged.
+    private func mealCard(_ meal: MealType) -> some View {
+        let entries = todaysEntries.filter { $0.mealType == meal }
+        return VStack(alignment: .leading, spacing: 2) {
+            HStack(alignment: .firstTextBaseline) {
+                HStack(spacing: 6) {
+                    Image(systemName: meal.icon)
+                        .foregroundStyle(.secondary)
+                    Text(meal.displayName)
+                        .fontWeight(.semibold)
+                }
+                Spacer()
+                Text(meal.defaultTimeWindow.displayText)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            HStack(alignment: .firstTextBaseline) {
+                Text(foodSummary(for: entries))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                Spacer()
+                if !entries.isEmpty {
+                    Text("\(Int(entries.reduce(0) { $0 + $1.caloriesKcal })) kcal")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .padding(.horizontal, Self.rowInset)
+        .frame(height: Self.mealCardHeight)
+    }
+
+    /// "Nothing logged today" when empty, the food's name for a single entry, or the first
+    /// entry's name plus a "and N more" count once there's more than one.
+    private func foodSummary(for entries: [FoodEntry]) -> String {
+        guard let first = entries.first else {
+            return "Nothing logged today"
+        }
+        let additional = entries.count - 1
+        guard additional > 0 else {
+            return "Logged \(first.nameSnapshot)"
+        }
+        return "Logged \(first.nameSnapshot) and \(additional) more"
     }
 
     // Matches the colors already used for these macros in the home-screen widget, so the
