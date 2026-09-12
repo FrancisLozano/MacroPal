@@ -8,7 +8,7 @@ import SwiftData
 
 struct DailySummaryView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var todaysEntries: [FoodEntry]
+    @Query(sort: \FoodEntry.date, order: .reverse) private var allEntries: [FoodEntry]
     @Query private var profiles: [UserProfile]
 
     @State private var isPresentingLogSheet = false
@@ -17,20 +17,20 @@ struct DailySummaryView: View {
     @State private var selectedMeal: MealType = MealType.current()
     @State private var mealScrollPosition: MealType?
     @State private var isPresentingMealInfo = false
-    @State private var todayDateText = Self.formattedToday()
+    @State private var selectedDate = Calendar.current.startOfDay(for: .now)
+    @State private var isPresentingCalendar = false
 
     private let viewModel = NutritionViewModel()
 
-    init() {
-        let startOfDay = Calendar.current.startOfDay(for: .now)
-        let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay) ?? startOfDay
-        _todaysEntries = Query(
-            filter: #Predicate<FoodEntry> { $0.date >= startOfDay && $0.date < endOfDay },
-            sort: \FoodEntry.date
-        )
+    private var profile: UserProfile? { profiles.first }
+
+    private var isToday: Bool {
+        Calendar.current.isDateInToday(selectedDate)
     }
 
-    private var profile: UserProfile? { profiles.first }
+    private var entriesForSelectedDate: [FoodEntry] {
+        allEntries.filter { Calendar.current.isDate($0.date, inSameDayAs: selectedDate) }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -51,8 +51,28 @@ struct DailySummaryView: View {
         }
         .sheet(isPresented: $isPresentingLogSheet) {
             NavigationStack {
-                LogFoodEntryView(initialMealType: selectedMeal)
+                LogFoodEntryView(initialMealType: selectedMeal, initialDate: selectedDate)
             }
+        }
+        .sheet(isPresented: $isPresentingCalendar) {
+            NavigationStack {
+                DatePicker(
+                    "Select a day",
+                    selection: $selectedDate,
+                    in: ...Date.now,
+                    displayedComponents: .date
+                )
+                .datePickerStyle(.graphical)
+                .padding()
+                .navigationTitle("Jump to Date")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") { isPresentingCalendar = false }
+                    }
+                }
+            }
+            .presentationDetents([.medium])
         }
         .task {
             _ = UserProfile.current(in: modelContext)
@@ -61,24 +81,128 @@ struct DailySummaryView: View {
             let current = MealType.current()
             selectedMeal = current
             mealScrollPosition = current
-            todayDateText = Self.formattedToday()
         }
     }
 
-    /// A custom header (rather than the system nav title/subtitle) so "Nutrition" and
-    /// today's date can run bigger than the fixed system title/subtitle sizes allow.
+    /// The title plus the date navigator (chevrons + week strip). Kept as a plain stack
+    /// sibling to the `List` below — not a row inside it — for the same reason
+    /// `FoodHistoryView`'s old date navigator was kept out of its `List`: a `List` whose
+    /// section/row structure changes shape between states can permanently detach buttons
+    /// inside it from their gesture recognizers (bit us once with the meal carousel and the
+    /// original date navigator). A plain stack above the List never has that problem.
     private var header: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: 8) {
             Text("Nutrition")
                 .font(.largeTitle)
                 .fontWeight(.bold)
-            Text(todayDateText)
-                .font(.title3)
-                .foregroundStyle(.secondary)
+                .padding(.horizontal)
+
+            dateChevronRow
+            weekStrip
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal)
         .padding(.top, 8)
+    }
+
+    /// "‹ [Today / weekday, date] ›" — tapping the date opens a calendar picker to jump
+    /// straight to any day; the chevrons step one day at a time. Can't navigate past today.
+    private var dateChevronRow: some View {
+        HStack {
+            Button {
+                changeDay(by: -1)
+            } label: {
+                Image(systemName: "chevron.left")
+            }
+
+            Spacer()
+
+            Button {
+                isPresentingCalendar = true
+            } label: {
+                VStack(spacing: 2) {
+                    Text(isToday ? "Today" : selectedDate.formatted(.dateTime.weekday(.wide)))
+                        .fontWeight(.semibold)
+                    Text(selectedDate.formatted(date: .abbreviated, time: .omitted))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .buttonStyle(.plain)
+
+            Spacer()
+
+            Button {
+                changeDay(by: 1)
+            } label: {
+                Image(systemName: "chevron.right")
+            }
+            .disabled(isToday)
+        }
+        .padding(.horizontal)
+    }
+
+    /// A row of the trailing 7 days (ending today) for one-tap jumps to a nearby day, with a
+    /// small dot on any day that has at least one logged entry. Always the same 7 fixed slots
+    /// regardless of `selectedDate` — only each circle's selected/dot state changes — so this
+    /// never changes shape the way a List row/section can.
+    private var weekStrip: some View {
+        HStack {
+            ForEach(visibleWeekDays, id: \.self) { day in
+                weekDayCircle(day)
+            }
+        }
+        .padding(.horizontal)
+    }
+
+    private var visibleWeekDays: [Date] {
+        let today = Calendar.current.startOfDay(for: .now)
+        return (0..<7).reversed().compactMap {
+            Calendar.current.date(byAdding: .day, value: -$0, to: today)
+        }
+    }
+
+    private var loggedDaysInVisibleWeek: Set<Date> {
+        let calendar = Calendar.current
+        let visible = Set(visibleWeekDays.map { calendar.startOfDay(for: $0) })
+        var result: Set<Date> = []
+        for entry in allEntries {
+            let day = calendar.startOfDay(for: entry.date)
+            if visible.contains(day) {
+                result.insert(day)
+            }
+        }
+        return result
+    }
+
+    private func weekDayCircle(_ day: Date) -> some View {
+        let calendar = Calendar.current
+        let isSelected = calendar.isDate(day, inSameDayAs: selectedDate)
+        let hasEntries = loggedDaysInVisibleWeek.contains(calendar.startOfDay(for: day))
+
+        return Button {
+            selectedDate = calendar.startOfDay(for: day)
+        } label: {
+            VStack(spacing: 4) {
+                Text(day.formatted(.dateTime.weekday(.narrow)))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                Text(day.formatted(.dateTime.day()))
+                    .font(.subheadline)
+                    .fontWeight(isSelected ? .bold : .regular)
+                    .frame(width: 32, height: 32)
+                    .background(isSelected ? Color.accentColor.opacity(0.15) : .clear, in: Circle())
+                Circle()
+                    .fill(hasEntries ? Color.accentColor : .clear)
+                    .frame(width: 4, height: 4)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func changeDay(by delta: Int) {
+        guard let newDate = Calendar.current.date(byAdding: .day, value: delta, to: selectedDate) else { return }
+        let today = Calendar.current.startOfDay(for: .now)
+        selectedDate = min(newDate, today)
     }
 
     /// A floating card in the bottom-right corner (rather than a toolbar item) for logging
@@ -99,17 +223,13 @@ struct DailySummaryView: View {
         .padding(.bottom, 20)
     }
 
-    private static func formattedToday() -> String {
-        Date.now.formatted(date: .long, time: .omitted)
-    }
-
     /// The macro breakdown list and the rest of the screen — kept as a plain `List` (its
     /// own card styling) separate from `calorieHeader`, which sits directly on the screen
     /// background with no card around it.
     private func macroList(profile: UserProfile?) -> some View {
         List {
             if let profile {
-                let totals = viewModel.dailyTotals(for: todaysEntries)
+                let totals = viewModel.dailyTotals(for: entriesForSelectedDate)
                 let remaining = viewModel.remaining(totals: totals, profile: profile)
 
                 Section {
@@ -158,12 +278,6 @@ struct DailySummaryView: View {
                     }
                 }
             }
-
-            Section {
-                NavigationLink("Food History") {
-                    FoodHistoryView()
-                }
-            }
         }
         .scrollIndicators(.hidden)
     }
@@ -194,8 +308,13 @@ struct DailySummaryView: View {
             ScrollView(.horizontal) {
                 LazyHStack(spacing: 0) {
                     ForEach(Self.loggableMealTypes) { meal in
-                        mealCard(meal)
-                            .containerRelativeFrame(.horizontal)
+                        NavigationLink {
+                            FoodHistoryView(date: selectedDate)
+                        } label: {
+                            mealCard(meal)
+                        }
+                        .buttonStyle(.plain)
+                        .containerRelativeFrame(.horizontal)
                     }
                 }
                 .scrollTargetLayout()
@@ -230,7 +349,7 @@ struct DailySummaryView: View {
     /// the time — a compact two-line row rather than a per-entry list, so it stays a fixed,
     /// small size regardless of how much has been logged.
     private func mealCard(_ meal: MealType) -> some View {
-        let entries = todaysEntries.filter { $0.mealType == meal }
+        let entries = entriesForSelectedDate.filter { $0.mealType == meal }
         return VStack(alignment: .leading, spacing: 2) {
             HStack(alignment: .firstTextBaseline) {
                 HStack(spacing: 6) {
@@ -259,7 +378,9 @@ struct DailySummaryView: View {
             }
         }
         .padding(.horizontal, Self.rowInset)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .frame(height: Self.mealCardHeight)
+        .contentShape(Rectangle())
     }
 
     /// "Nothing logged today" when empty, the food's name for a single entry, or the first
@@ -287,7 +408,7 @@ struct DailySummaryView: View {
     /// The calorie gauge, standalone on the screen background (no card) so it isn't
     /// squeezed into the same box as the macro list below it.
     private func calorieHeader(profile: UserProfile) -> some View {
-        let totals = viewModel.dailyTotals(for: todaysEntries)
+        let totals = viewModel.dailyTotals(for: entriesForSelectedDate)
         return calorieHalfRing(totals: totals, profile: profile)
             .frame(maxWidth: .infinity)
     }

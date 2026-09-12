@@ -13,13 +13,14 @@ struct LogFoodEntryView: View {
     @State private var selectedFoodItem: FoodItem?
     @State private var servingSizeText = ""
     @State private var mealType: MealType
-    @State private var date: Date = .now
+    @State private var date: Date
     @State private var isPresentingPicker = false
 
     private let viewModel = NutritionViewModel()
 
-    init(initialMealType: MealType = .breakfast) {
+    init(initialMealType: MealType = .breakfast, initialDate: Date = .now) {
         _mealType = State(initialValue: initialMealType)
+        _date = State(initialValue: initialDate)
     }
 
     private var servingSizeG: Double? {

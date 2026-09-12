@@ -7,15 +7,15 @@ import SwiftUI
 import SwiftData
 import WidgetKit
 
-/// A MyFitnessPal-style diary: one day at a time, navigated with prev/next-day arrows or a
-/// calendar picker, rather than an ever-growing flat list of every day ever logged.
+/// A single day's full diary — every meal, every entry. The date itself is chosen by the
+/// caller (DailySummaryView owns the date navigator); this view just renders whichever day
+/// it's handed.
 struct FoodHistoryView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \FoodEntry.date, order: .reverse) private var allEntries: [FoodEntry]
     @Query private var profiles: [UserProfile]
 
-    @State private var selectedDate = Calendar.current.startOfDay(for: .now)
-    @State private var isPresentingCalendar = false
+    let date: Date
 
     private let viewModel = NutritionViewModel()
     private static let mealOrder: [MealType] = [.breakfast, .lunch, .dinner, .snack]
@@ -23,64 +23,42 @@ struct FoodHistoryView: View {
     private var profile: UserProfile? { profiles.first }
 
     private var isToday: Bool {
-        Calendar.current.isDateInToday(selectedDate)
+        Calendar.current.isDateInToday(date)
     }
 
-    private var entriesForSelectedDate: [FoodEntry] {
-        allEntries.filter { Calendar.current.isDate($0.date, inSameDayAs: selectedDate) }
+    private var navigationTitleText: String {
+        isToday ? "Today" : date.formatted(date: .abbreviated, time: .omitted)
+    }
+
+    private var entriesForDate: [FoodEntry] {
+        allEntries.filter { Calendar.current.isDate($0.date, inSameDayAs: date) }
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            dateNavigator
-
-            historyList
-        }
-        .navigationTitle("Food History")
-        .navigationBarTitleDisplayMode(.inline)
-        .sheet(isPresented: $isPresentingCalendar) {
-            NavigationStack {
-                DatePicker(
-                    "Select a day",
-                    selection: $selectedDate,
-                    in: ...Date.now,
-                    displayedComponents: .date
-                )
-                .datePickerStyle(.graphical)
-                .padding()
-                .navigationTitle("Jump to Date")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Done") { isPresentingCalendar = false }
-                    }
-                }
-            }
-            .presentationDetents([.medium])
-        }
+        historyList
+            .navigationTitle(navigationTitleText)
+            .navigationBarTitleDisplayMode(.inline)
     }
 
-    /// Pulled out of the `List` below on purpose — its row structure changes shape
-    /// dramatically between a logged day (Totals + several meal sections) and an empty one
-    /// (Totals + a single fallback message), and that swing confused SwiftUI's List diffing
-    /// enough to permanently detach this row's buttons from their gesture recognizers after
-    /// the first date change (same class of bug as the meal carousel earlier). Keeping the
-    /// navigator as a plain, stable view above the List sidesteps that entirely.
     private var historyList: some View {
         List {
             if let profile {
-                let totals = viewModel.dailyTotals(for: entriesForSelectedDate)
+                let totals = viewModel.dailyTotals(for: entriesForDate)
                 Section("Totals") {
                     dailyTotalsSummary(totals: totals, profile: profile)
                 }
             }
 
             ForEach(Self.mealOrder) { meal in
-                let mealEntries = entriesForSelectedDate.filter { $0.mealType == meal }
+                let mealEntries = entriesForDate.filter { $0.mealType == meal }
                 if !mealEntries.isEmpty {
                     Section(meal.displayName) {
                         ForEach(mealEntries) { entry in
-                            entryRow(entry)
+                            NavigationLink {
+                                FoodEntryDetailView(entry: entry)
+                            } label: {
+                                entryRow(entry)
+                            }
                         }
                         .onDelete { offsets in
                             deleteEntries(mealEntries, at: offsets)
@@ -89,56 +67,13 @@ struct FoodHistoryView: View {
                 }
             }
 
-            if entriesForSelectedDate.isEmpty {
+            if entriesForDate.isEmpty {
                 Section {
                     Text("Nothing logged on this day.")
                         .foregroundStyle(.secondary)
                 }
             }
         }
-    }
-
-    /// "‹ [Today / weekday, date] ›" — tapping the date opens a calendar picker to jump
-    /// straight to any day; the chevrons step one day at a time. Can't navigate past today.
-    private var dateNavigator: some View {
-        HStack {
-            Button {
-                changeDay(by: -1)
-            } label: {
-                Image(systemName: "chevron.left")
-            }
-
-            Spacer()
-
-            Button {
-                isPresentingCalendar = true
-            } label: {
-                VStack(spacing: 2) {
-                    Text(isToday ? "Today" : selectedDate.formatted(.dateTime.weekday(.wide)))
-                        .fontWeight(.semibold)
-                    Text(selectedDate.formatted(date: .abbreviated, time: .omitted))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .buttonStyle(.plain)
-
-            Spacer()
-
-            Button {
-                changeDay(by: 1)
-            } label: {
-                Image(systemName: "chevron.right")
-            }
-            .disabled(isToday)
-        }
-        .padding()
-    }
-
-    private func changeDay(by delta: Int) {
-        guard let newDate = Calendar.current.date(byAdding: .day, value: delta, to: selectedDate) else { return }
-        let today = Calendar.current.startOfDay(for: .now)
-        selectedDate = min(newDate, today)
     }
 
     private func dailyTotalsSummary(totals: MacroTotals, profile: UserProfile) -> some View {
@@ -192,7 +127,7 @@ struct FoodHistoryView: View {
 
 #Preview {
     NavigationStack {
-        FoodHistoryView()
+        FoodHistoryView(date: .now)
     }
     .modelContainer(for: [FoodEntry.self, UserProfile.self], inMemory: true)
 }
