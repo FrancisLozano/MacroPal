@@ -153,6 +153,13 @@ struct DailySummaryView: View {
     /// SwiftUI treat a week change as a wholesale swap it can transition, instead of diffing
     /// day-by-day. Always 7 fixed slots for a given week — only which week, and each circle's
     /// selected/dot state, changes — so this never changes shape the way a List row/section can.
+    ///
+    /// A horizontal swipe (`weekSwipeGesture`) jumps a whole week too, same as one full pass of
+    /// the day chevrons would eventually reach — swipe left to advance, right to go back. It's
+    /// attached with `.simultaneousGesture` rather than `.gesture` so it never steals a tap from
+    /// the day circles underneath: a plain tap has no meaningful translation and only the
+    /// circle's own `Button` action fires, while a drag past the minimum distance also fires
+    /// this one independently.
     private var weekStrip: some View {
         HStack {
             ForEach(visibleWeekDays, id: \.self) { day in
@@ -166,6 +173,17 @@ struct DailySummaryView: View {
             removal: .move(edge: weekSlideForward ? .leading : .trailing).combined(with: .opacity)
         ))
         .animation(.easeInOut, value: currentWeekStart)
+        .simultaneousGesture(weekSwipeGesture)
+    }
+
+    private var weekSwipeGesture: some Gesture {
+        DragGesture(minimumDistance: 24)
+            .onEnded { value in
+                let horizontal = value.translation.width
+                let vertical = value.translation.height
+                guard abs(horizontal) > abs(vertical), abs(horizontal) > 40 else { return }
+                changeDay(by: horizontal < 0 ? 7 : -7)
+            }
     }
 
     private var currentWeekStart: Date {
