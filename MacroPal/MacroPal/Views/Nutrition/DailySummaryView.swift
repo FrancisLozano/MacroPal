@@ -19,6 +19,7 @@ struct DailySummaryView: View {
     @State private var isPresentingMealInfo = false
     @State private var selectedDate = Calendar.current.startOfDay(for: .now)
     @State private var isPresentingCalendar = false
+    @State private var weekSlideForward = true
 
     private let viewModel = NutritionViewModel()
 
@@ -80,6 +81,9 @@ struct DailySummaryView: View {
             let current = MealType.current()
             selectedMeal = current
             mealScrollPosition = current
+        }
+        .onChange(of: selectedDate) { oldValue, newValue in
+            weekSlideForward = newValue >= oldValue
         }
     }
 
@@ -143,8 +147,11 @@ struct DailySummaryView: View {
     /// jumps to a nearby day (past or future) plus a small dot on any day that has at least
     /// one logged entry. Stepping day-by-day with the chevrons stays within this same block
     /// and doesn't move it — the strip only jumps, as a whole, once `selectedDate` crosses into
-    /// a different week, so navigating feels like moving by week rather than sliding by one day
-    /// at a time. Always 7 fixed slots for a given week — only which week, and each circle's
+    /// a different week, sliding the whole row off in the direction of travel and the new week
+    /// in from the opposite edge (`weekSlideForward`, set from the sign of each `selectedDate`
+    /// change) rather than each day quietly fading. `.id(currentWeekStart)` is what makes
+    /// SwiftUI treat a week change as a wholesale swap it can transition, instead of diffing
+    /// day-by-day. Always 7 fixed slots for a given week — only which week, and each circle's
     /// selected/dot state, changes — so this never changes shape the way a List row/section can.
     private var weekStrip: some View {
         HStack {
@@ -153,16 +160,24 @@ struct DailySummaryView: View {
             }
         }
         .padding(.horizontal)
-        .animation(.default, value: visibleWeekDays)
+        .id(currentWeekStart)
+        .transition(.asymmetric(
+            insertion: .move(edge: weekSlideForward ? .trailing : .leading).combined(with: .opacity),
+            removal: .move(edge: weekSlideForward ? .leading : .trailing).combined(with: .opacity)
+        ))
+        .animation(.easeInOut, value: currentWeekStart)
+    }
+
+    private var currentWeekStart: Date {
+        let calendar = Calendar.current
+        return calendar.dateInterval(of: .weekOfYear, for: selectedDate)?.start
+            ?? calendar.startOfDay(for: selectedDate)
     }
 
     private var visibleWeekDays: [Date] {
         let calendar = Calendar.current
-        guard let week = calendar.dateInterval(of: .weekOfYear, for: selectedDate) else {
-            return [calendar.startOfDay(for: selectedDate)]
-        }
         return (0..<7).compactMap {
-            calendar.date(byAdding: .day, value: $0, to: week.start)
+            calendar.date(byAdding: .day, value: $0, to: currentWeekStart)
         }
     }
 
