@@ -141,10 +141,10 @@ struct FoodHistoryView: View {
             if let profile {
                 let totals = viewModel.dailyTotals(for: entriesForDate)
                 Section {
-                    macroTotalsCard(totals: totals, profile: profile)
+                    caloriesCard(totals: totals, profile: profile)
                 } header: {
                     HStack {
-                        Text("Macros")
+                        Text("Calories and Macronutrients")
                         Spacer()
                         Button {
                             withAnimation(.easeInOut(duration: 0.2)) {
@@ -153,9 +153,14 @@ struct FoodHistoryView: View {
                         } label: {
                             Image(systemName: "arrow.triangle.2.circlepath")
                         }
-                        .accessibilityLabel(showPercent ? "Show grams" : "Show percent")
+                        .accessibilityLabel(showPercent ? "Show amounts" : "Show percent")
                         .textCase(nil)
                     }
+                }
+                .listSectionSpacing(.custom(4))
+
+                Section {
+                    macroTotalsCard(totals: totals, profile: profile)
                 }
             }
 
@@ -186,6 +191,53 @@ struct FoodHistoryView: View {
         }
     }
 
+    // One full-width bar spanning the same total width as the three macro bars combined —
+    // color matches the main Nutrition screen's calorie ring (`Color.blue`, its solo-macro
+    // color) so it reads as the same quantity across both screens.
+    private func caloriesCard(totals: MacroTotals, profile: UserProfile) -> some View {
+        let target = Double(profile.calorieTarget)
+        let eaten = totals.calories
+        let remaining = target - eaten
+        // The bar's fill can't visually exceed its own width, but the percent label should
+        // still say 195% rather than capping at 100% — they're computed separately.
+        let barFraction = target > 0 ? min(1, max(0, eaten / target)) : 0
+        let percent = target > 0 ? max(0, eaten / target) * 100 : 0
+
+        return VStack(spacing: 6) {
+            HStack {
+                ZStack(alignment: .leading) {
+                    if showPercent {
+                        Text("\(Int(percent.rounded()))%")
+                            .fontWeight(.regular)
+                            .transition(.opacity)
+                    } else {
+                        // Only the amount actually eaten is bold — the "/2,000 kcal" target
+                        // is supporting context, not the headline number.
+                        (Text("\(Int(eaten))").fontWeight(.bold)
+                            + Text("/\(Int(target)) kcal").fontWeight(.regular))
+                            .transition(.opacity)
+                    }
+                }
+                .font(.caption)
+                Spacer()
+                Text(remaining >= 0 ? "\(Int(remaining)) left" : "\(Int(-remaining)) over")
+                    .font(.caption2)
+                    .foregroundStyle(remaining >= 0 ? Color.secondary : Color.red)
+            }
+            Capsule()
+                .fill(Color.secondary.opacity(0.15))
+                .frame(height: 6)
+                .overlay(alignment: .leading) {
+                    GeometryReader { geometry in
+                        Capsule()
+                            .fill(Color.blue)
+                            .frame(width: geometry.size.width * barFraction)
+                    }
+                }
+        }
+        .padding(.vertical, 4)
+    }
+
     // Calories are intentionally left out here — still figuring out how that should be
     // presented, so for now this card is just the three macros. The grams/percent toggle
     // lives in the section header above, not in here — see the "Macros" header.
@@ -199,7 +251,10 @@ struct FoodHistoryView: View {
     }
 
     private func macroBar(name: String, color: Color, eaten: Double, target: Double) -> some View {
-        let fraction = target > 0 ? min(1, max(0, eaten / target)) : 0
+        // Same split as the calories bar: the fill can't exceed its own width, but the
+        // percent label should still say e.g. 195% rather than capping at 100%.
+        let barFraction = target > 0 ? min(1, max(0, eaten / target)) : 0
+        let percent = target > 0 ? max(0, eaten / target) * 100 : 0
         return VStack(spacing: 6) {
             HStack(spacing: 4) {
                 Circle()
@@ -217,12 +272,12 @@ struct FoodHistoryView: View {
                     GeometryReader { geometry in
                         Capsule()
                             .fill(color)
-                            .frame(width: geometry.size.width * fraction)
+                            .frame(width: geometry.size.width * barFraction)
                     }
                 }
             ZStack {
                 if showPercent {
-                    Text("\(Int((fraction * 100).rounded()))%")
+                    Text("\(Int(percent.rounded()))%")
                         .transition(.opacity)
                 } else {
                     Text("\(Int(eaten))/\(Int(target))g")
