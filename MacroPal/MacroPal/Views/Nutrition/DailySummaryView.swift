@@ -276,6 +276,7 @@ struct DailySummaryView: View {
                 }
                 .listRowInsets(EdgeInsets())
                 .listRowBackground(Color.clear)
+                .listSectionSpacing(.compact)
 
                 let totals = viewModel.dailyTotals(for: entriesForSelectedDate)
                 let remaining = viewModel.remaining(totals: totals, profile: profile)
