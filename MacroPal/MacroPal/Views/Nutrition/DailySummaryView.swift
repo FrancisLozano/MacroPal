@@ -226,6 +226,19 @@ struct DailySummaryView: View {
                 Circle()
                     .fill(hasEntries ? Color.accentColor : .clear)
                     .frame(width: 4, height: 4)
+                // A couple of fading tick marks trailing below the dot — purely decorative,
+                // so a logged day doesn't just end abruptly right above the frozen header's
+                // bottom edge with nothing to visually carry it down. Reserved (in `.clear`)
+                // on days with no entries too, so every column stays the same height and the
+                // strip's alignment doesn't shift based on which days have a dot.
+                VStack(spacing: 2) {
+                    Capsule()
+                        .fill(hasEntries ? Color.accentColor.opacity(0.5) : .clear)
+                        .frame(width: 2, height: 3)
+                    Capsule()
+                        .fill(hasEntries ? Color.accentColor.opacity(0.25) : .clear)
+                        .frame(width: 2, height: 2)
+                }
             }
             .frame(maxWidth: .infinity)
         }
