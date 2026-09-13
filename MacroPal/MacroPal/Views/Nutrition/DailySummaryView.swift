@@ -265,7 +265,7 @@ struct DailySummaryView: View {
             if let profile {
                 Section {
                     calorieHeader(profile: profile)
-                        .padding(.top, 20)
+                        .padding(.top, 8)
                 }
                 .listRowInsets(EdgeInsets())
                 .listRowBackground(Color.clear)
@@ -487,7 +487,7 @@ struct DailySummaryView: View {
         return ZStack {
             Circle()
                 .trim(from: 0, to: 0.5)
-                .stroke(Color.secondary.opacity(0.15), lineWidth: Self.ringLineWidth)
+                .stroke(Color.secondary.opacity(0.15), style: StrokeStyle(lineWidth: Self.ringLineWidth, lineCap: .round))
                 .rotationEffect(.degrees(180))
             halfRingSegments(segments)
         }
