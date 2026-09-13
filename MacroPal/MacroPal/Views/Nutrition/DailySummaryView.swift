@@ -37,12 +37,6 @@ struct DailySummaryView: View {
         VStack(spacing: 0) {
             header
 
-            if let profile {
-                calorieHeader(profile: profile)
-                    .padding(.top, 12)
-                    .padding(.bottom, 4)
-            }
-
             macroList(profile: profile)
         }
         .navigationTitle("")
@@ -261,12 +255,22 @@ struct DailySummaryView: View {
         .padding(.bottom, 20)
     }
 
-    /// The macro breakdown list and the rest of the screen — kept as a plain `List` (its
-    /// own card styling) separate from `calorieHeader`, which sits directly on the screen
-    /// background with no card around it.
+    /// The calorie ring plus the macro breakdown and the rest of the screen, all one plain
+    /// `List` now, so the ring scrolls away with everything else instead of sitting pinned
+    /// above it. The ring's own section has no header and is stripped of the List's row
+    /// insets/background so it still reads as sitting on the plain screen background, not
+    /// boxed into a card, matching how it looked before it moved in here.
     private func macroList(profile: UserProfile?) -> some View {
         List {
             if let profile {
+                Section {
+                    calorieHeader(profile: profile)
+                        .padding(.top, 12)
+                        .padding(.bottom, 4)
+                }
+                .listRowInsets(EdgeInsets())
+                .listRowBackground(Color.clear)
+
                 let totals = viewModel.dailyTotals(for: entriesForSelectedDate)
                 let remaining = viewModel.remaining(totals: totals, profile: profile)
 
@@ -443,8 +447,9 @@ struct DailySummaryView: View {
     private static let ringDiameter: CGFloat = 284
     private static let soloColor = Color.blue
 
-    /// The calorie gauge, standalone on the screen background (no card) so it isn't
-    /// squeezed into the same box as the macro list below it.
+    /// The calorie gauge. Lives in its own header-less `List` section (see `macroList`) with
+    /// row insets/background stripped out, so it still reads as sitting plainly on the screen
+    /// rather than boxed into a card like the sections below it — it just scrolls now too.
     private func calorieHeader(profile: UserProfile) -> some View {
         let totals = viewModel.dailyTotals(for: entriesForSelectedDate)
         return calorieHalfRing(totals: totals, profile: profile)
