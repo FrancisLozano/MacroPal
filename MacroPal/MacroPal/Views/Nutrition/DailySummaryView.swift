@@ -148,6 +148,12 @@ struct DailySummaryView: View {
     /// day-by-day. Always 7 fixed slots for a given week — only which week, and each circle's
     /// selected/dot state, changes — so this never changes shape the way a List row/section can.
     ///
+    /// Also used as the List's top content margin (see `macroList`) so the gap between the
+    /// dots and the calorie ring below them matches the gap above the dots (between the day
+    /// number and its dot) exactly, instead of two independently-chosen numbers that happen to
+    /// look close.
+    private static let weekStripDotSpacing: CGFloat = 4
+
     /// A horizontal swipe (`weekSwipeGesture`) jumps a whole week too, same as one full pass of
     /// the day chevrons would eventually reach — swipe left to advance, right to go back. It's
     /// attached with `.simultaneousGesture` rather than `.gesture` so it never steals a tap from
@@ -214,7 +220,7 @@ struct DailySummaryView: View {
         return Button {
             selectedDate = calendar.startOfDay(for: day)
         } label: {
-            VStack(spacing: 4) {
+            VStack(spacing: Self.weekStripDotSpacing) {
                 Text(day.formatted(.dateTime.weekday(.narrow)))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
@@ -265,7 +271,6 @@ struct DailySummaryView: View {
             if let profile {
                 Section {
                     calorieHeader(profile: profile)
-                        .padding(.top, 0)
                         .padding(.bottom, 4)
                 }
                 .listRowInsets(EdgeInsets())
@@ -321,6 +326,7 @@ struct DailySummaryView: View {
                 }
             }
         }
+        .contentMargins(.top, Self.weekStripDotSpacing, for: .scrollContent)
         .scrollIndicators(.hidden)
     }
 
