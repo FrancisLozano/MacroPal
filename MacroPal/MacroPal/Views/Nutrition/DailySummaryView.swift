@@ -229,6 +229,11 @@ struct DailySummaryView: View {
                 Circle()
                     .fill(hasEntries ? Color.accentColor : .clear)
                     .frame(width: 6, height: 6)
+                // Reserves the same vertical room the old second tick used to take up, without
+                // actually drawing anything — keeps the strip's overall height (and its gap
+                // below the frozen header) the same as when that tick was visible.
+                Color.clear
+                    .frame(width: 2, height: 3)
             }
             .frame(maxWidth: .infinity)
         }
