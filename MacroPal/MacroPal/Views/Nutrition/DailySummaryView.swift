@@ -265,7 +265,6 @@ struct DailySummaryView: View {
             if let profile {
                 Section {
                     calorieHeader(profile: profile)
-                        .padding(.top, 8)
                 }
                 .listRowInsets(EdgeInsets())
                 .listRowBackground(Color.clear)
@@ -320,6 +319,7 @@ struct DailySummaryView: View {
                 }
             }
         }
+        .contentMargins(.top, Self.ringTopSpacing, for: .scrollContent)
         .scrollIndicators(.hidden)
     }
 
@@ -445,6 +445,12 @@ struct DailySummaryView: View {
     private static let ringLineWidth: CGFloat = 20
     private static let ringDiameter: CGFloat = 284
     private static let soloColor = Color.blue
+    /// Gap between the pinned date strip above and the calorie ring below it. This is the
+    /// single knob for that spacing — tweak this number directly to make it tighter or looser.
+    /// Applied as the List's own top content margin (see `macroList`) rather than padding on
+    /// the ring itself, so it's the *only* thing controlling that gap — no competing default
+    /// spacing from the List to fight with.
+    private static let ringTopSpacing: CGFloat = 8
 
     /// The calorie gauge. Lives in its own header-less `List` section (see `macroList`) with
     /// row insets/background stripped out, so it still reads as sitting plainly on the screen
