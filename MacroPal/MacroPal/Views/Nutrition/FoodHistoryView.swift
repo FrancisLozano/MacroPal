@@ -18,10 +18,12 @@ struct FoodHistoryView: View {
 
     @State private var date: Date
     @State private var isPresentingCalendar = false
+    @State private var isPresentingLogSheet = false
+    @State private var mealTypeToLog: MealType = .breakfast
     @AppStorage("foodHistoryShowPercent") private var showPercent = false
 
     private let viewModel = NutritionViewModel()
-    private static let mealOrder: [MealType] = [.breakfast, .lunch, .dinner, .snack]
+    private static let mealOrder: [MealType] = [.breakfast, .lunch, .dinner]
 
     init(date: Date) {
         _date = State(initialValue: date)
@@ -76,6 +78,11 @@ struct FoodHistoryView: View {
                 }
             }
             .presentationDetents([.medium])
+        }
+        .sheet(isPresented: $isPresentingLogSheet) {
+            NavigationStack {
+                LogFoodEntryView(initialMealType: mealTypeToLog, initialDate: date)
+            }
         }
     }
 
@@ -166,8 +173,12 @@ struct FoodHistoryView: View {
 
             ForEach(Self.mealOrder) { meal in
                 let mealEntries = entriesForDate.filter { $0.mealType == meal }
-                if !mealEntries.isEmpty {
-                    Section(meal.displayName) {
+                Section {
+                    if mealEntries.isEmpty {
+                        Text("No items logged")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    } else {
                         ForEach(mealEntries) { entry in
                             NavigationLink {
                                 FoodEntryDetailView(entry: entry)
@@ -179,13 +190,19 @@ struct FoodHistoryView: View {
                             deleteEntries(mealEntries, at: offsets)
                         }
                     }
-                }
-            }
-
-            if entriesForDate.isEmpty {
-                Section {
-                    Text("Nothing logged on this day.")
-                        .foregroundStyle(.secondary)
+                } header: {
+                    HStack {
+                        Text(meal.displayName)
+                        Spacer()
+                        Button {
+                            mealTypeToLog = meal
+                            isPresentingLogSheet = true
+                        } label: {
+                            Image(systemName: "plus.circle")
+                        }
+                        .accessibilityLabel("Add food to \(meal.displayName)")
+                        .textCase(nil)
+                    }
                 }
             }
         }
