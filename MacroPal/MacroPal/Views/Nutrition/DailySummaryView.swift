@@ -455,22 +455,29 @@ struct DailySummaryView: View {
     }
 
     /// A half-circle calorie gauge whose filled arc is itself split into colored segments —
-    /// one per macro, sized by that macro's share of calories eaten today — rather than a
-    /// plain single-color fill. In protein-only mode, orange no longer means anything
-    /// without the other macros to contrast against, so the whole eaten-calories fraction
-    /// fills in one solid accent color instead of a protein slice plus a leftover one.
+    /// one per macro, sized by that macro's share of grams eaten today, not its share of
+    /// calories — rather than a plain single-color fill. Weighting by calories made fat look
+    /// as prominent as protein or carbs despite being logged in much smaller amounts, since fat
+    /// has more than double the calories per gram (9 vs 4); weighting by grams instead makes the
+    /// segment sizes track the amounts actually shown in the Macros list below. In protein-only
+    /// mode, orange no longer means anything without the other macros to contrast against, so
+    /// the whole eaten-calories fraction fills in one solid accent color instead of a protein
+    /// slice plus a leftover one.
     private func calorieHalfRing(totals: MacroTotals, profile: UserProfile) -> some View {
         let target = Double(profile.calorieTarget)
         let fraction = target > 0 ? min(1, max(0, totals.calories / target)) : 0
         let remainingCalories = target - totals.calories
-        let breakdown = viewModel.macroCalorieBreakdown(for: totals)
+        let totalGrams = totals.proteinG + totals.carbG + totals.fatG
 
         let segments: [(color: Color, length: Double)]
         if showFullMacros {
+            let proteinShare = totalGrams > 0 ? totals.proteinG / totalGrams : 0
+            let carbShare = totalGrams > 0 ? totals.carbG / totalGrams : 0
+            let fatShare = totalGrams > 0 ? totals.fatG / totalGrams : 0
             segments = [
-                (Self.proteinColor, breakdown.proteinPercent * fraction),
-                (Self.carbColor, breakdown.carbPercent * fraction),
-                (Self.fatColor, breakdown.fatPercent * fraction),
+                (Self.proteinColor, proteinShare * fraction),
+                (Self.carbColor, carbShare * fraction),
+                (Self.fatColor, fatShare * fraction),
             ]
         } else {
             segments = [(Self.soloColor, fraction)]
