@@ -223,17 +223,12 @@ struct DailySummaryView: View {
                     .fontWeight(isSelected ? .bold : .regular)
                     .frame(width: 32, height: 32)
                     .background(isSelected ? Color.accentColor.opacity(0.15) : .clear, in: Circle())
+                // Sized up from the original 4x4 — big enough on its own to fill the space
+                // below it, rather than needing a second small tick mark underneath that ended
+                // up reading as a second dot.
                 Circle()
                     .fill(hasEntries ? Color.accentColor : .clear)
-                    .frame(width: 4, height: 4)
-                // One small tick below the dot — purely decorative, just enough so a logged
-                // day doesn't end abruptly right above the frozen header's bottom edge with
-                // nothing to visually carry it down. Reserved (in `.clear`) on days with no
-                // entries too, so every column stays the same height and the strip's alignment
-                // doesn't shift based on which days have a dot.
-                Capsule()
-                    .fill(hasEntries ? Color.accentColor.opacity(0.5) : .clear)
-                    .frame(width: 2, height: 3)
+                    .frame(width: 6, height: 6)
             }
             .frame(maxWidth: .infinity)
         }
