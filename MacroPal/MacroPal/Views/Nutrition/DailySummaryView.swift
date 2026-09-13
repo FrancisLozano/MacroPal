@@ -139,10 +139,13 @@ struct DailySummaryView: View {
         .padding(.horizontal)
     }
 
-    /// A row of 7 days centered on today — 3 back, today, 3 ahead — for one-tap jumps to a
-    /// nearby day (past or future), with a small dot on any day that has at least one logged
-    /// entry. Always the same 7 fixed slots regardless of `selectedDate` — only each circle's
-    /// selected/dot state changes — so this never changes shape the way a List row/section can.
+    /// The calendar week (locale-defined, e.g. Sun–Sat) containing `selectedDate`, for one-tap
+    /// jumps to a nearby day (past or future) plus a small dot on any day that has at least
+    /// one logged entry. Stepping day-by-day with the chevrons stays within this same block
+    /// and doesn't move it — the strip only jumps, as a whole, once `selectedDate` crosses into
+    /// a different week, so navigating feels like moving by week rather than sliding by one day
+    /// at a time. Always 7 fixed slots for a given week — only which week, and each circle's
+    /// selected/dot state, changes — so this never changes shape the way a List row/section can.
     private var weekStrip: some View {
         HStack {
             ForEach(visibleWeekDays, id: \.self) { day in
@@ -150,12 +153,16 @@ struct DailySummaryView: View {
             }
         }
         .padding(.horizontal)
+        .animation(.default, value: visibleWeekDays)
     }
 
     private var visibleWeekDays: [Date] {
-        let today = Calendar.current.startOfDay(for: .now)
-        return (-3...3).compactMap {
-            Calendar.current.date(byAdding: .day, value: $0, to: today)
+        let calendar = Calendar.current
+        guard let week = calendar.dateInterval(of: .weekOfYear, for: selectedDate) else {
+            return [calendar.startOfDay(for: selectedDate)]
+        }
+        return (0..<7).compactMap {
+            calendar.date(byAdding: .day, value: $0, to: week.start)
         }
     }
 
