@@ -265,7 +265,7 @@ struct DailySummaryView: View {
             if let profile {
                 Section {
                     calorieHeader(profile: profile)
-                        .padding(.top, 12)
+                        .padding(.top, 0)
                         .padding(.bottom, 4)
                 }
                 .listRowInsets(EdgeInsets())
