@@ -482,7 +482,6 @@ struct DailySummaryView: View {
     private func calorieHalfRing(totals: MacroTotals, profile: UserProfile) -> some View {
         let target = Double(profile.calorieTarget)
         let fraction = target > 0 ? min(1, max(0, totals.calories / target)) : 0
-        let remainingCalories = target - totals.calories
         let totalGrams = totals.proteinG + totals.carbG + totals.fatG
 
         let segments: [(color: Color, length: Double)]
@@ -516,16 +515,16 @@ struct DailySummaryView: View {
         .frame(height: Self.ringDiameter / 2 + Self.ringLineWidth, alignment: .top)
         .clipped()
         .overlay(alignment: .bottom) {
-            calorieReadout(remainingCalories: remainingCalories, target: target)
+            calorieReadout(eatenCalories: totals.calories, target: target)
         }
     }
 
     /// Shares the ring's own hollow interior instead of taking extra space below it —
     /// anchored to the half-circle's flat baseline via the `.bottom` overlay alignment.
-    private func calorieReadout(remainingCalories: Double, target: Double) -> some View {
-        let isOver = !showTotalCalories && remainingCalories < 0
-        let value = showTotalCalories ? Int(target.rounded()) : Int(abs(remainingCalories).rounded())
-        let caption = showTotalCalories ? "kcal / day" : (remainingCalories >= 0 ? "kcal left" : "kcal over")
+    private func calorieReadout(eatenCalories: Double, target: Double) -> some View {
+        let isOver = !showTotalCalories && target > 0 && eatenCalories > target
+        let value = showTotalCalories ? Int(target.rounded()) : Int(eatenCalories.rounded())
+        let caption = showTotalCalories ? "kcal / day" : "kcal eaten"
 
         return VStack(spacing: 2) {
             Text("\(value)")
@@ -543,7 +542,7 @@ struct DailySummaryView: View {
                         .font(.caption)
                         .foregroundStyle(Color.secondary)
                 }
-                .accessibilityLabel(showTotalCalories ? "Show calories remaining" : "Show total daily calories")
+                .accessibilityLabel(showTotalCalories ? "Show calories eaten" : "Show total daily calories")
             }
         }
     }
