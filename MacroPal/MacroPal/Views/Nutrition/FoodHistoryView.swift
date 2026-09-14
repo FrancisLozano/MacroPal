@@ -81,7 +81,7 @@ struct FoodHistoryView: View {
         }
         .sheet(isPresented: $isPresentingLogSheet) {
             NavigationStack {
-                LogFoodEntryView(initialMealType: mealTypeToLog, initialDate: date)
+                LogFoodFlowView(initialMealType: mealTypeToLog, initialDate: date)
             }
         }
     }
@@ -181,7 +181,7 @@ struct FoodHistoryView: View {
                     } else {
                         ForEach(mealEntries) { entry in
                             NavigationLink {
-                                FoodEntryDetailView(entry: entry)
+                                EditFoodEntryDestination(entry: entry)
                             } label: {
                                 entryRow(entry)
                             }
@@ -327,6 +327,20 @@ struct FoodHistoryView: View {
         }
         try? modelContext.save()
         WidgetCenter.shared.reloadAllTimelines()
+    }
+}
+
+/// Wraps `LogFoodEntryView` in edit mode for a `NavigationLink` push from the diary list.
+/// `LogFoodEntryView` itself takes `onSaved` rather than owning `@Environment(\.dismiss)` (it
+/// also gets pushed from the "add new food" flow, where dismissing needs to close a sheet
+/// several levels up, not just pop) — here, reached by a plain push, popping via this view's
+/// own `dismiss` is exactly the right behavior after a save.
+private struct EditFoodEntryDestination: View {
+    @Environment(\.dismiss) private var dismiss
+    let entry: FoodEntry
+
+    var body: some View {
+        LogFoodEntryView(entry: entry, onSaved: { dismiss() })
     }
 }
 

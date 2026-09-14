@@ -26,67 +26,100 @@ private enum ScanFlowState: Equatable {
     }
 }
 
-/// Search an existing `FoodItem` catalog, scan a barcode, or create a new one inline.
-/// Calls `onSelect` with the chosen/created item and dismisses itself.
+private enum PickerTab: Hashable {
+    case recents
+    case myFoods
+}
+
+/// Search an existing `FoodItem` catalog, search Open Food Facts by name, scan a barcode,
+/// or create a new one inline. Calls `onSelect` with the chosen/created item and dismisses
+/// itself.
 struct FoodItemPickerView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
     let onSelect: (FoodItem) -> Void
+    /// True (the default) when this picker is itself the whole "screen" — selecting an item
+    /// means the caller is done and this view should close. False when a caller instead
+    /// swaps this picker out for its own next screen on selection (the "search food first"
+    /// entry flow, `LogFoodFlowView`), where calling `dismiss()` here would close the whole
+    /// flow instead of handing off to what comes next.
+    var dismissesAfterSelection: Bool = true
 
     @State private var searchText = ""
+    @State private var selectedTab: PickerTab = .recents
+    @State private var onlineResults: [FoodItem] = []
+    @State private var isSearchingOnline = false
+    @State private var isShowingAllOnlineResults = false
     @State private var isPresentingNewFoodForm = false
     @State private var isPresentingScanner = false
     @State private var scanState: ScanFlowState = .idle
 
+    private static let collapsedOnlineResultCount = 10
+
     private let viewModel = NutritionViewModel()
 
-    private var results: [FoodItem] {
+    private var trimmedQuery: String {
+        searchText.trimmingCharacters(in: .whitespaces)
+    }
+
+    private var isSearching: Bool {
+        !trimmedQuery.isEmpty
+    }
+
+    private var localMatches: [FoodItem] {
         viewModel.searchFoodItems(matching: searchText, in: modelContext)
     }
 
+    private var recentItems: [FoodItem] {
+        viewModel.recentFoodItems(in: modelContext)
+    }
+
+    private var myFoodItems: [FoodItem] {
+        viewModel.searchFoodItems(matching: "", in: modelContext)
+    }
+
+    private var visibleOnlineResults: [FoodItem] {
+        isShowingAllOnlineResults ? onlineResults : Array(onlineResults.prefix(Self.collapsedOnlineResultCount))
+    }
+
     var body: some View {
-        List {
-            ForEach(results) { item in
-                Button {
-                    onSelect(item)
-                    dismiss()
-                } label: {
-                    VStack(alignment: .leading) {
-                        Text(item.name)
-                            .foregroundStyle(Color.primary)
-                        Text("\(Int(item.caloriesPer100g)) kcal / 100g")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+        VStack(spacing: 0) {
+            searchRow
+                .padding(.horizontal)
+                .padding(.top, 8)
+
+            if !isSearching {
+                Picker("", selection: $selectedTab) {
+                    Text("Recents").tag(PickerTab.recents)
+                    Text("My Foods").tag(PickerTab.myFoods)
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal)
+                .padding(.top, 8)
+            }
+            List {
+                if isSearching {
+                    searchingContent
+                } else {
+                    switch selectedTab {
+                    case .recents:
+                        if recentItems.isEmpty {
+                            ContentUnavailableView("No Recent Foods", systemImage: "clock", description: Text("Foods you search for or log will show up here."))
+                        } else {
+                            ForEach(recentItems) { item in foodRow(item) }
+                                .onDelete { offsets in deleteItems(recentItems, at: offsets) }
+                        }
+                    case .myFoods:
+                        ForEach(myFoodItems) { item in foodRow(item) }
+                            .onDelete { offsets in deleteItems(myFoodItems, at: offsets) }
                     }
                 }
             }
         }
-        .searchable(text: $searchText, prompt: "Search foods")
         .navigationTitle("Choose Food")
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    startScan()
-                } label: {
-                    Label("Scan Barcode", systemImage: "barcode.viewfinder")
-                }
-            }
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    isPresentingNewFoodForm = true
-                } label: {
-                    Label("New Food", systemImage: "plus")
-                }
-            }
-        }
-        .sheet(isPresented: $isPresentingNewFoodForm) {
-            NavigationStack {
-                NewFoodItemView { newItem in
-                    onSelect(newItem)
-                    dismiss()
-                }
-            }
+        .task(id: searchText) {
+            await performOnlineSearch()
         }
         .fullScreenCover(isPresented: $isPresentingScanner) {
             NavigationStack {
@@ -114,8 +147,14 @@ struct FoodItemPickerView: View {
         .sheet(item: foundItemBinding) { item in
             NavigationStack {
                 NewFoodItemView(prefill: item) { newItem in
-                    onSelect(newItem)
-                    dismiss()
+                    select(newItem)
+                }
+            }
+        }
+        .sheet(isPresented: $isPresentingNewFoodForm) {
+            NavigationStack {
+                NewFoodItemView(prefillName: trimmedQuery) { newItem in
+                    select(newItem)
                 }
             }
         }
@@ -156,10 +195,160 @@ struct FoodItemPickerView: View {
         isPresentingScanner = true
     }
 
+    private var searchRow: some View {
+        HStack(spacing: 12) {
+            HStack(spacing: 6) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(.secondary)
+                TextField("Search foods", text: $searchText)
+                    .textFieldStyle(.plain)
+                if !searchText.isEmpty {
+                    Button {
+                        searchText = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(10)
+            .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10))
+
+            Button {
+                startScan()
+            } label: {
+                Image(systemName: "barcode.viewfinder")
+                    .font(.title3)
+            }
+            .accessibilityLabel("Scan Barcode")
+        }
+    }
+
+    @ViewBuilder
+    private func foodRow(_ item: FoodItem, highlighting query: String = "") -> some View {
+        Button {
+            select(item)
+        } label: {
+            VStack(alignment: .leading) {
+                highlightedText(item.name, matching: query)
+                    .foregroundStyle(Color.primary)
+                Text(subtitle(for: item))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    /// `item.name` with the first case-insensitive occurrence of `query` bolded — e.g.
+    /// searching "orange" bolds just "Orange" within "Orange Juice". Falls back to plain
+    /// text when there's no query (the Recents/My Foods tabs, where nothing was searched) or
+    /// no match.
+    private func highlightedText(_ name: String, matching query: String) -> Text {
+        guard !query.isEmpty, let range = name.range(of: query, options: .caseInsensitive) else {
+            return Text(name)
+        }
+        return Text(name[name.startIndex..<range.lowerBound])
+            + Text(name[range]).fontWeight(.bold)
+            + Text(name[range.upperBound...])
+    }
+
+    private func subtitle(for item: FoodItem) -> String {
+        let base = "\(Int(item.caloriesPer100g)) kcal / 100g"
+        guard let brand = item.brand, !brand.isEmpty else { return base }
+        return "\(base) / \(brand)"
+    }
+
+    @ViewBuilder
+    private var searchingContent: some View {
+        if !onlineResults.isEmpty || isSearchingOnline {
+            Section("Search Results") {
+                if isSearchingOnline && onlineResults.isEmpty {
+                    HStack {
+                        Spacer()
+                        ProgressView()
+                        Spacer()
+                    }
+                }
+                ForEach(visibleOnlineResults) { item in foodRow(item, highlighting: trimmedQuery) }
+                if !isShowingAllOnlineResults && onlineResults.count > Self.collapsedOnlineResultCount {
+                    Button("See More") {
+                        isShowingAllOnlineResults = true
+                    }
+                }
+            }
+        }
+        // Always shown while searching — not just when there's a local match — so a food
+        // that isn't in the catalog yet still has somewhere to be added from. The "Add"
+        // button stays even when there are matches too — someone might genuinely want a
+        // second, differently-tracked item with the same name (e.g. their own recipe vs. a
+        // store-bought version).
+        Section("My Foods") {
+            ForEach(localMatches) { item in foodRow(item, highlighting: trimmedQuery) }
+            Button {
+                isPresentingNewFoodForm = true
+            } label: {
+                Label("Add \"\(trimmedQuery)\"", systemImage: "plus")
+            }
+        }
+    }
+
+    /// Marks `item` as just-used (feeds the Recents tab) and returns it to the caller.
+    /// Inserts it into the store first if it isn't already tracked — true for a freshly
+    /// mapped Open Food Facts search result, false for anything already in the catalog. A
+    /// transient search result whose barcode already exists locally reuses that catalog
+    /// entry instead of inserting a duplicate.
+    private func select(_ item: FoodItem) {
+        var item = item
+        if item.modelContext == nil {
+            if let barcode = item.barcode, let existing = viewModel.findFoodItem(byBarcode: barcode, in: modelContext) {
+                item = existing
+            } else {
+                modelContext.insert(item)
+            }
+        }
+        item.lastUsedAt = .now
+        onSelect(item)
+        if dismissesAfterSelection {
+            dismiss()
+        }
+    }
+
+    /// Removes a food from the local catalog for good — safe even for a food with logged
+    /// history, since `FoodEntry` snapshots its own macros/name at log time and only
+    /// nullifies its (already convenience-only) back-link to `FoodItem` on delete.
+    private func deleteItems(_ items: [FoodItem], at offsets: IndexSet) {
+        for index in offsets {
+            modelContext.delete(items[index])
+        }
+        try? modelContext.save()
+    }
+
+    private func performOnlineSearch() async {
+        isShowingAllOnlineResults = false
+        guard isSearching else {
+            onlineResults = []
+            isSearchingOnline = false
+            return
+        }
+        let query = trimmedQuery
+        try? await Task.sleep(nanoseconds: 400_000_000)
+        guard !Task.isCancelled else { return }
+        isSearchingOnline = true
+        do {
+            let matches = try await viewModel.searchOpenFoodFacts(matching: query, client: OpenFoodFactsClient())
+            guard !Task.isCancelled else { return }
+            onlineResults = matches
+        } catch {
+            guard !Task.isCancelled else { return }
+            onlineResults = []
+        }
+        isSearchingOnline = false
+    }
+
     private func lookup(barcode: String) async {
         if let existing = viewModel.findFoodItem(byBarcode: barcode, in: modelContext) {
-            onSelect(existing)
-            dismiss()
+            select(existing)
             return
         }
         do {
@@ -200,6 +389,23 @@ struct FoodItemPickerView: View {
     }
 }
 
+/// Unit for the "Default Serving Size" field — `defaultServingSizeG` is always stored in
+/// grams, so `.ounces` and `.serving` are both purely data-entry conveniences, converted on
+/// save. `.serving` is for foods naturally counted rather than weighed (e.g. "1 apple") —
+/// picking it is what reveals the "Unit Name" field, so a food that's just measured in
+/// grams/ounces never shows an unrelated, confusing "Unit Name" box.
+private enum WeightUnit: Hashable {
+    case grams
+    case ounces
+    case serving
+
+    /// International avoirdupois ounce, matching US nutrition labels. `.serving`'s amount
+    /// is entered directly in grams, same as `.grams`.
+    var gramsPerUnit: Double {
+        self == .ounces ? 28.349523125 : 1
+    }
+}
+
 /// Inline "create new food" form, used both when the desired food isn't in the catalog
 /// yet and to review/edit a barcode-scanned result before saving (Open Food Facts data
 /// quality varies, so this is always editable, never auto-saved).
@@ -210,6 +416,7 @@ private struct NewFoodItemView: View {
     let onCreate: (FoodItem) -> Void
 
     private let barcode: String?
+    private let brand: String?
 
     @State private var name: String
     @State private var caloriesText: String
@@ -217,11 +424,17 @@ private struct NewFoodItemView: View {
     @State private var carbText: String
     @State private var fatText: String
     @State private var servingSizeText: String
+    @State private var servingSizeUnit: WeightUnit = .grams
+    @State private var servingUnitLabel: String
 
-    init(prefill: FoodItem? = nil, onCreate: @escaping (FoodItem) -> Void) {
+    /// `prefillName` seeds the name field for the "add a food that wasn't in search"
+    /// affordance — ignored when `prefill` is given (the barcode-review flow), which has
+    /// its own name.
+    init(prefill: FoodItem? = nil, prefillName: String = "", onCreate: @escaping (FoodItem) -> Void) {
         self.onCreate = onCreate
         self.barcode = prefill?.barcode
-        _name = State(initialValue: prefill?.name ?? "")
+        self.brand = prefill?.brand
+        _name = State(initialValue: prefill?.name ?? prefillName)
         // Always show the real number, including 0 — Open Food Facts genuinely reports 0
         // for some macros, and hiding it as a blank field both misleads (looks like
         // nothing was fetched) and fails validation (an empty field can't Save).
@@ -230,10 +443,29 @@ private struct NewFoodItemView: View {
         _carbText = State(initialValue: prefill.map { Self.formatMacro($0.carbG) } ?? "")
         _fatText = State(initialValue: prefill.map { Self.formatMacro($0.fatG) } ?? "")
         _servingSizeText = State(initialValue: prefill.map { Self.formatMacro($0.defaultServingSizeG) } ?? "100")
+        _servingUnitLabel = State(initialValue: prefill?.servingUnitLabel ?? "")
+        // A barcode-scanned prefill may already carry a named unit (from OFF's serving_size
+        // field, e.g. "medium apple") — default the picker to Serving so it's visible
+        // instead of silently hiding a value that's already there.
+        _servingSizeUnit = State(initialValue: (prefill?.servingUnitLabel?.isEmpty == false) ? .serving : .grams)
     }
 
     private static func formatMacro(_ value: Double) -> String {
         String(format: "%g", value)
+    }
+
+    /// `servingSizeText` converted to grams regardless of `servingSizeUnit` — what actually
+    /// gets stored in `defaultServingSizeG`.
+    private var servingSizeGrams: Double? {
+        Double(servingSizeText).map { $0 * servingSizeUnit.gramsPerUnit }
+    }
+
+    private var servingSizeAmountLabel: String {
+        switch servingSizeUnit {
+        case .grams: return "Amount (g)"
+        case .ounces: return "Amount (oz)"
+        case .serving: return "Grams per Serving"
+        }
     }
 
     private var isValid: Bool {
@@ -242,7 +474,7 @@ private struct NewFoodItemView: View {
             && Double(proteinText) != nil
             && Double(carbText) != nil
             && Double(fatText) != nil
-            && Double(servingSizeText) != nil
+            && servingSizeGrams != nil
     }
 
     var body: some View {
@@ -282,10 +514,46 @@ private struct NewFoodItemView: View {
             }
             Section("Default Serving Size") {
                 HStack {
-                    TextField("Serving size", text: $servingSizeText)
-                        .keyboardType(.decimalPad)
-                    Text("g")
-                        .foregroundStyle(.secondary)
+                    Text(servingSizeAmountLabel)
+                    Spacer()
+                    // The "≈Xg" hint lives inside this same row rather than its own
+                    // conditionally-appearing one — see LogFoodEntryView's identical
+                    // pattern for why a row that appears/disappears is worth avoiding.
+                    VStack(alignment: .trailing, spacing: 2) {
+                        TextField("Serving size", text: $servingSizeText)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                        if servingSizeUnit == .ounces, let servingSizeGrams {
+                            Text("≈ \(Int(servingSizeGrams))g")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                HStack {
+                    Text("Unit")
+                    Spacer()
+                    // "Unit Name" lives inside this same row (as a second line, only when
+                    // .serving is picked) rather than its own row that appears/disappears —
+                    // same row-structure-stability reasoning as the "≈Xg" hint above.
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Picker("", selection: $servingSizeUnit) {
+                            Text("Grams").tag(WeightUnit.grams)
+                            Text("Ounces").tag(WeightUnit.ounces)
+                            Text("Serving").tag(WeightUnit.serving)
+                        }
+                        .labelsHidden()
+                        .onChange(of: servingSizeUnit) { oldUnit, newUnit in
+                            guard oldUnit != newUnit, let amount = Double(servingSizeText) else { return }
+                            let grams = amount * oldUnit.gramsPerUnit
+                            servingSizeText = Self.formatMacro(grams / newUnit.gramsPerUnit)
+                        }
+                        if servingSizeUnit == .serving {
+                            TextField("e.g. apple, cup, slice", text: $servingUnitLabel)
+                                .multilineTextAlignment(.trailing)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
             }
         }
@@ -303,16 +571,23 @@ private struct NewFoodItemView: View {
               let protein = Double(proteinText),
               let carb = Double(carbText),
               let fat = Double(fatText),
-              let servingSize = Double(servingSizeText) else { return }
+              let servingSizeGrams else { return }
 
+        // Only persist a unit label when "Serving" is actually selected — otherwise a name
+        // typed before switching away would linger unused on the saved food.
+        let trimmedUnitLabel = servingSizeUnit == .serving
+            ? servingUnitLabel.trimmingCharacters(in: .whitespaces)
+            : ""
         let item = FoodItem(
             name: name.trimmingCharacters(in: .whitespaces),
             caloriesPer100g: calories,
             proteinG: protein,
             carbG: carb,
             fatG: fat,
-            defaultServingSizeG: servingSize,
-            barcode: barcode
+            defaultServingSizeG: servingSizeGrams,
+            barcode: barcode,
+            brand: brand,
+            servingUnitLabel: trimmedUnitLabel.isEmpty ? nil : trimmedUnitLabel
         )
         modelContext.insert(item)
         onCreate(item)

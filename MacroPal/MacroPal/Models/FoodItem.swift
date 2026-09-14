@@ -17,6 +17,17 @@ final class FoodItem {
     var fatG: Double
     var defaultServingSizeG: Double
     var barcode: String?
+    /// Last time this item was picked in the food search or logged. Drives the "Recents"
+    /// tab in the food picker; `nil` until first use.
+    var lastUsedAt: Date?
+    /// The product's brand, e.g. "Walmart" — from Open Food Facts when this item came from
+    /// search or a barcode scan; `nil` for a manually-entered food.
+    var brand: String?
+    /// A human name for `defaultServingSizeG` as a countable unit — e.g. "medium apple" or
+    /// "cup" — so the log screen can offer "servings" as an alternative to grams. From Open
+    /// Food Facts' `serving_size` when a barcode scan provides one, or set by hand when
+    /// creating a food; `nil` means no named unit, just a plain "serving" of that many grams.
+    var servingUnitLabel: String?
 
     init(
         name: String,
@@ -25,7 +36,10 @@ final class FoodItem {
         carbG: Double,
         fatG: Double,
         defaultServingSizeG: Double,
-        barcode: String? = nil
+        barcode: String? = nil,
+        lastUsedAt: Date? = nil,
+        brand: String? = nil,
+        servingUnitLabel: String? = nil
     ) {
         self.name = name
         self.caloriesPer100g = caloriesPer100g
@@ -34,5 +48,8 @@ final class FoodItem {
         self.fatG = fatG
         self.defaultServingSizeG = defaultServingSizeG
         self.barcode = barcode
+        self.lastUsedAt = lastUsedAt
+        self.brand = brand
+        self.servingUnitLabel = servingUnitLabel
     }
 }

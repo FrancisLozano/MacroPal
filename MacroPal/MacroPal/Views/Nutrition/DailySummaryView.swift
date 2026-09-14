@@ -46,7 +46,7 @@ struct DailySummaryView: View {
         }
         .sheet(isPresented: $isPresentingLogSheet) {
             NavigationStack {
-                LogFoodEntryView(initialMealType: selectedMeal, initialDate: selectedDate)
+                LogFoodFlowView(initialMealType: selectedMeal, initialDate: selectedDate)
             }
         }
         .sheet(isPresented: $isPresentingCalendar) {
