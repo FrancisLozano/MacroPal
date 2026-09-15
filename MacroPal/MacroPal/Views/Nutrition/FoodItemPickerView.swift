@@ -56,6 +56,7 @@ struct FoodItemPickerView: View {
     @State private var isShowingAllOnlineResults = false
     @State private var isPresentingNewFoodForm = false
     @State private var isPresentingNewMealForm = false
+    @State private var mealToEdit: FoodItem?
     @State private var isPresentingScanner = false
     @State private var scanState: ScanFlowState = .idle
 
@@ -128,8 +129,18 @@ struct FoodItemPickerView: View {
                         } label: {
                             Label("New Meal", systemImage: "plus")
                         }
-                        ForEach(myMealItems) { item in foodRow(item, showSource: false) }
-                            .onDelete { offsets in deleteItems(myMealItems, at: offsets) }
+                        ForEach(myMealItems) { item in
+                            foodRow(item, showSource: false)
+                                .swipeActions(edge: .leading) {
+                                    Button {
+                                        mealToEdit = item
+                                    } label: {
+                                        Label("Edit", systemImage: "pencil")
+                                    }
+                                    .tint(.blue)
+                                }
+                        }
+                        .onDelete { offsets in deleteItems(myMealItems, at: offsets) }
                     }
                 }
             }
@@ -180,6 +191,11 @@ struct FoodItemPickerView: View {
                 NewMealView { newItem in
                     select(newItem)
                 }
+            }
+        }
+        .sheet(item: $mealToEdit) { item in
+            NavigationStack {
+                EditMealView(mealItem: item)
             }
         }
         .alert("Product Not Found", isPresented: notFoundBinding) {

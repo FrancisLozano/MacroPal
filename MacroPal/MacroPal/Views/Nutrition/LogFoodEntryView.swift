@@ -457,7 +457,7 @@ struct LogFoodFlowView: View {
 /// (toggled via the trailing Edit/Done button) and it can be removed from the meal entirely;
 /// both call back to the owning `LogFoodEntryView` to keep the meal's totals in sync, since
 /// this view only owns the one ingredient, not the recipe it belongs to.
-private struct MealIngredientDetailView: View {
+struct MealIngredientDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
