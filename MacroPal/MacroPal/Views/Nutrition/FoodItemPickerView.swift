@@ -471,10 +471,12 @@ private struct NewFoodItemView: View {
         // Always show the real number, including 0 — Open Food Facts genuinely reports 0
         // for some macros, and hiding it as a blank field both misleads (looks like
         // nothing was fetched) and fails validation (an empty field can't Save).
-        _caloriesText = State(initialValue: prefill.map { Self.formatMacro($0.caloriesPer100g) } ?? "")
-        _proteinText = State(initialValue: prefill.map { Self.formatMacro($0.proteinG) } ?? "")
-        _carbText = State(initialValue: prefill.map { Self.formatMacro($0.carbG) } ?? "")
-        _fatText = State(initialValue: prefill.map { Self.formatMacro($0.fatG) } ?? "")
+        // Prefill's macros are stored per-100g; scale them to the item's own default
+        // serving size since that's what this form now asks for.
+        _caloriesText = State(initialValue: prefill.map { Self.formatMacro($0.caloriesPer100g * $0.defaultServingSizeG / 100) } ?? "")
+        _proteinText = State(initialValue: prefill.map { Self.formatMacro($0.proteinG * $0.defaultServingSizeG / 100) } ?? "")
+        _carbText = State(initialValue: prefill.map { Self.formatMacro($0.carbG * $0.defaultServingSizeG / 100) } ?? "")
+        _fatText = State(initialValue: prefill.map { Self.formatMacro($0.fatG * $0.defaultServingSizeG / 100) } ?? "")
         _servingSizeText = State(initialValue: prefill.map { Self.formatMacro($0.defaultServingSizeG) } ?? "100")
         _servingUnitLabel = State(initialValue: prefill?.servingUnitLabel ?? "")
         // A barcode-scanned prefill may already carry a named unit (from OFF's serving_size
@@ -503,49 +505,27 @@ private struct NewFoodItemView: View {
         servingSizeUnit == .count ? "Grams per Serving" : servingSizeUnit.amountFieldLabel
     }
 
+    /// Macros are entered for the serving size itself (e.g. "36g, as printed on the
+    /// label") rather than normalized to 100g, so the section title names the amount
+    /// they're actually for.
+    private var macrosSectionTitle: String {
+        guard let servingSizeGrams else { return "Macros" }
+        return "Macros per Serving (\(Int(servingSizeGrams.rounded()))g)"
+    }
+
     private var isValid: Bool {
         !name.trimmingCharacters(in: .whitespaces).isEmpty
             && Double(caloriesText) != nil
             && Double(proteinText) != nil
             && Double(carbText) != nil
             && Double(fatText) != nil
-            && servingSizeGrams != nil
+            && (servingSizeGrams ?? 0) > 0
     }
 
     var body: some View {
         Form {
             Section("Name") {
                 TextField("Food name", text: $name)
-            }
-            Section("Macros per 100g") {
-                HStack {
-                    Text("Calories")
-                    Spacer()
-                    TextField("kcal", text: $caloriesText)
-                        .keyboardType(.decimalPad)
-                        .multilineTextAlignment(.trailing)
-                }
-                HStack {
-                    Text("Protein")
-                    Spacer()
-                    TextField("g", text: $proteinText)
-                        .keyboardType(.decimalPad)
-                        .multilineTextAlignment(.trailing)
-                }
-                HStack {
-                    Text("Carbs")
-                    Spacer()
-                    TextField("g", text: $carbText)
-                        .keyboardType(.decimalPad)
-                        .multilineTextAlignment(.trailing)
-                }
-                HStack {
-                    Text("Fat")
-                    Spacer()
-                    TextField("g", text: $fatText)
-                        .keyboardType(.decimalPad)
-                        .multilineTextAlignment(.trailing)
-                }
             }
             Section("Default Serving Size") {
                 HStack {
@@ -594,6 +574,36 @@ private struct NewFoodItemView: View {
                     }
                 }
             }
+            Section(macrosSectionTitle) {
+                HStack {
+                    Text("Calories")
+                    Spacer()
+                    TextField("kcal", text: $caloriesText)
+                        .keyboardType(.decimalPad)
+                        .multilineTextAlignment(.trailing)
+                }
+                HStack {
+                    Text("Protein")
+                    Spacer()
+                    TextField("g", text: $proteinText)
+                        .keyboardType(.decimalPad)
+                        .multilineTextAlignment(.trailing)
+                }
+                HStack {
+                    Text("Carbs")
+                    Spacer()
+                    TextField("g", text: $carbText)
+                        .keyboardType(.decimalPad)
+                        .multilineTextAlignment(.trailing)
+                }
+                HStack {
+                    Text("Fat")
+                    Spacer()
+                    TextField("g", text: $fatText)
+                        .keyboardType(.decimalPad)
+                        .multilineTextAlignment(.trailing)
+                }
+            }
         }
         .navigationTitle("New Food")
         .toolbar {
@@ -605,23 +615,26 @@ private struct NewFoodItemView: View {
     }
 
     private func save() {
-        guard let calories = Double(caloriesText),
-              let protein = Double(proteinText),
-              let carb = Double(carbText),
-              let fat = Double(fatText),
-              let servingSizeGrams else { return }
+        guard let enteredCalories = Double(caloriesText),
+              let enteredProtein = Double(proteinText),
+              let enteredCarb = Double(carbText),
+              let enteredFat = Double(fatText),
+              let servingSizeGrams, servingSizeGrams > 0 else { return }
 
         // Only persist a unit label when "Serving" is actually selected — otherwise a name
         // typed before switching away would linger unused on the saved food.
         let trimmedUnitLabel = servingSizeUnit == .count
             ? servingUnitLabel.trimmingCharacters(in: .whitespaces)
             : ""
+        // FoodItem stores macros per-100g throughout the app, but this form asks for them
+        // per the entered serving size (matching how a nutrition label reads) — scale back.
+        let scale = 100 / servingSizeGrams
         let item = FoodItem(
             name: name.trimmingCharacters(in: .whitespaces),
-            caloriesPer100g: calories,
-            proteinG: protein,
-            carbG: carb,
-            fatG: fat,
+            caloriesPer100g: enteredCalories * scale,
+            proteinG: enteredProtein * scale,
+            carbG: enteredCarb * scale,
+            fatG: enteredFat * scale,
             defaultServingSizeG: servingSizeGrams,
             barcode: barcode,
             brand: brand,
