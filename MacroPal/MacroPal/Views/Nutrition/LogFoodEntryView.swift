@@ -63,10 +63,10 @@ struct LogFoodEntryView: View {
     /// Edits an already-logged `FoodEntry` — reached by tapping a row in the Daily Log. Always
     /// rebuilds a per-100g `FoodItem` from the entry's own snapshot rather than reading
     /// `entry.foodItem` — that relationship can point at a `FoodItem` whose backing data is
-    /// gone (deleted from "My Foods" independently of its log entries), and merely *touching*
+    /// gone (deleted from My Meals independently of its log entries), and merely *touching*
     /// an invalidated SwiftData model's property is a hard crash, not a catchable nil. The
-    /// snapshot is self-sufficient for editing (name + macros + serving size), so there's no
-    /// need to risk it.
+    /// snapshot is self-sufficient for editing (name + brand + macros + serving size), so
+    /// there's no need to risk it.
     init(entry: FoodEntry, onSaved: @escaping () -> Void) {
         let foodItem = FoodItem(
             name: entry.nameSnapshot,
@@ -74,7 +74,8 @@ struct LogFoodEntryView: View {
             proteinG: entry.servingSizeG > 0 ? entry.proteinG / entry.servingSizeG * 100 : 0,
             carbG: entry.servingSizeG > 0 ? entry.carbG / entry.servingSizeG * 100 : 0,
             fatG: entry.servingSizeG > 0 ? entry.fatG / entry.servingSizeG * 100 : 0,
-            defaultServingSizeG: entry.servingSizeG
+            defaultServingSizeG: entry.servingSizeG,
+            brand: entry.brandSnapshot
         )
         _selectedFoodItem = State(initialValue: foodItem)
         _servingAmountText = State(initialValue: Self.formatAmount(entry.servingSizeG))
@@ -94,6 +95,13 @@ struct LogFoodEntryView: View {
     /// 100g if it doesn't have one (matches how a plain OFF/manual entry is stored).
     private var gramsPerCountUnit: Double {
         selectedFoodItem?.defaultServingSizeG ?? 100
+    }
+
+    /// The brand this food came from, or "My Meals" for one created locally — same
+    /// convention as the Daily Log and Choose Food screens.
+    private var sourceLabel: String {
+        guard let brand = selectedFoodItem?.brand, !brand.isEmpty else { return "My Meals" }
+        return brand
     }
 
     private func gramsPerUnit(_ unit: ServingUnit) -> Double {
@@ -159,9 +167,14 @@ struct LogFoodEntryView: View {
             // have its gesture recognizer permanently detached by SwiftUI's List cell
             // reuse. A plain sibling view doesn't hit that.
             HStack(alignment: .firstTextBaseline) {
-                Text(selectedFoodItem?.name ?? "")
-                    .font(.title2)
-                    .fontWeight(.bold)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(selectedFoodItem?.name ?? "")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                    Text(sourceLabel)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
                 Spacer()
                 Text("\(Int(caloriesForServing)) kcal")
                     .font(.subheadline)

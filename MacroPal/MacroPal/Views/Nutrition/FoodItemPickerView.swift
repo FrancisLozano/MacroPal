@@ -28,7 +28,7 @@ private enum ScanFlowState: Equatable {
 
 private enum PickerTab: Hashable {
     case recents
-    case myFoods
+    case myMeals
 }
 
 /// Search an existing `FoodItem` catalog, search Open Food Facts by name, scan a barcode,
@@ -38,13 +38,16 @@ struct FoodItemPickerView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
-    let onSelect: (FoodItem) -> Void
     /// True (the default) when this picker is itself the whole "screen" — selecting an item
     /// means the caller is done and this view should close. False when a caller instead
     /// swaps this picker out for its own next screen on selection (the "search food first"
     /// entry flow, `LogFoodFlowView`), where calling `dismiss()` here would close the whole
     /// flow instead of handing off to what comes next.
     var dismissesAfterSelection: Bool = true
+    /// Declared after `dismissesAfterSelection` so it's the memberwise init's last parameter
+    /// — callers pass it as a trailing closure (e.g. `FoodItemPickerView(dismissesAfterSelection: false) { item in ... }`),
+    /// which only forward-matches (no deprecated backward-matching) when the closure param is last.
+    let onSelect: (FoodItem) -> Void
 
     @State private var searchText = ""
     @State private var selectedTab: PickerTab = .recents
@@ -67,16 +70,22 @@ struct FoodItemPickerView: View {
         !trimmedQuery.isEmpty
     }
 
+    /// Catalog matches actually created under My Meals — excludes anything with a brand, even
+    /// though a brand item lands in the same local catalog once it's been searched or logged.
     private var localMatches: [FoodItem] {
-        viewModel.searchFoodItems(matching: searchText, in: modelContext)
+        viewModel.searchFoodItems(matching: searchText, in: modelContext).filter(Self.isMyMeal)
     }
 
     private var recentItems: [FoodItem] {
         viewModel.recentFoodItems(in: modelContext)
     }
 
-    private var myFoodItems: [FoodItem] {
-        viewModel.searchFoodItems(matching: "", in: modelContext)
+    private var myMealItems: [FoodItem] {
+        viewModel.searchFoodItems(matching: "", in: modelContext).filter(Self.isMyMeal)
+    }
+
+    private static nonisolated func isMyMeal(_ item: FoodItem) -> Bool {
+        (item.brand ?? "").isEmpty
     }
 
     private var visibleOnlineResults: [FoodItem] {
@@ -92,7 +101,7 @@ struct FoodItemPickerView: View {
             if !isSearching {
                 Picker("", selection: $selectedTab) {
                     Text("Recents").tag(PickerTab.recents)
-                    Text("My Foods").tag(PickerTab.myFoods)
+                    Text("My Meals").tag(PickerTab.myMeals)
                 }
                 .pickerStyle(.segmented)
                 .padding(.horizontal)
@@ -110,9 +119,9 @@ struct FoodItemPickerView: View {
                             ForEach(recentItems) { item in foodRow(item) }
                                 .onDelete { offsets in deleteItems(recentItems, at: offsets) }
                         }
-                    case .myFoods:
-                        ForEach(myFoodItems) { item in foodRow(item) }
-                            .onDelete { offsets in deleteItems(myFoodItems, at: offsets) }
+                    case .myMeals:
+                        ForEach(myMealItems) { item in foodRow(item) }
+                            .onDelete { offsets in deleteItems(myMealItems, at: offsets) }
                     }
                 }
             }
@@ -242,21 +251,27 @@ struct FoodItemPickerView: View {
 
     /// `item.name` with the first case-insensitive occurrence of `query` bolded — e.g.
     /// searching "orange" bolds just "Orange" within "Orange Juice". Falls back to plain
-    /// text when there's no query (the Recents/My Foods tabs, where nothing was searched) or
+    /// text when there's no query (the Recents/My Meals tabs, where nothing was searched) or
     /// no match.
     private func highlightedText(_ name: String, matching query: String) -> Text {
-        guard !query.isEmpty, let range = name.range(of: query, options: .caseInsensitive) else {
+        guard !query.isEmpty,
+              let range = name.range(of: query, options: .caseInsensitive) else {
             return Text(name)
         }
-        return Text(name[name.startIndex..<range.lowerBound])
-            + Text(name[range]).fontWeight(.bold)
-            + Text(name[range.upperBound...])
+        var attributed = AttributedString(name)
+        if let attributedRange = Range(range, in: attributed) {
+            attributed[attributedRange].inlinePresentationIntent = .stronglyEmphasized
+        }
+        return Text(attributed)
     }
 
+    /// Distinguishes, e.g., a Fairtrade banana from one created locally under the same name
+    /// — a brand name when the item came from Open Food Facts/a barcode scan, or "My Meals"
+    /// for anything created by hand.
     private func subtitle(for item: FoodItem) -> String {
         let base = "\(Int(item.caloriesPer100g)) kcal / 100g"
-        guard let brand = item.brand, !brand.isEmpty else { return base }
-        return "\(base) / \(brand)"
+        let source = (item.brand?.isEmpty == false) ? item.brand! : "My Meals"
+        return "\(base) / \(source)"
     }
 
     @ViewBuilder
@@ -283,7 +298,7 @@ struct FoodItemPickerView: View {
         // button stays even when there are matches too — someone might genuinely want a
         // second, differently-tracked item with the same name (e.g. their own recipe vs. a
         // store-bought version).
-        Section("My Foods") {
+        Section("My Meals") {
             ForEach(localMatches) { item in foodRow(item, highlighting: trimmedQuery) }
             Button {
                 isPresentingNewFoodForm = true

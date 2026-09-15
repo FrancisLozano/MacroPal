@@ -230,9 +230,13 @@ struct FoodHistoryView: View {
                     } else {
                         // Only the amount actually eaten is bold — the "/2,000 kcal" target
                         // is supporting context, not the headline number.
-                        (Text("\(Int(eaten))").fontWeight(.bold)
-                            + Text("/\(Int(target)) kcal").fontWeight(.regular))
-                            .transition(.opacity)
+                        HStack(spacing: 0) {
+                            Text("\(Int(eaten))")
+                                .fontWeight(.bold)
+                            Text("/\(Int(target)) kcal")
+                                .fontWeight(.regular)
+                        }
+                        .transition(.opacity)
                     }
                 }
                 .font(.caption)
@@ -311,6 +315,9 @@ struct FoodHistoryView: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(entry.nameSnapshot)
+                Text(sourceLabel(for: entry))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
                 Text("\(Int(entry.proteinG))p · \(Int(entry.carbG))c · \(Int(entry.fatG))f")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
@@ -319,6 +326,14 @@ struct FoodHistoryView: View {
             Text("\(Int(entry.caloriesKcal)) kcal")
                 .foregroundStyle(.secondary)
         }
+    }
+
+    /// The brand this entry was logged under, or "My Meals" when it was created locally
+    /// rather than pulled from a brand's product data — lets someone tell apart, say, a
+    /// Fairtrade banana from one they created themselves under the same name.
+    private func sourceLabel(for entry: FoodEntry) -> String {
+        guard let brand = entry.brandSnapshot, !brand.isEmpty else { return "My Meals" }
+        return brand
     }
 
     private func deleteEntries(_ entries: [FoodEntry], at offsets: IndexSet) {

@@ -31,6 +31,7 @@ final class NutritionViewModel {
             mealType: mealType,
             servingSizeG: servingSizeG,
             nameSnapshot: foodItem.name,
+            brandSnapshot: foodItem.brand,
             caloriesKcal: foodItem.caloriesPer100g * scale,
             proteinG: foodItem.proteinG * scale,
             carbG: foodItem.carbG * scale,
@@ -63,6 +64,7 @@ final class NutritionViewModel {
         entry.date = date
         entry.servingSizeG = servingSizeG
         entry.nameSnapshot = foodItem.name
+        entry.brandSnapshot = foodItem.brand
         entry.caloriesKcal = foodItem.caloriesPer100g * scale
         entry.proteinG = foodItem.proteinG * scale
         entry.carbG = foodItem.carbG * scale

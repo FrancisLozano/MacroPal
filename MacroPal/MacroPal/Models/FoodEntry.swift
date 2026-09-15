@@ -83,6 +83,10 @@ final class FoodEntry {
     var mealType: MealType
     var servingSizeG: Double
     var nameSnapshot: String
+    /// The source food's brand at log time, e.g. "Walmart"; `nil` for a food created under
+    /// My Meals. Snapshotted like `nameSnapshot` so the Daily Log still shows where an entry
+    /// came from even if the underlying `FoodItem` is later edited or deleted.
+    var brandSnapshot: String?
     var caloriesKcal: Double
     var proteinG: Double
     var carbG: Double
@@ -98,6 +102,7 @@ final class FoodEntry {
         mealType: MealType,
         servingSizeG: Double,
         nameSnapshot: String,
+        brandSnapshot: String? = nil,
         caloriesKcal: Double,
         proteinG: Double,
         carbG: Double,
@@ -108,6 +113,7 @@ final class FoodEntry {
         self.mealType = mealType
         self.servingSizeG = servingSizeG
         self.nameSnapshot = nameSnapshot
+        self.brandSnapshot = brandSnapshot
         self.caloriesKcal = caloriesKcal
         self.proteinG = proteinG
         self.carbG = carbG
