@@ -55,6 +55,7 @@ struct FoodItemPickerView: View {
     @State private var isSearchingOnline = false
     @State private var isShowingAllOnlineResults = false
     @State private var isPresentingNewFoodForm = false
+    @State private var isPresentingNewMealForm = false
     @State private var isPresentingScanner = false
     @State private var scanState: ScanFlowState = .idle
 
@@ -120,6 +121,11 @@ struct FoodItemPickerView: View {
                                 .onDelete { offsets in deleteItems(recentItems, at: offsets) }
                         }
                     case .myMeals:
+                        Button {
+                            isPresentingNewMealForm = true
+                        } label: {
+                            Label("New Meal", systemImage: "plus")
+                        }
                         ForEach(myMealItems) { item in foodRow(item) }
                             .onDelete { offsets in deleteItems(myMealItems, at: offsets) }
                     }
@@ -163,6 +169,13 @@ struct FoodItemPickerView: View {
         .sheet(isPresented: $isPresentingNewFoodForm) {
             NavigationStack {
                 NewFoodItemView(prefillName: trimmedQuery) { newItem in
+                    select(newItem)
+                }
+            }
+        }
+        .sheet(isPresented: $isPresentingNewMealForm) {
+            NavigationStack {
+                NewMealView { newItem in
                     select(newItem)
                 }
             }

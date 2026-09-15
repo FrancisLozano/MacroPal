@@ -75,6 +75,7 @@
 				Models/FoodEntry.swift,
 				Models/FoodItem.swift,
 				Models/Insight.swift,
+				Models/MealIngredient.swift,
 				Models/UserProfile.swift,
 				Models/WeightEntry.swift,
 				Models/WorkoutSession.swift,

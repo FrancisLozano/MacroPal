@@ -28,6 +28,14 @@ final class FoodItem {
     /// Food Facts' `serving_size` when a barcode scan provides one, or set by hand when
     /// creating a food; `nil` means no named unit, just a plain "serving" of that many grams.
     var servingUnitLabel: String?
+    /// The ingredients this food is composed of — e.g. a "Protein Yogurt Bowl" meal built
+    /// from protein powder, yogurt, and almond milk. Empty for a plain (non-meal) food. When
+    /// non-empty, this item's own macros and `defaultServingSizeG` are the aggregate of
+    /// these ingredients at their entered amounts, computed once when the meal was created
+    /// (see `NewMealView`) — editing or deleting one later doesn't retroactively change it,
+    /// same reasoning as `FoodEntry`'s snapshot fields.
+    @Relationship(deleteRule: .cascade)
+    var ingredients: [MealIngredient] = []
 
     init(
         name: String,
@@ -39,7 +47,8 @@ final class FoodItem {
         barcode: String? = nil,
         lastUsedAt: Date? = nil,
         brand: String? = nil,
-        servingUnitLabel: String? = nil
+        servingUnitLabel: String? = nil,
+        ingredients: [MealIngredient] = []
     ) {
         self.name = name
         self.caloriesPer100g = caloriesPer100g
@@ -51,5 +60,6 @@ final class FoodItem {
         self.lastUsedAt = lastUsedAt
         self.brand = brand
         self.servingUnitLabel = servingUnitLabel
+        self.ingredients = ingredients
     }
 }

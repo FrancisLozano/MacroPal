@@ -19,6 +19,7 @@ private func makeSharedModelContainer() -> ModelContainer? {
     let schema = Schema([
         UserProfile.self,
         FoodItem.self,
+        MealIngredient.self,
         FoodEntry.self,
         WeightEntry.self,
         Exercise.self,
