@@ -231,9 +231,9 @@ struct FoodHistoryView: View {
                         // Only the amount actually eaten is bold — the "/2,000 kcal" target
                         // is supporting context, not the headline number.
                         HStack(spacing: 0) {
-                            Text("\(Int(eaten))")
+                            Text("\(Int(eaten.rounded()))")
                                 .fontWeight(.bold)
-                            Text("/\(Int(target)) kcal")
+                            Text("/\(Int(target.rounded())) kcal")
                                 .fontWeight(.regular)
                         }
                         .transition(.opacity)
@@ -241,7 +241,7 @@ struct FoodHistoryView: View {
                 }
                 .font(.caption)
                 Spacer()
-                Text(remaining >= 0 ? "\(Int(remaining)) left" : "\(Int(-remaining)) over")
+                Text(remaining >= 0 ? "\(Int(remaining.rounded())) left" : "\(Int(-remaining.rounded())) over")
                     .font(.caption2)
                     .foregroundStyle(remaining >= 0 ? Color.secondary : Color.red)
             }
@@ -301,7 +301,7 @@ struct FoodHistoryView: View {
                     Text("\(Int(percent.rounded()))%")
                         .transition(.opacity)
                 } else {
-                    Text("\(Int(eaten))/\(Int(target))g")
+                    Text("\(Int(eaten.rounded()))/\(Int(target.rounded()))g")
                         .transition(.opacity)
                 }
             }
@@ -318,12 +318,12 @@ struct FoodHistoryView: View {
                 Text(sourceLabel(for: entry))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
-                Text("\(Int(entry.proteinG))p · \(Int(entry.carbG))c · \(Int(entry.fatG))f")
+                Text("\(Int(entry.proteinG.rounded()))p · \(Int(entry.carbG.rounded()))c · \(Int(entry.fatG.rounded()))f")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            Text("\(Int(entry.caloriesKcal)) kcal")
+            Text("\(Int(entry.caloriesKcal.rounded())) kcal")
                 .foregroundStyle(.secondary)
         }
     }

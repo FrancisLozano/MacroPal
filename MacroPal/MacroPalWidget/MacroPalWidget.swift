@@ -163,7 +163,7 @@ struct MacroPalWidgetEntryView: View {
                 .stroke(Color.teal, style: StrokeStyle(lineWidth: 8, lineCap: .round))
                 .rotationEffect(.degrees(-90))
             VStack(spacing: 0) {
-                Text("\(Int(remainingCalories))")
+                Text("\(Int(remainingCalories.rounded()))")
                     .font(.system(size: diameter * 0.3, weight: .bold))
                     .minimumScaleFactor(0.5)
                 Text("cal")

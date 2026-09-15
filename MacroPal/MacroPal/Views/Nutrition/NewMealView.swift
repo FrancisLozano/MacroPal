@@ -85,7 +85,7 @@ struct NewMealView: View {
             // Macronutrients above the ingredient list itself — same ordering as Log Food
             // and an ingredient's own detail screen.
             if !ingredients.isEmpty {
-                Section("Macronutrients (\(Int(totalGrams))g)") {
+                Section("Macronutrients (\(Int(totalGrams.rounded()))g)") {
                     macrosRow
                 }
             }
@@ -149,7 +149,7 @@ struct NewMealView: View {
                     convertAmount(ingredient, from: oldUnit, to: newUnit)
                 }
                 Spacer()
-                Text("\(Int(ingredient.wrappedValue.calories)) kcal")
+                Text("\(Int(ingredient.wrappedValue.calories.rounded())) kcal")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -170,10 +170,10 @@ struct NewMealView: View {
 
     private var macrosRow: some View {
         HStack(spacing: 12) {
-            macroChip(name: "Calories", color: .blue, value: "\(Int(totalCalories))")
-            macroChip(name: "Protein", color: .orange, value: "\(Int(totalProtein))g")
-            macroChip(name: "Carbs", color: .green, value: "\(Int(totalCarb))g")
-            macroChip(name: "Fat", color: .purple, value: "\(Int(totalFat))g")
+            macroChip(name: "Calories", color: .blue, value: "\(Int(totalCalories.rounded()))")
+            macroChip(name: "Protein", color: .orange, value: "\(Int(totalProtein.rounded()))g")
+            macroChip(name: "Carbs", color: .green, value: "\(Int(totalCarb.rounded()))g")
+            macroChip(name: "Fat", color: .purple, value: "\(Int(totalFat.rounded()))g")
         }
     }
 

@@ -287,7 +287,7 @@ struct FoodItemPickerView: View {
     /// — a brand name when the item came from Open Food Facts/a barcode scan, or "My Meals"
     /// for anything created by hand. `showSource: false` drops that entirely (see `foodRow`).
     private func subtitle(for item: FoodItem, showSource: Bool = true) -> String {
-        let base = "\(Int(item.caloriesPer100g)) kcal / 100g"
+        let base = "\(Int(item.caloriesPer100g.rounded())) kcal / 100g"
         guard showSource else { return base }
         let source = (item.brand?.isEmpty == false) ? item.brand! : "My Meals"
         return "\(base) / \(source)"
@@ -543,7 +543,7 @@ private struct NewFoodItemView: View {
                             .keyboardType(.numbersAndPunctuation)
                             .multilineTextAlignment(.trailing)
                         if servingSizeUnit != .grams && servingSizeUnit != .count, let servingSizeGrams {
-                            Text("≈ \(Int(servingSizeGrams))g")
+                            Text("≈ \(Int(servingSizeGrams.rounded()))g")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }

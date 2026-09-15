@@ -188,7 +188,7 @@ struct LogFoodEntryView: View {
                     .font(.title2)
                     .fontWeight(.bold)
                 Spacer()
-                Text("\(Int(caloriesForServing)) kcal")
+                Text("\(Int(caloriesForServing.rounded())) kcal")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -217,7 +217,7 @@ struct LogFoodEntryView: View {
                                 HStack {
                                     Text(ingredient.nameSnapshot)
                                     Spacer()
-                                    Text("\(Int(ingredient.quantityG))g")
+                                    Text("\(Int(ingredient.quantityG.rounded()))g")
                                         .foregroundStyle(.secondary)
                                 }
                             }
@@ -259,7 +259,7 @@ struct LogFoodEntryView: View {
                                     .keyboardType(.numbersAndPunctuation)
                                     .multilineTextAlignment(.trailing)
                                 if servingUnit != .grams, let servingSizeG {
-                                    Text("≈ \(Int(servingSizeG))g")
+                                    Text("≈ \(Int(servingSizeG.rounded()))g")
                                         .font(.caption2)
                                         .foregroundStyle(.secondary)
                                 }
@@ -357,7 +357,7 @@ struct LogFoodEntryView: View {
                     .font(.caption)
                     .fontWeight(.medium)
             }
-            Text("\(Int(grams))g")
+            Text("\(Int(grams.rounded()))g")
                 .font(.subheadline)
                 .fontWeight(.semibold)
         }
@@ -536,14 +536,14 @@ private struct MealIngredientDetailView: View {
                             convertAmount(from: oldUnit, to: newUnit)
                         }
                     } else {
-                        Text("\(Int(ingredient.quantityG))g")
+                        Text("\(Int(ingredient.quantityG.rounded()))g")
                             .foregroundStyle(.secondary)
                     }
                 }
                 HStack {
                     Text("Calories")
                     Spacer()
-                    Text("\(Int(calories)) kcal")
+                    Text("\(Int(calories.rounded())) kcal")
                         .foregroundStyle(.secondary)
                 }
                 HStack {
@@ -606,7 +606,7 @@ private struct MealIngredientDetailView: View {
                     .font(.caption)
                     .fontWeight(.medium)
             }
-            Text("\(Int(grams))g")
+            Text("\(Int(grams.rounded()))g")
                 .font(.subheadline)
                 .fontWeight(.semibold)
         }

@@ -421,7 +421,7 @@ struct DailySummaryView: View {
                     .truncationMode(.tail)
                 Spacer()
                 if !entries.isEmpty {
-                    Text("\(Int(entries.reduce(0) { $0 + $1.caloriesKcal })) kcal")
+                    Text("\(Int(entries.reduce(0) { $0 + $1.caloriesKcal }.rounded())) kcal")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
@@ -585,11 +585,11 @@ struct DailySummaryView: View {
                     .font(.subheadline)
                     .fontWeight(.medium)
                 Spacer()
-                Text("\(Int(eaten))/\(Int(target))g")
+                Text("\(Int(eaten.rounded()))/\(Int(target.rounded()))g")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
-            Text(remaining >= 0 ? "\(Int(remaining))g remaining" : "\(Int(-remaining))g over")
+            Text(remaining >= 0 ? "\(Int(remaining.rounded()))g remaining" : "\(Int(-remaining.rounded()))g over")
                 .font(.caption2)
                 .foregroundStyle(remaining >= 0 ? Color.secondary : Color.red)
         }
