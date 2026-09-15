@@ -295,7 +295,7 @@ struct LogFoodEntryView: View {
                 }
             }
         }
-        .navigationTitle("Log Food")
+        .navigationTitle(isMeal ? "Log Meal" : "Log Food")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Save") { save() }

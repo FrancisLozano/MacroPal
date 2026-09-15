@@ -128,7 +128,7 @@ struct FoodItemPickerView: View {
                         } label: {
                             Label("New Meal", systemImage: "plus")
                         }
-                        ForEach(myMealItems) { item in foodRow(item) }
+                        ForEach(myMealItems) { item in foodRow(item, showSource: false) }
                             .onDelete { offsets in deleteItems(myMealItems, at: offsets) }
                     }
                 }
@@ -250,14 +250,17 @@ struct FoodItemPickerView: View {
     }
 
     @ViewBuilder
-    private func foodRow(_ item: FoodItem, highlighting query: String = "") -> some View {
+    /// `showSource` is false only for rows already inside the My Meals tab, where every row
+    /// is a My Meals item by definition — repeating that as a subtitle on each one is just
+    /// noise there, even though it's useful context in Recents or search results.
+    private func foodRow(_ item: FoodItem, highlighting query: String = "", showSource: Bool = true) -> some View {
         Button {
             select(item)
         } label: {
             VStack(alignment: .leading) {
                 highlightedText(item.name, matching: query)
                     .foregroundStyle(Color.primary)
-                Text(subtitle(for: item))
+                Text(subtitle(for: item, showSource: showSource))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -282,9 +285,10 @@ struct FoodItemPickerView: View {
 
     /// Distinguishes, e.g., a Fairtrade banana from one created locally under the same name
     /// — a brand name when the item came from Open Food Facts/a barcode scan, or "My Meals"
-    /// for anything created by hand.
-    private func subtitle(for item: FoodItem) -> String {
+    /// for anything created by hand. `showSource: false` drops that entirely (see `foodRow`).
+    private func subtitle(for item: FoodItem, showSource: Bool = true) -> String {
         let base = "\(Int(item.caloriesPer100g)) kcal / 100g"
+        guard showSource else { return base }
         let source = (item.brand?.isEmpty == false) ? item.brand! : "My Meals"
         return "\(base) / \(source)"
     }
@@ -314,7 +318,7 @@ struct FoodItemPickerView: View {
         // second, differently-tracked item with the same name (e.g. their own recipe vs. a
         // store-bought version).
         Section("My Meals") {
-            ForEach(localMatches) { item in foodRow(item, highlighting: trimmedQuery) }
+            ForEach(localMatches) { item in foodRow(item, highlighting: trimmedQuery, showSource: false) }
             Button {
                 isPresentingNewFoodForm = true
             } label: {
