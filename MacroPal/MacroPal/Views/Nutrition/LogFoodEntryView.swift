@@ -38,6 +38,13 @@ struct LogFoodEntryView: View {
     /// creating a new one — `save()` updates this entry in place instead of inserting one.
     private let editingEntry: FoodEntry?
 
+    /// This food's ingredient breakdown, if it's a meal — empty otherwise. Reads from the
+    /// real `FoodItem` when logging fresh (`foodItem.ingredients`), or the entry's own
+    /// snapshot when editing (`entry.ingredientSnapshots`, already scaled to what was
+    /// actually logged) — never from `selectedFoodItem`'s synthetic rebuild, which doesn't
+    /// carry ingredients (see `init(entry:)`).
+    private let ingredients: [MealIngredient]
+
     /// Closes the whole "Log Food" flow (the sheet it's presented in), called after a
     /// successful save. Not `@Environment(\.dismiss)` here — since this screen is pushed
     /// onto the picker's `NavigationStack`, that would only pop back to search instead of
@@ -57,6 +64,7 @@ struct LogFoodEntryView: View {
         _mealType = State(initialValue: initialMealType)
         _date = State(initialValue: initialDate)
         self.editingEntry = nil
+        self.ingredients = foodItem.ingredients
         self.onSaved = onSaved
     }
 
@@ -82,6 +90,7 @@ struct LogFoodEntryView: View {
         _mealType = State(initialValue: entry.mealType)
         _date = State(initialValue: entry.date)
         self.editingEntry = entry
+        self.ingredients = entry.ingredientSnapshots
         self.onSaved = onSaved
     }
 
@@ -167,14 +176,9 @@ struct LogFoodEntryView: View {
             // have its gesture recognizer permanently detached by SwiftUI's List cell
             // reuse. A plain sibling view doesn't hit that.
             HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(selectedFoodItem?.name ?? "")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                    Text(sourceLabel)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+                Text(selectedFoodItem?.name ?? "")
+                    .font(.title2)
+                    .fontWeight(.bold)
                 Spacer()
                 Text("\(Int(caloriesForServing)) kcal")
                     .font(.subheadline)
@@ -220,6 +224,12 @@ struct LogFoodEntryView: View {
                             }
                         }
                     }
+                    HStack {
+                        Text("Brand")
+                        Spacer()
+                        Text(sourceLabel)
+                            .foregroundStyle(.secondary)
+                    }
                     Picker("Meal", selection: $mealType) {
                         ForEach(MealType.allCases) { type in
                             Text(type.displayName).tag(type)
@@ -231,6 +241,22 @@ struct LogFoodEntryView: View {
                 // same as the Daily Log's own macro card.
                 Section("Macronutrients") {
                     macrosRow
+                }
+                if !ingredients.isEmpty {
+                    Section("Ingredients") {
+                        ForEach(ingredients) { ingredient in
+                            NavigationLink {
+                                MealIngredientDetailView(ingredient: ingredient)
+                            } label: {
+                                HStack {
+                                    Text(ingredient.nameSnapshot)
+                                    Spacer()
+                                    Text("\(Int(ingredient.quantityG))g")
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -333,6 +359,76 @@ struct LogFoodFlowView: View {
                 )
             }
         }
+    }
+}
+
+/// Read-only detail for one ingredient inside a logged (or about-to-be-logged) meal — its
+/// serving within the recipe and the individual macros that contributes.
+private struct MealIngredientDetailView: View {
+    let ingredient: MealIngredient
+
+    private var scale: Double {
+        ingredient.quantityG / 100
+    }
+
+    private var calories: Double {
+        ingredient.caloriesPer100gSnapshot * scale
+    }
+
+    private var protein: Double {
+        ingredient.proteinPer100gSnapshot * scale
+    }
+
+    private var carb: Double {
+        ingredient.carbPer100gSnapshot * scale
+    }
+
+    private var fat: Double {
+        ingredient.fatPer100gSnapshot * scale
+    }
+
+    var body: some View {
+        Form {
+            Section("Serving") {
+                HStack {
+                    Text("Amount")
+                    Spacer()
+                    Text("\(Int(ingredient.quantityG))g")
+                        .foregroundStyle(.secondary)
+                }
+                HStack {
+                    Text("Calories")
+                    Spacer()
+                    Text("\(Int(calories)) kcal")
+                        .foregroundStyle(.secondary)
+                }
+            }
+            Section("Macronutrients") {
+                HStack(spacing: 12) {
+                    macroChip(name: "Protein", color: .orange, grams: protein)
+                    macroChip(name: "Carbs", color: .green, grams: carb)
+                    macroChip(name: "Fat", color: .purple, grams: fat)
+                }
+            }
+        }
+        .navigationTitle(ingredient.nameSnapshot)
+    }
+
+    private func macroChip(name: String, color: Color, grams: Double) -> some View {
+        VStack(spacing: 4) {
+            HStack(spacing: 4) {
+                Circle()
+                    .fill(color)
+                    .frame(width: 6, height: 6)
+                Text(name)
+                    .font(.caption)
+                    .fontWeight(.medium)
+            }
+            Text("\(Int(grams))g")
+                .font(.subheadline)
+                .fontWeight(.semibold)
+        }
+        .frame(maxWidth: .infinity)
     }
 }
 

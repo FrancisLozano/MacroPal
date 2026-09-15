@@ -26,6 +26,10 @@ final class NutritionViewModel {
         context: ModelContext
     ) {
         let scale = servingSizeG / 100
+        // A meal's `MealIngredient.quantityG` is stated for its full recipe batch
+        // (`defaultServingSizeG`), so logging any other amount needs its own scale factor —
+        // e.g. logging half a batch should show half of each ingredient, not the full recipe.
+        let recipeScale = foodItem.defaultServingSizeG > 0 ? servingSizeG / foodItem.defaultServingSizeG : 0
         let entry = FoodEntry(
             date: date,
             mealType: mealType,
@@ -36,7 +40,8 @@ final class NutritionViewModel {
             proteinG: foodItem.proteinG * scale,
             carbG: foodItem.carbG * scale,
             fatG: foodItem.fatG * scale,
-            foodItem: foodItem
+            foodItem: foodItem,
+            ingredientSnapshots: Self.cloneIngredients(from: foodItem, scale: recipeScale)
         )
         context.insert(entry)
         foodItem.lastUsedAt = .now
@@ -60,6 +65,18 @@ final class NutritionViewModel {
         context: ModelContext
     ) {
         let scale = servingSizeG / 100
+        // Rescale the entry's existing ingredient snapshots in place, by the ratio of the
+        // new serving to the previous one — not re-derived from `foodItem`, which for an
+        // edit is a synthetic per-100g rebuild from the entry's own snapshot (see
+        // `LogFoodEntryView.init(entry:)`) and doesn't carry the original recipe's
+        // ingredient list.
+        let previousServingSizeG = entry.servingSizeG
+        if previousServingSizeG > 0 {
+            let ingredientScale = servingSizeG / previousServingSizeG
+            for ingredient in entry.ingredientSnapshots {
+                ingredient.quantityG *= ingredientScale
+            }
+        }
         entry.mealType = mealType
         entry.date = date
         entry.servingSizeG = servingSizeG
@@ -71,6 +88,22 @@ final class NutritionViewModel {
         entry.fatG = foodItem.fatG * scale
         try? context.save()
         WidgetCenter.shared.reloadAllTimelines()
+    }
+
+    /// Copies `foodItem.ingredients` (a meal's recipe, stated for its full batch) into fresh
+    /// `MealIngredient` instances scaled by `scale`, for a `FoodEntry` to own independently —
+    /// empty for a plain (non-meal) food, since `foodItem.ingredients` is empty too.
+    private static func cloneIngredients(from foodItem: FoodItem, scale: Double) -> [MealIngredient] {
+        foodItem.ingredients.map { ingredient in
+            MealIngredient(
+                nameSnapshot: ingredient.nameSnapshot,
+                quantityG: ingredient.quantityG * scale,
+                caloriesPer100gSnapshot: ingredient.caloriesPer100gSnapshot,
+                proteinPer100gSnapshot: ingredient.proteinPer100gSnapshot,
+                carbPer100gSnapshot: ingredient.carbPer100gSnapshot,
+                fatPer100gSnapshot: ingredient.fatPer100gSnapshot
+            )
+        }
     }
 
     /// Items picked or logged most recently first, for the food picker's "Recents" tab.

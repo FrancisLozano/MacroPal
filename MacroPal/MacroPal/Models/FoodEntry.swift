@@ -97,6 +97,15 @@ final class FoodEntry {
     @Relationship(deleteRule: .nullify)
     var foodItem: FoodItem?
 
+    /// This entry's own copy of its source food's ingredient breakdown, if it was a meal —
+    /// empty for a plain (non-meal) food. Cloned from `FoodItem.ingredients` at log time,
+    /// scaled to the serving actually logged (a meal's `MealIngredient.quantityG` is stated
+    /// for its full recipe batch, not necessarily what was logged here), so it stays correct
+    /// even if the source `FoodItem` is later edited or deleted — same reasoning as the
+    /// snapshot fields above.
+    @Relationship(deleteRule: .cascade)
+    var ingredientSnapshots: [MealIngredient] = []
+
     init(
         date: Date,
         mealType: MealType,
@@ -107,7 +116,8 @@ final class FoodEntry {
         proteinG: Double,
         carbG: Double,
         fatG: Double,
-        foodItem: FoodItem? = nil
+        foodItem: FoodItem? = nil,
+        ingredientSnapshots: [MealIngredient] = []
     ) {
         self.date = date
         self.mealType = mealType
@@ -119,5 +129,6 @@ final class FoodEntry {
         self.carbG = carbG
         self.fatG = fatG
         self.foodItem = foodItem
+        self.ingredientSnapshots = ingredientSnapshots
     }
 }
