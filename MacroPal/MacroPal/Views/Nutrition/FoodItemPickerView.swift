@@ -423,23 +423,6 @@ struct FoodItemPickerView: View {
     }
 }
 
-/// Unit for the "Default Serving Size" field — `defaultServingSizeG` is always stored in
-/// grams, so `.ounces` and `.serving` are both purely data-entry conveniences, converted on
-/// save. `.serving` is for foods naturally counted rather than weighed (e.g. "1 apple") —
-/// picking it is what reveals the "Unit Name" field, so a food that's just measured in
-/// grams/ounces never shows an unrelated, confusing "Unit Name" box.
-private enum WeightUnit: Hashable {
-    case grams
-    case ounces
-    case serving
-
-    /// International avoirdupois ounce, matching US nutrition labels. `.serving`'s amount
-    /// is entered directly in grams, same as `.grams`.
-    var gramsPerUnit: Double {
-        self == .ounces ? 28.349523125 : 1
-    }
-}
-
 /// Inline "create new food" form, used both when the desired food isn't in the catalog
 /// yet and to review/edit a barcode-scanned result before saving (Open Food Facts data
 /// quality varies, so this is always editable, never auto-saved).
@@ -458,7 +441,7 @@ private struct NewFoodItemView: View {
     @State private var carbText: String
     @State private var fatText: String
     @State private var servingSizeText: String
-    @State private var servingSizeUnit: WeightUnit = .grams
+    @State private var servingSizeUnit: ServingAmountUnit = .grams
     @State private var servingUnitLabel: String
 
     /// `prefillName` seeds the name field for the "add a food that wasn't in search"
@@ -481,25 +464,27 @@ private struct NewFoodItemView: View {
         // A barcode-scanned prefill may already carry a named unit (from OFF's serving_size
         // field, e.g. "medium apple") — default the picker to Serving so it's visible
         // instead of silently hiding a value that's already there.
-        _servingSizeUnit = State(initialValue: (prefill?.servingUnitLabel?.isEmpty == false) ? .serving : .grams)
+        _servingSizeUnit = State(initialValue: (prefill?.servingUnitLabel?.isEmpty == false) ? .count : .grams)
     }
 
     private static func formatMacro(_ value: Double) -> String {
         String(format: "%g", value)
     }
 
+    /// Grams in one of `unit`, for defining this food's default serving. `.count`'s amount
+    /// is entered directly in grams (defining "1 serving" itself), same as `.grams`.
+    private func gramsPerUnit(_ unit: ServingAmountUnit) -> Double {
+        unit.fixedGramsPerUnit ?? 1
+    }
+
     /// `servingSizeText` converted to grams regardless of `servingSizeUnit` — what actually
     /// gets stored in `defaultServingSizeG`.
     private var servingSizeGrams: Double? {
-        Double(servingSizeText).map { $0 * servingSizeUnit.gramsPerUnit }
+        AmountParsing.parseAmount(servingSizeText).map { $0 * gramsPerUnit(servingSizeUnit) }
     }
 
     private var servingSizeAmountLabel: String {
-        switch servingSizeUnit {
-        case .grams: return "Amount (g)"
-        case .ounces: return "Amount (oz)"
-        case .serving: return "Grams per Serving"
-        }
+        servingSizeUnit == .count ? "Grams per Serving" : servingSizeUnit.amountFieldLabel
     }
 
     private var isValid: Bool {
@@ -555,9 +540,9 @@ private struct NewFoodItemView: View {
                     // pattern for why a row that appears/disappears is worth avoiding.
                     VStack(alignment: .trailing, spacing: 2) {
                         TextField("Serving size", text: $servingSizeText)
-                            .keyboardType(.decimalPad)
+                            .keyboardType(.numbersAndPunctuation)
                             .multilineTextAlignment(.trailing)
-                        if servingSizeUnit == .ounces, let servingSizeGrams {
+                        if servingSizeUnit != .grams && servingSizeUnit != .count, let servingSizeGrams {
                             Text("≈ \(Int(servingSizeGrams))g")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
@@ -572,17 +557,20 @@ private struct NewFoodItemView: View {
                     // same row-structure-stability reasoning as the "≈Xg" hint above.
                     VStack(alignment: .trailing, spacing: 4) {
                         Picker("", selection: $servingSizeUnit) {
-                            Text("Grams").tag(WeightUnit.grams)
-                            Text("Ounces").tag(WeightUnit.ounces)
-                            Text("Serving").tag(WeightUnit.serving)
+                            Text("Grams").tag(ServingAmountUnit.grams)
+                            Text("Ounces").tag(ServingAmountUnit.ounces)
+                            Text("Cups").tag(ServingAmountUnit.cups)
+                            Text("Tbsp").tag(ServingAmountUnit.tablespoons)
+                            Text("Tsp").tag(ServingAmountUnit.teaspoons)
+                            Text("Serving").tag(ServingAmountUnit.count)
                         }
                         .labelsHidden()
                         .onChange(of: servingSizeUnit) { oldUnit, newUnit in
-                            guard oldUnit != newUnit, let amount = Double(servingSizeText) else { return }
-                            let grams = amount * oldUnit.gramsPerUnit
-                            servingSizeText = Self.formatMacro(grams / newUnit.gramsPerUnit)
+                            guard oldUnit != newUnit, let amount = AmountParsing.parseAmount(servingSizeText) else { return }
+                            let grams = amount * gramsPerUnit(oldUnit)
+                            servingSizeText = Self.formatMacro(grams / gramsPerUnit(newUnit))
                         }
-                        if servingSizeUnit == .serving {
+                        if servingSizeUnit == .count {
                             TextField("e.g. apple, cup, slice", text: $servingUnitLabel)
                                 .multilineTextAlignment(.trailing)
                                 .foregroundStyle(.secondary)
@@ -609,7 +597,7 @@ private struct NewFoodItemView: View {
 
         // Only persist a unit label when "Serving" is actually selected — otherwise a name
         // typed before switching away would linger unused on the saved food.
-        let trimmedUnitLabel = servingSizeUnit == .serving
+        let trimmedUnitLabel = servingSizeUnit == .count
             ? servingUnitLabel.trimmingCharacters(in: .whitespaces)
             : ""
         let item = FoodItem(

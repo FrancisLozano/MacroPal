@@ -7,31 +7,12 @@ import SwiftUI
 import SwiftData
 import WidgetKit
 
-/// What the serving-amount field's number represents: grams or ounces directly, or a count
-/// of the food's named unit (e.g. "2 medium apples") scaled by its `defaultServingSizeG`.
-private enum ServingUnit: Hashable {
-    case grams
-    case ounces
-    case count
-
-    /// Grams in exactly one of this unit — the international avoirdupois ounce (used on US
-    /// nutrition labels) for `.ounces`; `.count`'s is food-specific, so it's handled outside
-    /// this enum.
-    var gramsPerUnit: Double? {
-        switch self {
-        case .grams: return 1
-        case .ounces: return 28.349523125
-        case .count: return nil
-        }
-    }
-}
-
 struct LogFoodEntryView: View {
     @Environment(\.modelContext) private var modelContext
 
     @State private var selectedFoodItem: FoodItem?
     @State private var servingAmountText = ""
-    @State private var servingUnit: ServingUnit = .grams
+    @State private var servingUnit: ServingAmountUnit = .grams
     @State private var mealType: MealType
     @State private var date: Date
 
@@ -115,12 +96,12 @@ struct LogFoodEntryView: View {
         return brand
     }
 
-    private func gramsPerUnit(_ unit: ServingUnit) -> Double {
-        unit.gramsPerUnit ?? gramsPerCountUnit
+    private func gramsPerUnit(_ unit: ServingAmountUnit) -> Double {
+        unit.fixedGramsPerUnit ?? gramsPerCountUnit
     }
 
     private var servingSizeG: Double? {
-        guard let amount = Double(servingAmountText) else { return nil }
+        guard let amount = AmountParsing.parseAmount(servingAmountText) else { return nil }
         return amount * gramsPerUnit(servingUnit)
     }
 
@@ -138,8 +119,8 @@ struct LogFoodEntryView: View {
 
     /// Keeps the represented amount continuous across a unit switch — e.g. 200g becomes "2"
     /// when switching to a 100g-per-unit food, rather than resetting to some fixed default.
-    private func convertServingAmount(from oldUnit: ServingUnit, to newUnit: ServingUnit) {
-        guard oldUnit != newUnit, let amount = Double(servingAmountText) else { return }
+    private func convertServingAmount(from oldUnit: ServingAmountUnit, to newUnit: ServingAmountUnit) {
+        guard oldUnit != newUnit, let amount = AmountParsing.parseAmount(servingAmountText) else { return }
         let grams = amount * gramsPerUnit(oldUnit)
         servingAmountText = Self.formatAmount(grams / gramsPerUnit(newUnit))
     }
@@ -149,11 +130,7 @@ struct LogFoodEntryView: View {
     }
 
     private var servingAmountLabel: String {
-        switch servingUnit {
-        case .grams: return "Amount (g)"
-        case .ounces: return "Amount (oz)"
-        case .count: return "Number of Servings"
-        }
+        servingUnit == .count ? "Number of Servings" : servingUnit.amountFieldLabel
     }
 
     /// This entry's serving as a fraction of the food's per-100g macros — 0 while the
@@ -255,9 +232,12 @@ struct LogFoodEntryView: View {
                             Text("Serving Size")
                             Spacer()
                             Picker("", selection: $servingUnit) {
-                                Text("Grams").tag(ServingUnit.grams)
-                                Text("Ounces").tag(ServingUnit.ounces)
-                                Text(countUnitLabel.capitalized).tag(ServingUnit.count)
+                                Text("Grams").tag(ServingAmountUnit.grams)
+                                Text("Ounces").tag(ServingAmountUnit.ounces)
+                                Text("Cups").tag(ServingAmountUnit.cups)
+                                Text("Tbsp").tag(ServingAmountUnit.tablespoons)
+                                Text("Tsp").tag(ServingAmountUnit.teaspoons)
+                                Text(countUnitLabel.capitalized).tag(ServingAmountUnit.count)
                             }
                             .labelsHidden()
                             .onChange(of: servingUnit) { oldUnit, newUnit in
@@ -276,7 +256,7 @@ struct LogFoodEntryView: View {
                             Spacer()
                             VStack(alignment: .trailing, spacing: 2) {
                                 TextField("Amount", text: $servingAmountText)
-                                    .keyboardType(.decimalPad)
+                                    .keyboardType(.numbersAndPunctuation)
                                     .multilineTextAlignment(.trailing)
                                 if servingUnit != .grams, let servingSizeG {
                                     Text("≈ \(Int(servingSizeG))g")
@@ -487,6 +467,11 @@ private struct MealIngredientDetailView: View {
 
     @State private var isEditing = false
     @State private var amountText: String
+    @State private var unit: ServingAmountUnit = .grams
+
+    /// Units offered for editing an ingredient's amount — no `.count`, since a `MealIngredient`
+    /// doesn't carry its own named unit the way a `FoodItem` can.
+    private static let editableUnits: [ServingAmountUnit] = [.grams, .ounces, .cups, .tablespoons, .teaspoons]
 
     init(ingredient: MealIngredient, onDelete: @escaping () -> Void, onChange: @escaping () -> Void) {
         self.ingredient = ingredient
@@ -538,10 +523,18 @@ private struct MealIngredientDetailView: View {
                     Spacer()
                     if isEditing {
                         TextField("Amount", text: $amountText)
-                            .keyboardType(.decimalPad)
+                            .keyboardType(.numbersAndPunctuation)
                             .multilineTextAlignment(.trailing)
-                        Text("g")
-                            .foregroundStyle(.secondary)
+                            .frame(width: 70)
+                        Picker("", selection: $unit) {
+                            ForEach(Self.editableUnits, id: \.self) { unit in
+                                Text(unit.displayName).tag(unit)
+                            }
+                        }
+                        .labelsHidden()
+                        .onChange(of: unit) { oldUnit, newUnit in
+                            convertAmount(from: oldUnit, to: newUnit)
+                        }
                     } else {
                         Text("\(Int(ingredient.quantityG))g")
                             .foregroundStyle(.secondary)
@@ -582,9 +575,23 @@ private struct MealIngredientDetailView: View {
         }
     }
 
+    /// Keeps the represented amount continuous across a unit switch — same reasoning as
+    /// `LogFoodEntryView.convertServingAmount`.
+    private func convertAmount(from oldUnit: ServingAmountUnit, to newUnit: ServingAmountUnit) {
+        guard oldUnit != newUnit,
+              let amount = AmountParsing.parseAmount(amountText),
+              let oldGramsPerUnit = oldUnit.fixedGramsPerUnit,
+              let newGramsPerUnit = newUnit.fixedGramsPerUnit else { return }
+        let grams = amount * oldGramsPerUnit
+        amountText = String(format: "%g", grams / newGramsPerUnit)
+    }
+
     private func commitAmount() {
-        guard let amount = Double(amountText), amount > 0, amount != ingredient.quantityG else { return }
-        ingredient.quantityG = amount
+        guard let amount = AmountParsing.parseAmount(amountText),
+              let gramsPerUnit = unit.fixedGramsPerUnit else { return }
+        let grams = amount * gramsPerUnit
+        guard grams > 0, grams != ingredient.quantityG else { return }
+        ingredient.quantityG = grams
         try? modelContext.save()
         onChange()
     }
