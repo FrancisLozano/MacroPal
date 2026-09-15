@@ -77,8 +77,10 @@ struct FoodItemPickerView: View {
         viewModel.searchFoodItems(matching: searchText, in: modelContext).filter(Self.isMyMeal)
     }
 
+    /// Recently used items with a real brand — a My Meals item lives only under its own tab,
+    /// even after being logged, so recency doesn't pull it back into this list too.
     private var recentItems: [FoodItem] {
-        viewModel.recentFoodItems(in: modelContext)
+        viewModel.recentFoodItems(in: modelContext).filter { !Self.isMyMeal($0) }
     }
 
     private var myMealItems: [FoodItem] {
