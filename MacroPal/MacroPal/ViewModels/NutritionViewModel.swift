@@ -98,6 +98,7 @@ final class NutritionViewModel {
             MealIngredient(
                 nameSnapshot: ingredient.nameSnapshot,
                 quantityG: ingredient.quantityG * scale,
+                brandSnapshot: ingredient.brandSnapshot,
                 caloriesPer100gSnapshot: ingredient.caloriesPer100gSnapshot,
                 proteinPer100gSnapshot: ingredient.proteinPer100gSnapshot,
                 carbPer100gSnapshot: ingredient.carbPer100gSnapshot,

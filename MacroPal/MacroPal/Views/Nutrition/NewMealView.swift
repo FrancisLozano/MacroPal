@@ -100,6 +100,14 @@ struct NewMealView: View {
                 TextField("Meal name", text: $name)
             }
 
+            // Macronutrients above the ingredient list itself — same ordering as Log Food
+            // and an ingredient's own detail screen.
+            if !ingredients.isEmpty {
+                Section("Macronutrients (\(Int(totalGrams))g)") {
+                    macrosRow
+                }
+            }
+
             Section("Ingredients") {
                 if ingredients.isEmpty {
                     Text("Add the foods that make up this meal.")
@@ -113,12 +121,6 @@ struct NewMealView: View {
                     isPresentingIngredientPicker = true
                 } label: {
                     Label("Add Ingredient", systemImage: "plus")
-                }
-            }
-
-            if !ingredients.isEmpty {
-                Section("Total (\(Int(totalGrams))g)") {
-                    macrosRow
                 }
             }
         }
@@ -215,6 +217,7 @@ struct NewMealView: View {
             MealIngredient(
                 nameSnapshot: draft.foodItem.name,
                 quantityG: draft.quantityG ?? 0,
+                brandSnapshot: draft.foodItem.brand,
                 caloriesPer100gSnapshot: draft.foodItem.caloriesPer100g,
                 proteinPer100gSnapshot: draft.foodItem.proteinG,
                 carbPer100gSnapshot: draft.foodItem.carbG,

@@ -31,9 +31,10 @@ final class FoodItem {
     /// The ingredients this food is composed of — e.g. a "Protein Yogurt Bowl" meal built
     /// from protein powder, yogurt, and almond milk. Empty for a plain (non-meal) food. When
     /// non-empty, this item's own macros and `defaultServingSizeG` are the aggregate of
-    /// these ingredients at their entered amounts, computed once when the meal was created
-    /// (see `NewMealView`) — editing or deleting one later doesn't retroactively change it,
-    /// same reasoning as `FoodEntry`'s snapshot fields.
+    /// these ingredients at their entered amounts — see `recomputeAggregateFromIngredients()`,
+    /// which must be called after adding, editing, or deleting an ingredient to keep them in
+    /// sync (they're stored, not computed on read, so every other screen that just reads
+    /// `caloriesPer100g` etc. — search results, Recents — doesn't need to know about meals).
     @Relationship(deleteRule: .cascade)
     var ingredients: [MealIngredient] = []
 
@@ -61,5 +62,24 @@ final class FoodItem {
         self.brand = brand
         self.servingUnitLabel = servingUnitLabel
         self.ingredients = ingredients
+    }
+
+    /// Recomputes `caloriesPer100g`/`proteinG`/`carbG`/`fatG`/`defaultServingSizeG` from the
+    /// current `ingredients`, scaled to their (possibly just-edited) `quantityG` amounts.
+    /// Call after any change to `ingredients` — adding, editing an amount, or deleting one —
+    /// so every other reader of this item's macros stays correct. A no-op when there are no
+    /// ingredients (a plain food) or they sum to zero grams.
+    func recomputeAggregateFromIngredients() {
+        let totalGrams = ingredients.reduce(0) { $0 + $1.quantityG }
+        guard totalGrams > 0 else { return }
+        let totalCalories = ingredients.reduce(0) { $0 + $1.caloriesPer100gSnapshot * $1.quantityG / 100 }
+        let totalProtein = ingredients.reduce(0) { $0 + $1.proteinPer100gSnapshot * $1.quantityG / 100 }
+        let totalCarb = ingredients.reduce(0) { $0 + $1.carbPer100gSnapshot * $1.quantityG / 100 }
+        let totalFat = ingredients.reduce(0) { $0 + $1.fatPer100gSnapshot * $1.quantityG / 100 }
+        defaultServingSizeG = totalGrams
+        caloriesPer100g = totalCalories / totalGrams * 100
+        proteinG = totalProtein / totalGrams * 100
+        carbG = totalCarb / totalGrams * 100
+        fatG = totalFat / totalGrams * 100
     }
 }

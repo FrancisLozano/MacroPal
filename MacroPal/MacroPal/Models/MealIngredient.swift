@@ -17,6 +17,9 @@ import SwiftData
 final class MealIngredient {
     var nameSnapshot: String
     var quantityG: Double
+    /// The ingredient's own brand, e.g. "Nature's Promise"; `nil` for one created under My
+    /// Meals — same convention as `FoodEntry.brandSnapshot`.
+    var brandSnapshot: String?
     var caloriesPer100gSnapshot: Double
     var proteinPer100gSnapshot: Double
     var carbPer100gSnapshot: Double
@@ -30,6 +33,7 @@ final class MealIngredient {
     init(
         nameSnapshot: String,
         quantityG: Double,
+        brandSnapshot: String? = nil,
         caloriesPer100gSnapshot: Double,
         proteinPer100gSnapshot: Double,
         carbPer100gSnapshot: Double,
@@ -38,6 +42,7 @@ final class MealIngredient {
     ) {
         self.nameSnapshot = nameSnapshot
         self.quantityG = quantityG
+        self.brandSnapshot = brandSnapshot
         self.caloriesPer100gSnapshot = caloriesPer100gSnapshot
         self.proteinPer100gSnapshot = proteinPer100gSnapshot
         self.carbPer100gSnapshot = carbPer100gSnapshot

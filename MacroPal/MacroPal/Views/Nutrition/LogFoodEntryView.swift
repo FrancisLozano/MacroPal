@@ -5,6 +5,7 @@
 
 import SwiftUI
 import SwiftData
+import WidgetKit
 
 /// What the serving-amount field's number represents: grams or ounces directly, or a count
 /// of the food's named unit (e.g. "2 medium apples") scaled by its `defaultServingSizeG`.
@@ -42,8 +43,9 @@ struct LogFoodEntryView: View {
     /// real `FoodItem` when logging fresh (`foodItem.ingredients`), or the entry's own
     /// snapshot when editing (`entry.ingredientSnapshots`, already scaled to what was
     /// actually logged) — never from `selectedFoodItem`'s synthetic rebuild, which doesn't
-    /// carry ingredients (see `init(entry:)`).
-    private let ingredients: [MealIngredient]
+    /// carry ingredients (see `init(entry:)`). `@State` (not `let`) since deleting an
+    /// ingredient here needs to remove it from this list too, to update the UI.
+    @State private var ingredients: [MealIngredient]
 
     /// Closes the whole "Log Food" flow (the sheet it's presented in), called after a
     /// successful save. Not `@Environment(\.dismiss)` here — since this screen is pushed
@@ -64,7 +66,7 @@ struct LogFoodEntryView: View {
         _mealType = State(initialValue: initialMealType)
         _date = State(initialValue: initialDate)
         self.editingEntry = nil
-        self.ingredients = foodItem.ingredients
+        _ingredients = State(initialValue: foodItem.ingredients)
         self.onSaved = onSaved
     }
 
@@ -90,7 +92,7 @@ struct LogFoodEntryView: View {
         _mealType = State(initialValue: entry.mealType)
         _date = State(initialValue: entry.date)
         self.editingEntry = entry
-        self.ingredients = entry.ingredientSnapshots
+        _ingredients = State(initialValue: entry.ingredientSnapshots)
         self.onSaved = onSaved
     }
 
@@ -122,7 +124,14 @@ struct LogFoodEntryView: View {
         return amount * gramsPerUnit(servingUnit)
     }
 
+    /// A meal (has ingredients) has no separate serving-size control — logging it always
+    /// logs its current ingredient composition in full, so there's nothing to scale by.
+    private var isMeal: Bool {
+        !ingredients.isEmpty
+    }
+
     private var isValid: Bool {
+        if isMeal { return mealTotalGrams > 0 }
         guard selectedFoodItem != nil, let servingSizeG else { return false }
         return servingSizeG > 0
     }
@@ -154,19 +163,41 @@ struct LogFoodEntryView: View {
     }
 
     private var caloriesForServing: Double {
-        (selectedFoodItem?.caloriesPer100g ?? 0) * servingScale
+        isMeal ? mealCalories : (selectedFoodItem?.caloriesPer100g ?? 0) * servingScale
     }
 
     private var proteinForServing: Double {
-        (selectedFoodItem?.proteinG ?? 0) * servingScale
+        isMeal ? mealProtein : (selectedFoodItem?.proteinG ?? 0) * servingScale
     }
 
     private var carbForServing: Double {
-        (selectedFoodItem?.carbG ?? 0) * servingScale
+        isMeal ? mealCarb : (selectedFoodItem?.carbG ?? 0) * servingScale
     }
 
     private var fatForServing: Double {
-        (selectedFoodItem?.fatG ?? 0) * servingScale
+        isMeal ? mealFat : (selectedFoodItem?.fatG ?? 0) * servingScale
+    }
+
+    /// Sum of the current ingredients' amounts — what actually gets logged as this entry's
+    /// `servingSizeG` for a meal, since there's no separate serving-size control for one.
+    private var mealTotalGrams: Double {
+        ingredients.reduce(0) { $0 + $1.quantityG }
+    }
+
+    private var mealCalories: Double {
+        ingredients.reduce(0) { $0 + $1.caloriesPer100gSnapshot * $1.quantityG / 100 }
+    }
+
+    private var mealProtein: Double {
+        ingredients.reduce(0) { $0 + $1.proteinPer100gSnapshot * $1.quantityG / 100 }
+    }
+
+    private var mealCarb: Double {
+        ingredients.reduce(0) { $0 + $1.carbPer100gSnapshot * $1.quantityG / 100 }
+    }
+
+    private var mealFat: Double {
+        ingredients.reduce(0) { $0 + $1.fatPer100gSnapshot * $1.quantityG / 100 }
     }
 
     var body: some View {
@@ -189,64 +220,22 @@ struct LogFoodEntryView: View {
             .padding(.bottom, 8)
 
             Form {
-                Section("Serving") {
-                    HStack {
-                        Text("Serving Size")
-                        Spacer()
-                        Picker("", selection: $servingUnit) {
-                            Text("Grams").tag(ServingUnit.grams)
-                            Text("Ounces").tag(ServingUnit.ounces)
-                            Text(countUnitLabel.capitalized).tag(ServingUnit.count)
-                        }
-                        .labelsHidden()
-                        .onChange(of: servingUnit) { oldUnit, newUnit in
-                            convertServingAmount(from: oldUnit, to: newUnit)
-                        }
+                if isMeal {
+                    // A meal has no serving-size control (see `isMeal`), so Macronutrients
+                    // and Ingredients lead instead of Serving, which here is just
+                    // Brand/Meal/Date — per feedback that this reads better than
+                    // Serving-first when there's no amount to actually set.
+                    Section("Macronutrients") {
+                        macrosRow
                     }
-                    // The "≈Xg" hint stays inside this same row (rather than its own
-                    // conditionally-appearing row) so the Section's row count never changes
-                    // shape when toggling units — a List whose row/section structure changes
-                    // shape between states can permanently detach a row's controls from
-                    // their gesture recognizers (bit us before with the meal carousel and
-                    // date navigator; this field going untappable after a unit switch was
-                    // the same bug).
-                    HStack {
-                        Text(servingAmountLabel)
-                        Spacer()
-                        VStack(alignment: .trailing, spacing: 2) {
-                            TextField("Amount", text: $servingAmountText)
-                                .keyboardType(.decimalPad)
-                                .multilineTextAlignment(.trailing)
-                            if servingUnit != .grams, let servingSizeG {
-                                Text("≈ \(Int(servingSizeG))g")
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-                    HStack {
-                        Text("Brand")
-                        Spacer()
-                        Text(sourceLabel)
-                            .foregroundStyle(.secondary)
-                    }
-                    Picker("Meal", selection: $mealType) {
-                        ForEach(MealType.allCases) { type in
-                            Text(type.displayName).tag(type)
-                        }
-                    }
-                    DatePicker("Date", selection: $date)
-                }
-                // Not pinned above with the name/calories header — it scrolls with the rest,
-                // same as the Daily Log's own macro card.
-                Section("Macronutrients") {
-                    macrosRow
-                }
-                if !ingredients.isEmpty {
                     Section("Ingredients") {
                         ForEach(ingredients) { ingredient in
                             NavigationLink {
-                                MealIngredientDetailView(ingredient: ingredient)
+                                MealIngredientDetailView(ingredient: ingredient) {
+                                    deleteIngredient(ingredient)
+                                } onChange: {
+                                    handleIngredientsChanged()
+                                }
                             } label: {
                                 HStack {
                                     Text(ingredient.nameSnapshot)
@@ -256,6 +245,52 @@ struct LogFoodEntryView: View {
                                 }
                             }
                         }
+                    }
+                    Section("Serving") {
+                        brandMealDateRows
+                    }
+                } else {
+                    Section("Serving") {
+                        HStack {
+                            Text("Serving Size")
+                            Spacer()
+                            Picker("", selection: $servingUnit) {
+                                Text("Grams").tag(ServingUnit.grams)
+                                Text("Ounces").tag(ServingUnit.ounces)
+                                Text(countUnitLabel.capitalized).tag(ServingUnit.count)
+                            }
+                            .labelsHidden()
+                            .onChange(of: servingUnit) { oldUnit, newUnit in
+                                convertServingAmount(from: oldUnit, to: newUnit)
+                            }
+                        }
+                        // The "≈Xg" hint stays inside this same row (rather than its own
+                        // conditionally-appearing row) so the Section's row count never
+                        // changes shape when toggling units — a List whose row/section
+                        // structure changes shape between states can permanently detach a
+                        // row's controls from their gesture recognizers (bit us before with
+                        // the meal carousel and date navigator; this field going untappable
+                        // after a unit switch was the same bug).
+                        HStack {
+                            Text(servingAmountLabel)
+                            Spacer()
+                            VStack(alignment: .trailing, spacing: 2) {
+                                TextField("Amount", text: $servingAmountText)
+                                    .keyboardType(.decimalPad)
+                                    .multilineTextAlignment(.trailing)
+                                if servingUnit != .grams, let servingSizeG {
+                                    Text("≈ \(Int(servingSizeG))g")
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                        brandMealDateRows
+                    }
+                    // Not pinned above with the name/calories header — it scrolls with the
+                    // rest, same as the Daily Log's own macro card.
+                    Section("Macronutrients") {
+                        macrosRow
                     }
                 }
             }
@@ -267,6 +302,59 @@ struct LogFoodEntryView: View {
                     .disabled(!isValid)
             }
         }
+    }
+
+    /// Brand, meal-type picker, and date — shared between the meal and plain-food layouts of
+    /// the Serving section (a meal's just drops the Serving Size/Amount rows above these).
+    @ViewBuilder
+    private var brandMealDateRows: some View {
+        HStack {
+            Text("Brand")
+            Spacer()
+            Text(sourceLabel)
+                .foregroundStyle(.secondary)
+        }
+        Picker("Meal", selection: $mealType) {
+            ForEach(MealType.allCases) { type in
+                Text(type.displayName).tag(type)
+            }
+        }
+        DatePicker("Date", selection: $date)
+    }
+
+    /// Removes `ingredient` from this meal — from the catalog recipe (`selectedFoodItem`)
+    /// when logging fresh, or from this entry's own snapshot when editing one already
+    /// logged — and recomputes totals to match.
+    private func deleteIngredient(_ ingredient: MealIngredient) {
+        ingredients.removeAll { $0 === ingredient }
+        if editingEntry != nil {
+            editingEntry?.ingredientSnapshots.removeAll { $0 === ingredient }
+        } else {
+            selectedFoodItem?.ingredients.removeAll { $0 === ingredient }
+        }
+        modelContext.delete(ingredient)
+        handleIngredientsChanged()
+    }
+
+    /// Re-derives this meal's stored totals from its current ingredients — called after
+    /// adding, editing, or deleting one. For a not-yet-logged meal, updates the real catalog
+    /// `FoodItem` so every other screen that reads its macros stays correct. For an
+    /// already-logged entry, updates the entry's own fields directly rather than going
+    /// through `NutritionViewModel.updateEntry` — that re-derives macros from `foodItem`,
+    /// but here `foodItem` is `init(entry:)`'s synthetic, stale-at-init rebuild that doesn't
+    /// track live ingredient edits (see that initializer).
+    private func handleIngredientsChanged() {
+        if let editingEntry {
+            editingEntry.servingSizeG = mealTotalGrams
+            editingEntry.caloriesKcal = mealCalories
+            editingEntry.proteinG = mealProtein
+            editingEntry.carbG = mealCarb
+            editingEntry.fatG = mealFat
+        } else {
+            selectedFoodItem?.recomputeAggregateFromIngredients()
+        }
+        try? modelContext.save()
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     /// Protein/carb/fat for this entry's serving, styled to match the colored-dot macro
@@ -297,24 +385,46 @@ struct LogFoodEntryView: View {
     }
 
     private func save() {
-        guard let selectedFoodItem, let servingSizeG else { return }
-        if let editingEntry {
-            viewModel.updateEntry(
-                editingEntry,
-                foodItem: selectedFoodItem,
-                servingSizeG: servingSizeG,
-                mealType: mealType,
-                date: date,
-                context: modelContext
-            )
+        guard let selectedFoodItem else { return }
+        if isMeal {
+            // Ingredient edits already kept `selectedFoodItem`/`editingEntry` fully current
+            // via `handleIngredientsChanged` — there's no separate serving size to apply on
+            // top, just the meal-type/date the rest of this screen controls.
+            guard mealTotalGrams > 0 else { return }
+            if let editingEntry {
+                editingEntry.mealType = mealType
+                editingEntry.date = date
+                try? modelContext.save()
+                WidgetCenter.shared.reloadAllTimelines()
+            } else {
+                viewModel.logEntry(
+                    foodItem: selectedFoodItem,
+                    servingSizeG: mealTotalGrams,
+                    mealType: mealType,
+                    date: date,
+                    context: modelContext
+                )
+            }
         } else {
-            viewModel.logEntry(
-                foodItem: selectedFoodItem,
-                servingSizeG: servingSizeG,
-                mealType: mealType,
-                date: date,
-                context: modelContext
-            )
+            guard let servingSizeG else { return }
+            if let editingEntry {
+                viewModel.updateEntry(
+                    editingEntry,
+                    foodItem: selectedFoodItem,
+                    servingSizeG: servingSizeG,
+                    mealType: mealType,
+                    date: date,
+                    context: modelContext
+                )
+            } else {
+                viewModel.logEntry(
+                    foodItem: selectedFoodItem,
+                    servingSizeG: servingSizeG,
+                    mealType: mealType,
+                    date: date,
+                    context: modelContext
+                )
+            }
         }
         onSaved()
     }
@@ -362,10 +472,35 @@ struct LogFoodFlowView: View {
     }
 }
 
-/// Read-only detail for one ingredient inside a logged (or about-to-be-logged) meal — its
-/// serving within the recipe and the individual macros that contributes.
+/// Detail for one ingredient inside a logged (or about-to-be-logged) meal — its serving
+/// within the recipe and the individual macros that contributes. Its amount is editable
+/// (toggled via the trailing Edit/Done button) and it can be removed from the meal entirely;
+/// both call back to the owning `LogFoodEntryView` to keep the meal's totals in sync, since
+/// this view only owns the one ingredient, not the recipe it belongs to.
 private struct MealIngredientDetailView: View {
-    let ingredient: MealIngredient
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
+
+    @Bindable var ingredient: MealIngredient
+    let onDelete: () -> Void
+    let onChange: () -> Void
+
+    @State private var isEditing = false
+    @State private var amountText: String
+
+    init(ingredient: MealIngredient, onDelete: @escaping () -> Void, onChange: @escaping () -> Void) {
+        self.ingredient = ingredient
+        self.onDelete = onDelete
+        self.onChange = onChange
+        _amountText = State(initialValue: String(format: "%g", ingredient.quantityG))
+    }
+
+    /// The ingredient's own brand, or "My Meals" for one created locally — same convention
+    /// as `LogFoodEntryView.sourceLabel`.
+    private var sourceLabel: String {
+        guard let brand = ingredient.brandSnapshot, !brand.isEmpty else { return "My Meals" }
+        return brand
+    }
 
     private var scale: Double {
         ingredient.quantityG / 100
@@ -389,20 +524,7 @@ private struct MealIngredientDetailView: View {
 
     var body: some View {
         Form {
-            Section("Serving") {
-                HStack {
-                    Text("Amount")
-                    Spacer()
-                    Text("\(Int(ingredient.quantityG))g")
-                        .foregroundStyle(.secondary)
-                }
-                HStack {
-                    Text("Calories")
-                    Spacer()
-                    Text("\(Int(calories)) kcal")
-                        .foregroundStyle(.secondary)
-                }
-            }
+            // Macronutrients above Serving — same ordering as Log Food and New Meal.
             Section("Macronutrients") {
                 HStack(spacing: 12) {
                     macroChip(name: "Protein", color: .orange, grams: protein)
@@ -410,8 +532,61 @@ private struct MealIngredientDetailView: View {
                     macroChip(name: "Fat", color: .purple, grams: fat)
                 }
             }
+            Section("Serving") {
+                HStack {
+                    Text("Amount")
+                    Spacer()
+                    if isEditing {
+                        TextField("Amount", text: $amountText)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                        Text("g")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text("\(Int(ingredient.quantityG))g")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                HStack {
+                    Text("Calories")
+                    Spacer()
+                    Text("\(Int(calories)) kcal")
+                        .foregroundStyle(.secondary)
+                }
+                HStack {
+                    Text("Brand")
+                    Spacer()
+                    Text(sourceLabel)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            if isEditing {
+                Section {
+                    Button("Delete Ingredient", role: .destructive) {
+                        onDelete()
+                        dismiss()
+                    }
+                }
+            }
         }
         .navigationTitle(ingredient.nameSnapshot)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(isEditing ? "Done" : "Edit") {
+                    if isEditing {
+                        commitAmount()
+                    }
+                    isEditing.toggle()
+                }
+            }
+        }
+    }
+
+    private func commitAmount() {
+        guard let amount = Double(amountText), amount > 0, amount != ingredient.quantityG else { return }
+        ingredient.quantityG = amount
+        try? modelContext.save()
+        onChange()
     }
 
     private func macroChip(name: String, color: Color, grams: Double) -> some View {
