@@ -27,7 +27,7 @@ private enum ScanFlowState: Equatable {
 }
 
 private enum PickerTab: Hashable {
-    case recents
+    case history
     case myMeals
 }
 
@@ -50,10 +50,11 @@ struct FoodItemPickerView: View {
     let onSelect: (FoodItem) -> Void
 
     @State private var searchText = ""
-    @State private var selectedTab: PickerTab = .recents
+    @State private var selectedTab: PickerTab = .history
     @State private var onlineResults: [FoodItem] = []
     @State private var isSearchingOnline = false
     @State private var isShowingAllOnlineResults = false
+    @State private var isShowingAllRecents = false
     @State private var isPresentingNewFoodForm = false
     @State private var isPresentingNewMealForm = false
     @State private var mealToEdit: FoodItem?
@@ -61,6 +62,7 @@ struct FoodItemPickerView: View {
     @State private var scanState: ScanFlowState = .idle
 
     private static let collapsedOnlineResultCount = 10
+    private static let collapsedRecentCount = 7
 
     private let viewModel = NutritionViewModel()
 
@@ -72,24 +74,43 @@ struct FoodItemPickerView: View {
         !trimmedQuery.isEmpty
     }
 
-    /// Catalog matches actually created under My Meals — excludes anything with a brand, even
-    /// though a brand item lands in the same local catalog once it's been searched or logged.
-    private var localMatches: [FoodItem] {
-        viewModel.searchFoodItems(matching: searchText, in: modelContext).filter(Self.isMyMeal)
+    /// Search matches among real meals (built via New Meal/Edit Meal) — searching should
+    /// still find your own recipes by name, just under their own section.
+    private var matchingMeals: [FoodItem] {
+        viewModel.searchFoodItems(matching: searchText, in: modelContext).filter { $0.isMeal }
     }
 
-    /// Recently used items with a real brand — a My Meals item lives only under its own tab,
-    /// even after being logged, so recency doesn't pull it back into this list too.
+    /// Search matches among manually-added, non-meal foods — e.g. something typed in by
+    /// hand because it wasn't in Open Food Facts.
+    private var matchingManuallyAdded: [FoodItem] {
+        viewModel.searchFoodItems(matching: searchText, in: modelContext).filter(Self.isManuallyAdded)
+    }
+
+    /// Recently used items, any source — a meal lives only under its own tab even after
+    /// being logged, so recency doesn't pull it back into History too.
     private var recentItems: [FoodItem] {
-        viewModel.recentFoodItems(in: modelContext).filter { !Self.isMyMeal($0) }
+        viewModel.recentFoodItems(in: modelContext).filter { !$0.isMeal }
+    }
+
+    private var visibleRecentItems: [FoodItem] {
+        isShowingAllRecents ? recentItems : Array(recentItems.prefix(Self.collapsedRecentCount))
+    }
+
+    /// The full manually-added catalog (not just recently-used ones) — its own permanent
+    /// list under History, separate from the "used recently" Recents section above it.
+    private var manuallyAddedItems: [FoodItem] {
+        viewModel.searchFoodItems(matching: "", in: modelContext).filter(Self.isManuallyAdded)
     }
 
     private var myMealItems: [FoodItem] {
-        viewModel.searchFoodItems(matching: "", in: modelContext).filter(Self.isMyMeal)
+        viewModel.searchFoodItems(matching: "", in: modelContext).filter { $0.isMeal }
     }
 
-    private static nonisolated func isMyMeal(_ item: FoodItem) -> Bool {
-        (item.brand ?? "").isEmpty
+    /// A food typed in by hand rather than coming from Open Food Facts/a barcode scan —
+    /// distinct from a meal (see `FoodItem.isMeal`), which also has no brand but belongs
+    /// under My Meals instead.
+    private static nonisolated func isManuallyAdded(_ item: FoodItem) -> Bool {
+        !item.isMeal && (item.brand ?? "").isEmpty
     }
 
     private var visibleOnlineResults: [FoodItem] {
@@ -104,7 +125,7 @@ struct FoodItemPickerView: View {
 
             if !isSearching {
                 Picker("", selection: $selectedTab) {
-                    Text("Recents").tag(PickerTab.recents)
+                    Text("History").tag(PickerTab.history)
                     Text("My Meals").tag(PickerTab.myMeals)
                 }
                 .pickerStyle(.segmented)
@@ -116,12 +137,29 @@ struct FoodItemPickerView: View {
                     searchingContent
                 } else {
                     switch selectedTab {
-                    case .recents:
-                        if recentItems.isEmpty {
-                            ContentUnavailableView("No Recent Foods", systemImage: "clock", description: Text("Foods you search for or log will show up here."))
-                        } else {
-                            ForEach(recentItems) { item in foodRow(item) }
-                                .onDelete { offsets in deleteItems(recentItems, at: offsets) }
+                    case .history:
+                        Section("Recents") {
+                            if recentItems.isEmpty {
+                                Text("Foods you search for or log will show up here.")
+                                    .foregroundStyle(.secondary)
+                            } else {
+                                ForEach(visibleRecentItems) { item in foodRow(item) }
+                                    .onDelete { offsets in deleteItems(visibleRecentItems, at: offsets) }
+                                if !isShowingAllRecents && recentItems.count > Self.collapsedRecentCount {
+                                    Button("See More") {
+                                        isShowingAllRecents = true
+                                    }
+                                }
+                            }
+                        }
+                        Section("Foods Manually Added") {
+                            if manuallyAddedItems.isEmpty {
+                                Text("Foods you add by hand will show up here.")
+                                    .foregroundStyle(.secondary)
+                            } else {
+                                ForEach(manuallyAddedItems) { item in foodRow(item, showSource: false) }
+                                    .onDelete { offsets in deleteItems(manuallyAddedItems, at: offsets) }
+                            }
                         }
                     case .myMeals:
                         Button {
@@ -300,12 +338,20 @@ struct FoodItemPickerView: View {
     }
 
     /// Distinguishes, e.g., a Fairtrade banana from one created locally under the same name
-    /// — a brand name when the item came from Open Food Facts/a barcode scan, or "My Meals"
-    /// for anything created by hand. `showSource: false` drops that entirely (see `foodRow`).
+    /// — a brand name when the item came from Open Food Facts/a barcode scan, "My Meals" for
+    /// a recipe, or "Manually Added" for a plain food typed in by hand. `showSource: false`
+    /// drops this entirely (see `foodRow`).
     private func subtitle(for item: FoodItem, showSource: Bool = true) -> String {
         let base = "\(Int(item.caloriesPer100g.rounded())) kcal / 100g"
         guard showSource else { return base }
-        let source = (item.brand?.isEmpty == false) ? item.brand! : "My Meals"
+        let source: String
+        if let brand = item.brand, !brand.isEmpty {
+            source = brand
+        } else if item.isMeal {
+            source = "My Meals"
+        } else {
+            source = "Manually Added"
+        }
         return "\(base) / \(source)"
     }
 
@@ -328,13 +374,22 @@ struct FoodItemPickerView: View {
                 }
             }
         }
+        if !matchingMeals.isEmpty {
+            Section("My Meals") {
+                ForEach(matchingMeals) { item in foodRow(item, highlighting: trimmedQuery, showSource: false) }
+            }
+        }
         // Always shown while searching — not just when there's a local match — so a food
         // that isn't in the catalog yet still has somewhere to be added from. The "Add"
         // button stays even when there are matches too — someone might genuinely want a
         // second, differently-tracked item with the same name (e.g. their own recipe vs. a
         // store-bought version).
-        Section("My Meals") {
-            ForEach(localMatches) { item in foodRow(item, highlighting: trimmedQuery, showSource: false) }
+        Section("Foods Manually Added") {
+            ForEach(matchingManuallyAdded) { item in foodRow(item, highlighting: trimmedQuery, showSource: false) }
+            if matchingManuallyAdded.isEmpty {
+                Text("Item not found in database")
+                    .foregroundStyle(.secondary)
+            }
             Button {
                 isPresentingNewFoodForm = true
             } label: {

@@ -328,12 +328,13 @@ struct FoodHistoryView: View {
         }
     }
 
-    /// The brand this entry was logged under, or "My Meals" when it was created locally
-    /// rather than pulled from a brand's product data — lets someone tell apart, say, a
-    /// Fairtrade banana from one they created themselves under the same name.
+    /// The brand this entry was logged under, "My Meals" for a recipe (it carried its own
+    /// ingredient snapshots at log time), or "Manually Added" for a plain food typed in by
+    /// hand — lets someone tell apart, say, a Fairtrade banana from one they created
+    /// themselves under the same name.
     private func sourceLabel(for entry: FoodEntry) -> String {
-        guard let brand = entry.brandSnapshot, !brand.isEmpty else { return "My Meals" }
-        return brand
+        if let brand = entry.brandSnapshot, !brand.isEmpty { return brand }
+        return entry.ingredientSnapshots.isEmpty ? "Manually Added" : "My Meals"
     }
 
     private func deleteEntries(_ entries: [FoodEntry], at offsets: IndexSet) {

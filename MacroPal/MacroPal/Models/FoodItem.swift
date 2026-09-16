@@ -28,6 +28,11 @@ final class FoodItem {
     /// Food Facts' `serving_size` when a barcode scan provides one, or set by hand when
     /// creating a food; `nil` means no named unit, just a plain "serving" of that many grams.
     var servingUnitLabel: String?
+    /// True for a recipe built from other foods via New Meal/Edit Meal — drives the "My
+    /// Meals" tab in the food picker. Stored explicitly (rather than inferred from
+    /// `ingredients` being non-empty) so a meal edited down to zero ingredients still reads
+    /// as a meal instead of silently reclassifying as a manually-added plain food.
+    var isMeal: Bool = false
     /// The ingredients this food is composed of — e.g. a "Protein Yogurt Bowl" meal built
     /// from protein powder, yogurt, and almond milk. Empty for a plain (non-meal) food. When
     /// non-empty, this item's own macros and `defaultServingSizeG` are the aggregate of
@@ -49,6 +54,7 @@ final class FoodItem {
         lastUsedAt: Date? = nil,
         brand: String? = nil,
         servingUnitLabel: String? = nil,
+        isMeal: Bool = false,
         ingredients: [MealIngredient] = []
     ) {
         self.name = name
@@ -61,6 +67,7 @@ final class FoodItem {
         self.lastUsedAt = lastUsedAt
         self.brand = brand
         self.servingUnitLabel = servingUnitLabel
+        self.isMeal = isMeal
         self.ingredients = ingredients
     }
 

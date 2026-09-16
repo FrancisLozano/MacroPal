@@ -217,6 +217,7 @@ struct NewMealView: View {
             carbG: totalCarb * scale,
             fatG: totalFat * scale,
             defaultServingSizeG: grams,
+            isMeal: true,
             ingredients: ingredientModels
         )
         modelContext.insert(mealItem)

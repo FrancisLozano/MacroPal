@@ -89,11 +89,12 @@ struct LogFoodEntryView: View {
         selectedFoodItem?.defaultServingSizeG ?? 100
     }
 
-    /// The brand this food came from, or "My Meals" for one created locally — same
-    /// convention as the Daily Log and Choose Food screens.
+    /// The brand this food came from, "My Meals" for a recipe, or "Manually Added" for a
+    /// plain food typed in by hand — same convention as the Daily Log and Choose Food
+    /// screens.
     private var sourceLabel: String {
-        guard let brand = selectedFoodItem?.brand, !brand.isEmpty else { return "My Meals" }
-        return brand
+        if let brand = selectedFoodItem?.brand, !brand.isEmpty { return brand }
+        return isMeal ? "My Meals" : "Manually Added"
     }
 
     private func gramsPerUnit(_ unit: ServingAmountUnit) -> Double {
