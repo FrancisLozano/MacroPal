@@ -58,6 +58,7 @@ struct FoodItemPickerView: View {
     @State private var isPresentingNewFoodForm = false
     @State private var isPresentingNewMealForm = false
     @State private var mealToEdit: FoodItem?
+    @State private var manuallyAddedItemToEdit: FoodItem?
     @State private var isPresentingScanner = false
     @State private var scanState: ScanFlowState = .idle
 
@@ -157,8 +158,18 @@ struct FoodItemPickerView: View {
                                 Text("Foods you add by hand will show up here.")
                                     .foregroundStyle(.secondary)
                             } else {
-                                ForEach(manuallyAddedItems) { item in foodRow(item, showSource: false) }
-                                    .onDelete { offsets in deleteItems(manuallyAddedItems, at: offsets) }
+                                ForEach(manuallyAddedItems) { item in
+                                    foodRow(item, showSource: false)
+                                        .swipeActions(edge: .leading) {
+                                            Button {
+                                                manuallyAddedItemToEdit = item
+                                            } label: {
+                                                Label("Edit", systemImage: "pencil")
+                                            }
+                                            .tint(.blue)
+                                        }
+                                }
+                                .onDelete { offsets in deleteItems(manuallyAddedItems, at: offsets) }
                             }
                         }
                     case .myMeals:
@@ -234,6 +245,11 @@ struct FoodItemPickerView: View {
         .sheet(item: $mealToEdit) { item in
             NavigationStack {
                 EditMealView(mealItem: item)
+            }
+        }
+        .sheet(item: $manuallyAddedItemToEdit) { item in
+            NavigationStack {
+                NewFoodItemView(editing: item)
             }
         }
         .alert("Product Not Found", isPresented: notFoundBinding) {
@@ -503,6 +519,10 @@ private struct NewFoodItemView: View {
 
     let onCreate: (FoodItem) -> Void
 
+    /// The existing item being edited in place, or nil when this form is creating a new
+    /// one (a fresh manual entry or a barcode-scan review) — `save()` mutates this item
+    /// instead of inserting a new `FoodItem` when it's set.
+    private let editingItem: FoodItem?
     private let barcode: String?
     private let brand: String?
 
@@ -516,28 +536,32 @@ private struct NewFoodItemView: View {
     @State private var servingUnitLabel: String
 
     /// `prefillName` seeds the name field for the "add a food that wasn't in search"
-    /// affordance — ignored when `prefill` is given (the barcode-review flow), which has
-    /// its own name.
-    init(prefill: FoodItem? = nil, prefillName: String = "", onCreate: @escaping (FoodItem) -> Void) {
+    /// affordance — ignored when `prefill` or `editing` is given, which have their own name.
+    /// `editing` puts the form in edit-in-place mode for an already-saved manually-added
+    /// food (swipe-to-edit from "Foods Manually Added"); `prefill` is the barcode-review
+    /// flow, which always creates a new item on save.
+    init(editing item: FoodItem? = nil, prefill: FoodItem? = nil, prefillName: String = "", onCreate: @escaping (FoodItem) -> Void = { _ in }) {
         self.onCreate = onCreate
-        self.barcode = prefill?.barcode
-        self.brand = prefill?.brand
-        _name = State(initialValue: prefill?.name ?? prefillName)
+        self.editingItem = item
+        let source = item ?? prefill
+        self.barcode = source?.barcode
+        self.brand = source?.brand
+        _name = State(initialValue: source?.name ?? prefillName)
         // Always show the real number, including 0 — Open Food Facts genuinely reports 0
         // for some macros, and hiding it as a blank field both misleads (looks like
         // nothing was fetched) and fails validation (an empty field can't Save).
-        // Prefill's macros are stored per-100g; scale them to the item's own default
+        // Source's macros are stored per-100g; scale them to the item's own default
         // serving size since that's what this form now asks for.
-        _caloriesText = State(initialValue: prefill.map { Self.formatMacro($0.caloriesPer100g * $0.defaultServingSizeG / 100) } ?? "")
-        _proteinText = State(initialValue: prefill.map { Self.formatMacro($0.proteinG * $0.defaultServingSizeG / 100) } ?? "")
-        _carbText = State(initialValue: prefill.map { Self.formatMacro($0.carbG * $0.defaultServingSizeG / 100) } ?? "")
-        _fatText = State(initialValue: prefill.map { Self.formatMacro($0.fatG * $0.defaultServingSizeG / 100) } ?? "")
-        _servingSizeText = State(initialValue: prefill.map { Self.formatMacro($0.defaultServingSizeG) } ?? "100")
-        _servingUnitLabel = State(initialValue: prefill?.servingUnitLabel ?? "")
-        // A barcode-scanned prefill may already carry a named unit (from OFF's serving_size
-        // field, e.g. "medium apple") — default the picker to Serving so it's visible
-        // instead of silently hiding a value that's already there.
-        _servingSizeUnit = State(initialValue: (prefill?.servingUnitLabel?.isEmpty == false) ? .count : .grams)
+        _caloriesText = State(initialValue: source.map { Self.formatMacro($0.caloriesPer100g * $0.defaultServingSizeG / 100) } ?? "")
+        _proteinText = State(initialValue: source.map { Self.formatMacro($0.proteinG * $0.defaultServingSizeG / 100) } ?? "")
+        _carbText = State(initialValue: source.map { Self.formatMacro($0.carbG * $0.defaultServingSizeG / 100) } ?? "")
+        _fatText = State(initialValue: source.map { Self.formatMacro($0.fatG * $0.defaultServingSizeG / 100) } ?? "")
+        _servingSizeText = State(initialValue: source.map { Self.formatMacro($0.defaultServingSizeG) } ?? "100")
+        _servingUnitLabel = State(initialValue: source?.servingUnitLabel ?? "")
+        // A barcode-scanned prefill (or an already-edited item) may already carry a named
+        // unit (from OFF's serving_size field, e.g. "medium apple") — default the picker to
+        // Serving so it's visible instead of silently hiding a value that's already there.
+        _servingSizeUnit = State(initialValue: (source?.servingUnitLabel?.isEmpty == false) ? .count : .grams)
     }
 
     private static func formatMacro(_ value: Double) -> String {
@@ -660,7 +684,7 @@ private struct NewFoodItemView: View {
                 }
             }
         }
-        .navigationTitle("New Food")
+        .navigationTitle(editingItem == nil ? "New Food" : "Edit Food")
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") { save() }
@@ -684,6 +708,20 @@ private struct NewFoodItemView: View {
         // FoodItem stores macros per-100g throughout the app, but this form asks for them
         // per the entered serving size (matching how a nutrition label reads) — scale back.
         let scale = 100 / servingSizeGrams
+
+        if let editingItem {
+            editingItem.name = name.trimmingCharacters(in: .whitespaces)
+            editingItem.caloriesPer100g = enteredCalories * scale
+            editingItem.proteinG = enteredProtein * scale
+            editingItem.carbG = enteredCarb * scale
+            editingItem.fatG = enteredFat * scale
+            editingItem.defaultServingSizeG = servingSizeGrams
+            editingItem.servingUnitLabel = trimmedUnitLabel.isEmpty ? nil : trimmedUnitLabel
+            try? modelContext.save()
+            dismiss()
+            return
+        }
+
         let item = FoodItem(
             name: name.trimmingCharacters(in: .whitespaces),
             caloriesPer100g: enteredCalories * scale,
