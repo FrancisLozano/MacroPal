@@ -3,6 +3,30 @@
 **Status:** Living document — ongoing, not tied to a phase
 **Started:** 2026-09-06
 
+## Progress summary (as of 2026-09-15)
+
+9 of 16 triaged backlog items are Done, most recently letting a manually-added (non-meal)
+food's macros/serving size be edited in place via swipe-to-edit (da4b4f6), matching the
+affordance My Meals rows already had. 1 item was verified as "No change needed."
+
+Remaining open items, by priority:
+- **P1** — Redesign Workouts page (visual appeal + faster set logging). Already scoped: see
+  [discovery-workouts-body-redesign.md](discovery-workouts-body-redesign.md), which recommends
+  folding Body into Workouts as one "Training" surface (fixes the Body "separate page"
+  complaint too) and cutting steps out of `LogWorkoutSessionView`/`ExercisePickerView`.
+  Discussion stalled once already — needs sign-off on that recommendation before implementation
+  starts.
+- **P2** — Redesign food history (calories vs. target, per-entry macros, better scaling).
+- **P2** — Fold Body into another page (see discovery doc above — likely resolved as part of
+  the P1 Workouts item rather than separately).
+- **P2** — Replace Insights page with contextual info icons.
+- **P2** — Clicking a macro shows which foods contributed to it.
+- **P2** — Split Profile page into subpages.
+- **P3** — Nicer-looking exercise graph / workout-progress graphic.
+
+Next step: get a decision on the Workouts/Body redesign recommendation (biggest scoped win),
+otherwise pick one of the P2s.
+
 ## Purpose
 
 Phases 0–3 (core app) and the free half of Phase 5 (barcode scanning, home-screen widget) are
