@@ -9,22 +9,23 @@ import Charts
 struct WeightTrendChart: View {
     let points: [WeightTrendPoint]
     let goalWeightKg: Double
+    var unit: WeightUnit = .kg
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Chart {
                 ForEach(points) { point in
-                    PointMark(x: .value("Date", point.date), y: .value("Weight", point.weightKg))
+                    PointMark(x: .value("Date", point.date), y: .value("Weight", unit.fromKg(point.weightKg)))
                         .foregroundStyle(.secondary)
                         .symbolSize(30)
                 }
                 ForEach(points) { point in
-                    LineMark(x: .value("Date", point.date), y: .value("7-day Avg", point.rollingAverageKg))
+                    LineMark(x: .value("Date", point.date), y: .value("7-day Avg", unit.fromKg(point.rollingAverageKg)))
                         .foregroundStyle(.blue)
                         .lineStyle(StrokeStyle(lineWidth: 2))
                         .interpolationMethod(.catmullRom)
                 }
-                RuleMark(y: .value("Goal", goalWeightKg))
+                RuleMark(y: .value("Goal", unit.fromKg(goalWeightKg)))
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
                     .foregroundStyle(.green)
                     .annotation(position: .top, alignment: .trailing) {

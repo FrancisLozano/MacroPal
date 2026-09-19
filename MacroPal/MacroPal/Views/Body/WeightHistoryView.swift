@@ -10,6 +10,7 @@ struct WeightHistoryView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \WeightEntry.date, order: .reverse) private var entries: [WeightEntry]
     @Query private var profiles: [UserProfile]
+    @AppStorage(WeightUnit.storageKey) private var unit: WeightUnit = .lb
 
     @State private var isPresentingLogSheet = false
     @State private var isPresentingGoalWeightSheet = false
@@ -32,7 +33,8 @@ struct WeightHistoryView: View {
                         Section {
                             WeightTrendChart(
                                 points: viewModel.trendPoints(for: entries),
-                                goalWeightKg: profile.goalWeightKg
+                                goalWeightKg: profile.goalWeightKg,
+                                unit: unit
                             )
                         }
                     }
@@ -45,8 +47,8 @@ struct WeightHistoryView: View {
                                     Text("Goal Weight")
                                         .foregroundStyle(Color.primary)
                                     Spacer()
-                                    Text(profile.goalWeightKg, format: .number.precision(.fractionLength(1)))
-                                    Text("kg")
+                                    Text(unit.formatted(fromKg: profile.goalWeightKg))
+                                    Text(unit.symbol)
                                         .foregroundStyle(.secondary)
                                 }
                             }
@@ -55,9 +57,9 @@ struct WeightHistoryView: View {
                     ForEach(entries) { entry in
                         VStack(alignment: .leading, spacing: 2) {
                             HStack {
-                                Text(entry.weightKg, format: .number.precision(.fractionLength(1)))
+                                Text(unit.formatted(fromKg: entry.weightKg))
                                     .font(.headline)
-                                Text("kg")
+                                Text(unit.symbol)
                                     .foregroundStyle(.secondary)
                                 Spacer()
                                 Text(entry.date, format: .dateTime.month().day().year())

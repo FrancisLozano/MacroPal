@@ -8,6 +8,7 @@ import SwiftUI
 struct GoalWeightEditView: View {
     @Bindable var profile: UserProfile
     @Environment(\.dismiss) private var dismiss
+    @AppStorage(WeightUnit.storageKey) private var unit: WeightUnit = .lb
 
     @State private var goalWeightText: String
 
@@ -15,11 +16,11 @@ struct GoalWeightEditView: View {
 
     init(profile: UserProfile) {
         self.profile = profile
-        _goalWeightText = State(initialValue: String(format: "%.1f", profile.goalWeightKg))
+        _goalWeightText = State(initialValue: String(format: "%.1f", WeightUnit.stored.fromKg(profile.goalWeightKg)))
     }
 
     private var goalWeightKg: Double? {
-        Double(goalWeightText)
+        Double(goalWeightText).map(unit.toKg)
     }
 
     private var isValid: Bool {
@@ -33,7 +34,7 @@ struct GoalWeightEditView: View {
                 HStack {
                     TextField("Goal Weight", text: $goalWeightText)
                         .keyboardType(.decimalPad)
-                    Text("kg")
+                    Text(unit.symbol)
                         .foregroundStyle(.secondary)
                 }
             }

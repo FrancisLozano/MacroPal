@@ -10,12 +10,13 @@ struct LogWeightEntryView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
+    @AppStorage(WeightUnit.storageKey) private var unit: WeightUnit = .lb
+
     @State private var date: Date = .now
     @State private var weightText: String = ""
-    @State private var notes: String = ""
 
     private var weightKg: Double? {
-        Double(weightText)
+        Double(weightText).map(unit.toKg)
     }
 
     private var isValid: Bool {
@@ -29,16 +30,15 @@ struct LogWeightEntryView: View {
                 HStack {
                     TextField("Weight", text: $weightText)
                         .keyboardType(.decimalPad)
-                    Text("kg")
+                    Text(unit.symbol)
                         .foregroundStyle(.secondary)
                 }
                 DatePicker("Date", selection: $date, displayedComponents: .date)
             }
-            Section("Notes") {
-                TextField("Optional", text: $notes, axis: .vertical)
-            }
         }
         .navigationTitle("Log Weight")
+        .navigationBarTitleDisplayMode(.inline)
+        .presentationDetents([.height(260)])
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") { save() }
@@ -49,11 +49,7 @@ struct LogWeightEntryView: View {
 
     private func save() {
         guard let weightKg else { return }
-        let entry = WeightEntry(
-            date: date,
-            weightKg: weightKg,
-            notes: notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : notes
-        )
+        let entry = WeightEntry(date: date, weightKg: weightKg, notes: nil)
         modelContext.insert(entry)
         dismiss()
     }
