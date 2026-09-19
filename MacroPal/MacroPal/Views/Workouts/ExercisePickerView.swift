@@ -7,14 +7,17 @@ import SwiftUI
 import SwiftData
 
 /// Search an existing `Exercise` catalog, or create a new one inline. Calls `onSelect`
-/// with the chosen/created exercise and dismisses itself.
+/// with the chosen/created exercise and dismisses itself. Pass `suggestedGroups` to open on
+/// just those muscle groups, with a switch to see everything.
 struct ExercisePickerView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
+    var suggestedGroups: [MuscleGroup] = []
     let onSelect: (Exercise) -> Void
 
     @State private var searchText = ""
+    @State private var showsSuggestedOnly = true
     @State private var isPresentingNewExerciseForm = false
 
     private var results: [Exercise] {
@@ -27,22 +30,37 @@ struct ExercisePickerView: View {
                 sortBy: [SortDescriptor(\.name)]
             )
         }
-        return (try? modelContext.fetch(descriptor)) ?? []
+        let fetched = (try? modelContext.fetch(descriptor)) ?? []
+        // Searching always looks across everything; the suggestion filter only narrows browsing.
+        guard showsSuggestedOnly, !suggestedGroups.isEmpty, searchText.isEmpty else { return fetched }
+        return fetched.filter { suggestedGroups.contains($0.muscleGroup) }
     }
 
     var body: some View {
-        List {
-            ForEach(results) { exercise in
-                Button {
-                    onSelect(exercise)
-                    dismiss()
-                } label: {
-                    VStack(alignment: .leading) {
-                        Text(exercise.name)
-                            .foregroundStyle(Color.primary)
-                        Text(exercise.muscleGroup.displayName)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+        // The suggested/all switch sits outside the `List` so it stays live as the list changes.
+        VStack(spacing: 0) {
+            if !suggestedGroups.isEmpty {
+                Picker("Show", selection: $showsSuggestedOnly) {
+                    Text("Suggested").tag(true)
+                    Text("All").tag(false)
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal)
+                .padding(.bottom, 8)
+            }
+            List {
+                ForEach(results) { exercise in
+                    Button {
+                        onSelect(exercise)
+                        dismiss()
+                    } label: {
+                        VStack(alignment: .leading) {
+                            Text(exercise.name)
+                                .foregroundStyle(Color.primary)
+                            Text(exercise.muscleGroup.displayName)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
             }

@@ -7,6 +7,8 @@ import SwiftUI
 import SwiftData
 
 struct RootView: View {
+    @Environment(\.modelContext) private var modelContext
+
     var body: some View {
         TabView {
             NavigationStack {
@@ -26,6 +28,9 @@ struct RootView: View {
                 ProfileView()
             }
             .tabItem { Label("Profile", systemImage: "person.circle") }
+        }
+        .task {
+            StarterExerciseCatalog.seedIfNeeded(in: modelContext)
         }
     }
 }

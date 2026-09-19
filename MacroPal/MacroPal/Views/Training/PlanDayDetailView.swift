@@ -53,7 +53,7 @@ struct PlanDayDetailView: View {
         }
         .sheet(isPresented: $isPresentingExercisePicker) {
             NavigationStack {
-                ExercisePickerView { exercise in
+                ExercisePickerView(suggestedGroups: RoutineTemplate.muscleGroups(forDayNamed: day.name)) { exercise in
                     let planExercise = PlanExercise(order: day.exercises.count, exercise: exercise)
                     planExercise.day = day
                     modelContext.insert(planExercise)

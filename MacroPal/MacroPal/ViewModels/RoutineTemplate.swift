@@ -32,6 +32,20 @@ enum RoutineTemplate {
         }
     }
 
+    /// Muscle groups a day of this name trains, for suggesting exercises. Empty for a name
+    /// this file doesn't know.
+    static func muscleGroups(forDayNamed name: String) -> [MuscleGroup] {
+        switch name {
+        case push.name: [.chest, .shoulders, .arms]
+        case pull.name: [.back, .arms]
+        case legs.name: [.legs]
+        case legsAndAbs.name: [.legs, .core]
+        case upper.name: [.chest, .back, .shoulders, .arms]
+        case lower.name: [.legs, .core]
+        default: []
+        }
+    }
+
     /// Replaces `plan`'s days with a split for `weekdays` (`Calendar` weekday numbers), keeping
     /// the exercises of any day whose name carries over. Creates the plan if there isn't one.
     @discardableResult
