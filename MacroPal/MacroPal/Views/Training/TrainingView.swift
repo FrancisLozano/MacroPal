@@ -6,22 +6,20 @@
 import SwiftUI
 import SwiftData
 
-/// One surface for a gym session: weigh in, start a workout, and browse past sessions
-/// without leaving the tab. Replaces the separate Body and Workouts tabs.
+/// One surface for training: goals, starting a workout, and past sessions. Replaces the
+/// separate Body and Workouts tabs. Progress body map and the current-plan card slot in above
+/// the goals as they're built.
 ///
 /// The action buttons live in a plain `VStack` above the session `List` on purpose — buttons
 /// nested in a `List` whose sections change shape can go dead (see the Daily Log chevrons).
 struct TrainingView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: \WeightEntry.date, order: .reverse) private var weightEntries: [WeightEntry]
-    @Query private var profiles: [UserProfile]
 
     @State private var isPresentingLogWorkoutSheet = false
-    @State private var isPresentingLogWeightSheet = false
 
     var body: some View {
         VStack(spacing: 12) {
-            weightCard
+            GoalsCard()
             actionRow
             WorkoutHistoryView()
         }
@@ -31,58 +29,9 @@ struct TrainingView: View {
                 LogWorkoutSessionView()
             }
         }
-        .sheet(isPresented: $isPresentingLogWeightSheet) {
-            NavigationStack {
-                LogWeightEntryView()
-            }
-        }
         .task {
             _ = UserProfile.current(in: modelContext)
         }
-    }
-
-    private var weightCard: some View {
-        HStack {
-            NavigationLink {
-                WeightHistoryView()
-            } label: {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Weight")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    if let latest = weightEntries.first {
-                        HStack(alignment: .firstTextBaseline, spacing: 4) {
-                            Text(latest.weightKg, format: .number.precision(.fractionLength(1)))
-                                .font(.title2.bold())
-                            Text("kg")
-                                .foregroundStyle(.secondary)
-                        }
-                        if let goal = profiles.first?.goalWeightKg {
-                            Text("Goal \(goal.formatted(.number.precision(.fractionLength(1)))) kg")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    } else {
-                        Text("Not logged yet")
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .foregroundStyle(Color.primary)
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Button {
-                isPresentingLogWeightSheet = true
-            } label: {
-                Label("Log", systemImage: "plus")
-            }
-            .buttonStyle(.bordered)
-        }
-        .padding()
-        .background(.background.secondary, in: RoundedRectangle(cornerRadius: 12))
-        .padding(.horizontal)
     }
 
     private var actionRow: some View {
