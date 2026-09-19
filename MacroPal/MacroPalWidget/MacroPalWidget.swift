@@ -25,6 +25,9 @@ private func makeSharedModelContainer() -> ModelContainer? {
         Exercise.self,
         WorkoutSession.self,
         WorkoutSetEntry.self,
+        WorkoutPlan.self,
+        PlanDay.self,
+        PlanExercise.self,
         Insight.self,
     ])
     let configuration = ModelConfiguration(schema: schema, url: storeURL)

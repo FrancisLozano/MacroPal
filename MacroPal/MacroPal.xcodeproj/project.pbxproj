@@ -79,6 +79,7 @@
 				Models/UserProfile.swift,
 				Models/WeightEntry.swift,
 				Models/WorkoutSession.swift,
+				Models/WorkoutPlan.swift,
 				Models/WorkoutSetEntry.swift,
 				Networking/OpenFoodFactsClient.swift,
 				Networking/OpenFoodFactsProduct.swift,

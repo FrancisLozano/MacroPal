@@ -19,6 +19,7 @@ struct TrainingView: View {
 
     var body: some View {
         VStack(spacing: 12) {
+            CurrentPlanCard()
             GoalsCard()
             actionRow
             WorkoutHistoryView()
@@ -62,7 +63,7 @@ struct TrainingView: View {
         TrainingView()
     }
     .modelContainer(
-        for: [WeightEntry.self, UserProfile.self, WorkoutSession.self, WorkoutSetEntry.self, Exercise.self],
+        for: [WeightEntry.self, UserProfile.self, WorkoutSession.self, WorkoutSetEntry.self, Exercise.self, WorkoutPlan.self, PlanDay.self, PlanExercise.self],
         inMemory: true
     )
 }

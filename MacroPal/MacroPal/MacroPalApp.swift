@@ -20,6 +20,9 @@ struct MacroPalApp: App {
             Exercise.self,
             WorkoutSession.self,
             WorkoutSetEntry.self,
+            WorkoutPlan.self,
+            PlanDay.self,
+            PlanExercise.self,
             Insight.self,
         ])
         // Stored in the App Group container (not the app's private sandbox) so the
