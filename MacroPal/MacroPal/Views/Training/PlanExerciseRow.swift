@@ -24,11 +24,7 @@ struct PlanExerciseRow: View {
                 ExerciseTrackView(planExercise: planExercise)
             } label: {
                 HStack(spacing: 12) {
-                    Image(systemName: "figure.strengthtraining.traditional")
-                        .font(.title2)
-                        .foregroundStyle(Color.accentColor)
-                        .frame(width: 56, height: 56)
-                        .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 10))
+                    ExerciseThumbnail(exercise: planExercise.exercise)
                     VStack(alignment: .leading, spacing: 6) {
                         Text(planExercise.exercise?.name ?? "Unknown exercise")
                             .font(.headline)

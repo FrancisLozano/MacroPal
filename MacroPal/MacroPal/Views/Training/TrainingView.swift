@@ -6,23 +6,22 @@
 import SwiftUI
 import SwiftData
 
-/// One surface for training: goals, starting a workout, and past sessions. Replaces the
-/// separate Body and Workouts tabs. Progress body map and the current-plan card slot in above
-/// the goals as they're built.
-///
-/// The action buttons live in a plain `VStack` above the session `List` on purpose — buttons
-/// nested in a `List` whose sections change shape can go dead (see the Daily Log chevrons).
+/// One surface for training: progress body map, current plan, goals, and shortcuts to past
+/// sessions. Replaces the separate Body and Workouts tabs.
 struct TrainingView: View {
     @Environment(\.modelContext) private var modelContext
 
     @State private var isPresentingLogWorkoutSheet = false
 
     var body: some View {
-        VStack(spacing: 12) {
-            CurrentPlanCard()
-            GoalsCard()
-            actionRow
-            WorkoutHistoryView()
+        ScrollView {
+            VStack(spacing: 12) {
+                BodyMapCard()
+                CurrentPlanCard()
+                GoalsCard()
+                moreCard
+            }
+            .padding(.vertical)
         }
         .navigationTitle("Training")
         .sheet(isPresented: $isPresentingLogWorkoutSheet) {
@@ -35,26 +34,46 @@ struct TrainingView: View {
         }
     }
 
-    private var actionRow: some View {
-        HStack(spacing: 12) {
-            Button {
-                isPresentingLogWorkoutSheet = true
+    private var moreCard: some View {
+        VStack(spacing: 0) {
+            NavigationLink {
+                WorkoutHistoryView()
             } label: {
-                Label("Start Workout", systemImage: "dumbbell")
-                    .frame(maxWidth: .infinity)
+                moreRow("Workout History", systemImage: "clock.arrow.circlepath")
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-
+            Divider().padding(.leading, 44)
             NavigationLink {
                 ExerciseProgressView()
             } label: {
-                Label("Progress", systemImage: "chart.line.uptrend.xyaxis")
+                moreRow("Exercise Progress", systemImage: "chart.line.uptrend.xyaxis")
             }
-            .buttonStyle(.bordered)
-            .controlSize(.large)
+            Divider().padding(.leading, 44)
+            Button {
+                isPresentingLogWorkoutSheet = true
+            } label: {
+                moreRow("Log an Unplanned Workout", systemImage: "plus.circle", showsChevron: false)
+            }
         }
+        .buttonStyle(.plain)
+        .background(.background.secondary, in: RoundedRectangle(cornerRadius: 12))
         .padding(.horizontal)
+    }
+
+    private func moreRow(_ title: String, systemImage: String, showsChevron: Bool = true) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: systemImage)
+                .foregroundStyle(Color.accentColor)
+                .frame(width: 20)
+            Text(title)
+            Spacer()
+            if showsChevron {
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding()
+        .contentShape(Rectangle())
     }
 }
 
