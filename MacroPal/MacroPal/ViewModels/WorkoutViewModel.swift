@@ -50,4 +50,41 @@ final class WorkoutViewModel {
             context.insert(setEntry)
         }
     }
+
+    /// Logs one set straight into the session for `date`'s day, creating that session if this
+    /// is the first set of the day. Used by the plan's inline logging, which has no draft step.
+    func logSet(exercise: Exercise, weightKg: Double, reps: Int, on date: Date = .now, context: ModelContext) {
+        let dayStart = Calendar.current.startOfDay(for: date)
+        let dayEnd = Calendar.current.date(byAdding: .day, value: 1, to: dayStart) ?? date
+        let descriptor = FetchDescriptor<WorkoutSession>(
+            predicate: #Predicate { $0.date >= dayStart && $0.date < dayEnd },
+            sortBy: [SortDescriptor(\.date)]
+        )
+        let session: WorkoutSession
+        if let existing = (try? context.fetch(descriptor))?.first {
+            session = existing
+        } else {
+            session = WorkoutSession(date: date)
+            context.insert(session)
+        }
+        let setEntry = WorkoutSetEntry(
+            setNumber: session.setEntries.count + 1,
+            weightKg: weightKg,
+            reps: reps,
+            exercise: exercise
+        )
+        setEntry.session = session
+        context.insert(setEntry)
+    }
+
+    /// The most recent set logged for `exercise` in `sessions` (which must be newest-first).
+    static func lastSet(for exercise: Exercise, in sessions: [WorkoutSession]) -> WorkoutSetEntry? {
+        for session in sessions {
+            let sets = session.setEntries
+                .filter { $0.exercise == exercise }
+                .sorted { $0.setNumber < $1.setNumber }
+            if let last = sets.last { return last }
+        }
+        return nil
+    }
 }

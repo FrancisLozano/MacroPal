@@ -6,9 +6,14 @@
 import SwiftUI
 import SwiftData
 
-/// One planned workout: its exercises with target sets × reps. Add exercises from the toolbar.
+/// One planned workout: each exercise is a card where sets are logged inline. Add exercises
+/// from the toolbar; press and hold a card to remove it.
+///
+/// Cards live in a `ScrollView` rather than a `List` so their buttons stay live as exercises
+/// come and go (see the Daily Log chevron bug).
 struct PlanDayDetailView: View {
     @Environment(\.modelContext) private var modelContext
+    @Query(sort: \WorkoutSession.date, order: .reverse) private var sessions: [WorkoutSession]
 
     let day: PlanDay
 
@@ -23,22 +28,17 @@ struct PlanDayDetailView: View {
                     description: Text("Add the exercises you do on \(day.name) day.")
                 )
             } else {
-                List {
-                    ForEach(day.sortedExercises) { planExercise in
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(planExercise.exercise?.name ?? "Unknown exercise")
-                                Text(planExercise.exercise?.muscleGroup.displayName ?? "")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                ScrollView {
+                    VStack(spacing: 12) {
+                        ForEach(day.sortedExercises) { planExercise in
+                            ExerciseLogCard(planExercise: planExercise, sessions: sessions) {
+                                remove(planExercise)
                             }
-                            Spacer()
-                            Text("\(planExercise.targetSets) × \(planExercise.targetReps)")
-                                .foregroundStyle(.secondary)
                         }
                     }
-                    .onDelete(perform: deleteExercises)
+                    .padding()
                 }
+                .scrollDismissesKeyboard(.interactively)
             }
         }
         .navigationTitle(day.name)
@@ -62,13 +62,10 @@ struct PlanDayDetailView: View {
         }
     }
 
-    private func deleteExercises(at offsets: IndexSet) {
-        let sorted = day.sortedExercises
-        for index in offsets {
-            modelContext.delete(sorted[index])
-        }
+    private func remove(_ planExercise: PlanExercise) {
+        modelContext.delete(planExercise)
         // Close the gap so `order` stays contiguous for the next append.
-        for (order, remaining) in day.sortedExercises.filter({ !$0.isDeleted }).enumerated() {
+        for (order, remaining) in day.sortedExercises.filter({ $0 !== planExercise }).enumerated() {
             remaining.order = order
         }
     }
