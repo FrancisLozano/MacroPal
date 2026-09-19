@@ -8,18 +8,21 @@ import Charts
 
 struct WorkoutProgressChart: View {
     let points: [ExerciseProgressPoint]
+    @AppStorage(WeightUnit.storageKey) private var unit: WeightUnit = .lb
 
     var body: some View {
+        let topSetLabel = "Top Set (\(unit.symbol))"
+        let oneRepMaxLabel = "Est. 1RM (\(unit.symbol))"
         Chart {
             ForEach(points) { point in
-                LineMark(x: .value("Date", point.date), y: .value("Value", point.topSetWeightKg))
-                    .foregroundStyle(by: .value("Metric", "Top Set (kg)"))
-                    .symbol(by: .value("Metric", "Top Set (kg)"))
+                LineMark(x: .value("Date", point.date), y: .value("Value", unit.fromKg(point.topSetWeightKg)))
+                    .foregroundStyle(by: .value("Metric", topSetLabel))
+                    .symbol(by: .value("Metric", topSetLabel))
             }
             ForEach(points) { point in
-                LineMark(x: .value("Date", point.date), y: .value("Value", point.estimated1RM))
-                    .foregroundStyle(by: .value("Metric", "Est. 1RM (kg)"))
-                    .symbol(by: .value("Metric", "Est. 1RM (kg)"))
+                LineMark(x: .value("Date", point.date), y: .value("Value", unit.fromKg(point.estimated1RM)))
+                    .foregroundStyle(by: .value("Metric", oneRepMaxLabel))
+                    .symbol(by: .value("Metric", oneRepMaxLabel))
             }
         }
         .chartXAxis {

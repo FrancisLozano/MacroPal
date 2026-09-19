@@ -7,6 +7,8 @@ import SwiftUI
 import SwiftData
 
 struct WorkoutSessionDetailView: View {
+    @AppStorage(WeightUnit.storageKey) private var unit: WeightUnit = .lb
+
     let session: WorkoutSession
 
     private var sortedSets: [WorkoutSetEntry] {
@@ -39,7 +41,7 @@ struct WorkoutSessionDetailView: View {
     }
 
     private func setSummary(_ set: WorkoutSetEntry) -> String {
-        var parts = ["\(set.weightKg.formatted()) kg × \(set.reps)"]
+        var parts = ["\(unit.formattedLift(fromKg: set.weightKg)) \(unit.symbol) × \(set.reps)"]
         if let rpe = set.rpe {
             parts.append("RPE \(rpe.formatted())")
         }

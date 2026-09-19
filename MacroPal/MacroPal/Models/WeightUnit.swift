@@ -30,6 +30,11 @@ enum WeightUnit: String, CaseIterable, Identifiable {
         self == .kg ? value : value * Self.kgPerLb
     }
 
+    /// Lift weights, trailing ".0" dropped: "135", "62.5".
+    func formattedLift(fromKg kg: Double) -> String {
+        fromKg(kg).formatted(.number.precision(.fractionLength(0...1)))
+    }
+
     /// e.g. "154.3" — one decimal, no unit symbol.
     func formatted(fromKg kg: Double) -> String {
         fromKg(kg).formatted(.number.precision(.fractionLength(1)))

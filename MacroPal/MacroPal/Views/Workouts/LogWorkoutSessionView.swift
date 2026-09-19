@@ -9,6 +9,7 @@ import SwiftData
 struct LogWorkoutSessionView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @AppStorage(WeightUnit.storageKey) private var unit: WeightUnit = .lb
 
     @State private var date: Date = .now
     @State private var notes: String = ""
@@ -62,7 +63,7 @@ struct LogWorkoutSessionView: View {
     }
 
     private func setSummary(_ draft: DraftSetEntry) -> String {
-        var parts = ["\(draft.weightKg.formatted()) kg × \(draft.reps)"]
+        var parts = ["\(unit.formattedLift(fromKg: draft.weightKg)) \(unit.symbol) × \(draft.reps)"]
         if let rpe = draft.rpe {
             parts.append("RPE \(rpe.formatted())")
         }
@@ -83,6 +84,7 @@ struct LogWorkoutSessionView: View {
 /// previous set's values.
 private struct AddSetView: View {
     @Environment(\.dismiss) private var dismiss
+    @AppStorage(WeightUnit.storageKey) private var unit: WeightUnit = .lb
 
     var viewModel: WorkoutViewModel
 
@@ -119,7 +121,7 @@ private struct AddSetView: View {
                     TextField("0", text: $weightText)
                         .keyboardType(.decimalPad)
                         .multilineTextAlignment(.trailing)
-                    Text("kg")
+                    Text(unit.symbol)
                         .foregroundStyle(.secondary)
                 }
                 HStack {
@@ -155,14 +157,14 @@ private struct AddSetView: View {
         .onAppear {
             let defaults = viewModel.nextSetDefaults
             exercise = defaults.exercise
-            if defaults.weightKg > 0 { weightText = defaults.weightKg.formatted() }
+            if defaults.weightKg > 0 { weightText = unit.formattedLift(fromKg: defaults.weightKg) }
             if defaults.reps > 0 { repsText = String(defaults.reps) }
         }
     }
 
     private func addSet() {
         guard let exercise, let weightKg = Double(weightText), let reps = Int(repsText) else { return }
-        viewModel.addSet(exercise: exercise, weightKg: weightKg, reps: reps, rpe: Double(rpeText))
+        viewModel.addSet(exercise: exercise, weightKg: unit.toKg(weightKg), reps: reps, rpe: Double(rpeText))
         dismiss()
     }
 }
