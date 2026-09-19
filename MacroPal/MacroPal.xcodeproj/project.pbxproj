@@ -71,6 +71,7 @@
 		EEE0DE12304B5E070043FC7D /* Exceptions for "MacroPal" folder in "MacroPalWidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Models/AppSchema.swift,
 				Models/Exercise.swift,
 				Models/FoodEntry.swift,
 				Models/FoodItem.swift,

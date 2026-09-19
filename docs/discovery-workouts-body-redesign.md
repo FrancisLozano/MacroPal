@@ -72,11 +72,12 @@ Option 2: merge into a single Training-oriented surface where a weigh-in is a fa
 
 ## Implementation notes (for whoever touches this next)
 
-- **Adding a `@Model` means touching three places**, not one: the schema in
-  `MacroPalApp.swift`, the schema in `MacroPalWidget/MacroPalWidget.swift`, and the widget
-  target's file-membership list in `project.pbxproj` (the "membershipExceptions" block). The
-  widget opens the same on-disk store; a schema that's a subset of the app's risks the widget
-  mishandling the extra tables. (`WorkoutPlan.swift` was added this way.)
+- **Adding a `@Model` takes two steps:** list it in `AppSchema.models` (`Models/AppSchema.swift`,
+  the one schema shared by the app and the widget), and add its file to the widget target's
+  membership (the "membershipExceptions" block in `project.pbxproj`). The widget opens the
+  same on-disk store as the app, so the two must never have different schemas. Forgetting the
+  membership step fails the widget build rather than failing silently. (This used to be three
+  hand-edited places — two separate schema lists plus membership — until the list was shared.)
 - Buttons stay out of `List` sections whose shape changes (see the Daily Log chevron bug).
   The plan day and tracking screens use `ScrollView` + cards for that reason; the picker's
   Suggested/All switch sits above its `List`.

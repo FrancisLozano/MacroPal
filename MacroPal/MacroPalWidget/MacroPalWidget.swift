@@ -16,20 +16,7 @@ private func makeSharedModelContainer() -> ModelContainer? {
         return nil
     }
     let storeURL = groupURL.appendingPathComponent("MacroPal.sqlite")
-    let schema = Schema([
-        UserProfile.self,
-        FoodItem.self,
-        MealIngredient.self,
-        FoodEntry.self,
-        WeightEntry.self,
-        Exercise.self,
-        WorkoutSession.self,
-        WorkoutSetEntry.self,
-        WorkoutPlan.self,
-        PlanDay.self,
-        PlanExercise.self,
-        Insight.self,
-    ])
+    let schema = AppSchema.schema
     let configuration = ModelConfiguration(schema: schema, url: storeURL)
     return try? ModelContainer(for: schema, configurations: [configuration])
 }
