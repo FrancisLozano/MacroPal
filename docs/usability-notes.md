@@ -3,7 +3,7 @@
 **Status:** Living document — ongoing, not tied to a phase
 **Started:** 2026-09-06
 
-## Progress summary (as of 2026-09-19)
+## Progress summary (as of 2026-09-19, end of day)
 
 15 of 21 triaged backlog items are Done, 1 was verified as "No change needed", 5 are open.
 (The 09-15 summary said "9 of 16"; the table actually held 17 rows then — the counts below
@@ -24,6 +24,9 @@ Remaining open items, by priority:
   Training redesign — `WorkoutProgressChart` is still the plain two-line chart).
 
 ### Next steps on the Training page
+
+**Start here next session:** spend ~10 minutes clicking through the "Not yet verified" list
+below (it's the cheapest way to catch bugs in what's already shipped), then take item 1.
 
 Roughly in the order I'd do them:
 
@@ -64,13 +67,32 @@ The body map's levels are a judgement call, so they're documented rather than bu
   dumbbells); leg press and calf raise are scaled down. One-arm row is probably underrated.
 - With no weight logged, every trained muscle just shows Beginner.
 
-### Not yet verified in the simulator
+### Verified vs. not yet verified in the simulator
 
-Exercise-row muscle thumbnails; unchecking a set; Add Set on the tracking screen; the
-ellipsis menu (edit sets & reps / remove); dragging to reorder in the week view; editing an
-existing routine (exercises should carry over for days that keep their name); the bottom
-"more" list on the Training page; the home-screen widget after the schema change. Sessions
-logged from a plan day showing up in Workout History was also not checked.
+**Verified (2026-09-19):** Training tab layout; lb/kg toggle; Log Weight sheet; creating a
+5-day plan; week view; Current Plan card ("Today: Lower"); adding an exercise to a day;
+per-set tracking (logging set 3 with the check, "% of best 1RM" bar); starter catalog and the
+Suggested/All picker; body map colors after a squat session (quads + glutes Beginner);
+`MuscleLevelEngineTests` (8 passing); **home-screen widget after the shared-schema change** —
+it read the shared store and updated from 2,000 to 1,950 cal after logging a 50 kcal food.
+(Small widget only; not tried on a real device.)
+
+**Not yet verified:** exercise-row muscle thumbnails; unchecking a set; Add Set on the
+tracking screen; the ellipsis menu (edit sets & reps / remove); dragging to reorder in the
+week view; editing an existing routine (exercises should carry over for days that keep their
+name); the bottom "more" list on the Training page (Workout History / Exercise Progress / Log
+an Unplanned Workout); sessions logged from a plan day appearing in Workout History; the
+medium-size widget; anything on a physical device.
+
+### Housekeeping
+
+- The simulator has leftover test data from these sessions: a "rwoaw" food entry logged for
+  today (50 kcal), a Back Squat with 3 sets of 135 lb × 10, a 5-day plan, and a weight entry
+  of 227 lb whose origin is unknown (it appeared between two runs; I didn't knowingly log it).
+  None of it is in the repo.
+- Untracked and left alone: `MacroPal.xcodeproj/xcshareddata/` and `scratchpad/`.
+- Adding a database model is now two steps — list it in `AppSchema.models`, and add its file
+  to the widget target's membership — see the discovery doc's implementation notes.
 
 ## Purpose
 
