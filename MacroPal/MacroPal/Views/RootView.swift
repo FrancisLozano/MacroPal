@@ -15,14 +15,9 @@ struct RootView: View {
             .tabItem { Label("Nutrition", systemImage: "fork.knife") }
 
             NavigationStack {
-                WeightHistoryView()
+                TrainingView()
             }
-            .tabItem { Label("Body", systemImage: "figure.stand") }
-
-            NavigationStack {
-                WorkoutHistoryView()
-            }
-            .tabItem { Label("Workouts", systemImage: "dumbbell") }
+            .tabItem { Label("Training", systemImage: "dumbbell") }
 
             // Insights tab removed for now — revisit later (per project backlog: replace
             // with contextual info icons at point of relevance instead of its own tab).

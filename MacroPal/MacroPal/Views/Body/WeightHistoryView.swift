@@ -74,7 +74,7 @@ struct WeightHistoryView: View {
                 }
             }
         }
-        .navigationTitle("Body")
+        .navigationTitle("Weight")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
