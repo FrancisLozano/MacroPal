@@ -6,10 +6,10 @@
 import SwiftUI
 import SwiftData
 
-/// One planned workout: each exercise is a card where sets are logged inline. Add exercises
-/// from the toolbar; press and hold a card to remove it.
+/// One planned workout as a list of exercises. Tap an exercise to track its sets; the ellipsis
+/// edits its sets × reps or removes it.
 ///
-/// Cards live in a `ScrollView` rather than a `List` so their buttons stay live as exercises
+/// Rows live in a `ScrollView` rather than a `List` so their buttons stay live as exercises
 /// come and go (see the Daily Log chevron bug).
 struct PlanDayDetailView: View {
     @Environment(\.modelContext) private var modelContext
@@ -19,38 +19,43 @@ struct PlanDayDetailView: View {
 
     @State private var isPresentingExercisePicker = false
 
+    private var todaysSession: WorkoutSession? {
+        sessions.first { Calendar.current.isDateInToday($0.date) }
+    }
+
+    private func setsLoggedToday(for planExercise: PlanExercise) -> Int {
+        guard let exercise = planExercise.exercise else { return 0 }
+        return todaysSession?.setEntries.filter { $0.exercise == exercise }.count ?? 0
+    }
+
     var body: some View {
-        Group {
-            if day.exercises.isEmpty {
-                ContentUnavailableView(
-                    "No Exercises Yet",
-                    systemImage: "dumbbell",
-                    description: Text("Add the exercises you do on \(day.name) day.")
-                )
-            } else {
-                ScrollView {
-                    VStack(spacing: 12) {
-                        ForEach(day.sortedExercises) { planExercise in
-                            ExerciseLogCard(planExercise: planExercise, sessions: sessions) {
-                                remove(planExercise)
-                            }
-                        }
-                    }
-                    .padding()
+        ScrollView {
+            VStack(spacing: 12) {
+                if day.exercises.isEmpty {
+                    Text("Add the exercises you do on \(day.name) day.")
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.vertical, 24)
                 }
-                .scrollDismissesKeyboard(.interactively)
-            }
-        }
-        .navigationTitle(day.name)
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
+                ForEach(day.sortedExercises) { planExercise in
+                    PlanExerciseRow(
+                        planExercise: planExercise,
+                        setsLoggedToday: setsLoggedToday(for: planExercise)
+                    ) {
+                        remove(planExercise)
+                    }
+                }
                 Button {
                     isPresentingExercisePicker = true
                 } label: {
                     Label("Add Exercise", systemImage: "plus")
+                        .frame(maxWidth: .infinity, minHeight: 44)
                 }
+                .buttonStyle(.bordered)
             }
+            .padding()
         }
+        .navigationTitle(day.name)
         .sheet(isPresented: $isPresentingExercisePicker) {
             NavigationStack {
                 ExercisePickerView(suggestedGroups: RoutineTemplate.muscleGroups(forDayNamed: day.name)) { exercise in

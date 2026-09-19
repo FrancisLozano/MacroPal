@@ -53,7 +53,8 @@ final class WorkoutViewModel {
 
     /// Logs one set straight into the session for `date`'s day, creating that session if this
     /// is the first set of the day. Used by the plan's inline logging, which has no draft step.
-    func logSet(exercise: Exercise, weightKg: Double, reps: Int, on date: Date = .now, context: ModelContext) {
+    @discardableResult
+    func logSet(exercise: Exercise, weightKg: Double, reps: Int, on date: Date = .now, context: ModelContext) -> WorkoutSetEntry {
         let dayStart = Calendar.current.startOfDay(for: date)
         let dayEnd = Calendar.current.date(byAdding: .day, value: 1, to: dayStart) ?? date
         let descriptor = FetchDescriptor<WorkoutSession>(
@@ -75,6 +76,17 @@ final class WorkoutViewModel {
         )
         setEntry.session = session
         context.insert(setEntry)
+        return setEntry
+    }
+
+    /// The best estimated one-rep max (kg) across every logged set of `exercise`, used as the
+    /// reference a planned set's weight is shown as a percentage of.
+    static func bestEstimated1RMKg(for exercise: Exercise, in sessions: [WorkoutSession]) -> Double? {
+        sessions
+            .flatMap(\.setEntries)
+            .filter { $0.exercise == exercise && $0.reps > 0 }
+            .map { OneRepMaxEstimator.epley(weightKg: $0.weightKg, reps: $0.reps) }
+            .max()
     }
 
     /// The most recent set logged for `exercise` in `sessions` (which must be newest-first).
