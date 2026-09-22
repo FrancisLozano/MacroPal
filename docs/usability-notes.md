@@ -10,24 +10,42 @@
 (The 09-15 summary said "9 of 16"; the table actually held 17 rows then — the counts below
 are recounted from the table.)
 
-This stretch closed the P1 Workouts redesign and the P2 "fold Body into another page" item
-together, following [discovery-workouts-body-redesign.md](discovery-workouts-body-redesign.md)
+The 2026-09-19 stretch closed the P1 Workouts redesign and the P2 "fold Body into another
+page" item together, following [discovery-workouts-body-redesign.md](discovery-workouts-body-redesign.md)
 (Option 2): Body and Workouts are now **one Training tab**, built out from a whiteboard
 sketch of the user's — progress body map on top, Current Plan (today's workout, tap for the
 week), Goals below. Body weight and lifts can be shown in lb or kg (default lb).
 
+**2026-09-22:** a simulator pass over everything still unverified (no broken features, seven
+rough edges logged in the Backlog), fixes for the two worst ones, and the steps goal from the
+whiteboard. Commits, in order:
+- `fc7d42a` — tracking screen carries a logged set's weight into the empty sets below it.
+- `ab0bd10` — Edit Routine warns when a day's exercises would be removed
+  (`RoutineTemplate.match` + `RoutineTemplateTests`).
+- `0cafc2d` — notes for the simulator pass and those fixes.
+- `a46cfe9` — daily steps goal with a bar chart (`StepEntry`, `UserProfile.stepGoal`,
+  `StepsViewModelTests`).
+- `cbeb8e2` — notes for the steps goal.
+
 Remaining open items, by priority:
 - **P2** — Redesign food history (calories vs. target, per-entry macros, better scaling).
+  **Probably stale:** `ab68f73` turned Food History into a day-by-day diary and `4e02e89`
+  redesigned the Daily Log header and macros card, but the row was never updated. Check the
+  current screen against the three original dislikes before closing it.
 - **P2** — Replace Insights page with contextual info icons.
 - **P2** — Clicking a macro shows which foods contributed to it.
 - **P2** — Split Profile page into subpages.
+- **P2** — Log Workout (unplanned) sheet has no Cancel button.
 - **P3** — Nicer-looking exercise graph / workout-progress graphic (not touched by the
   Training redesign — `WorkoutProgressChart` is still the plain two-line chart).
+- **P3** — Small rough edges from the 2026-09-22 pass: Edit Routine carries exercises to the
+  first same-named day; no way to delete an extra Add Set row; widget macro order differs
+  from the app; Workout History rows don't show the plan day or exercises.
 
 ### Next steps on the Training page
 
-**Start here next session:** item 1 (steps goal) is built — manual entry, see the Backlog row;
-next is item 2. The click-through of the "Not yet verified" list
+**Start here next session:** item 2 (body map polish). Item 1 (steps goal) is built with
+manual entry — see below and the Backlog row. The click-through of the "Not yet verified" list
 was done on 2026-09-22 (see below); it turned up no broken features, just seven rough edges
 that are now in the Backlog. The two worst (tracking-screen prefill, and routine edits
 silently dropping exercises) were fixed the same day and checked in the simulator.
@@ -36,15 +54,31 @@ Roughly in the order I'd do them:
 
 1. ~~**Steps goal + bar chart.**~~ Done 2026-09-22 with manual entry: a Steps row on the
    Goals card (today vs. goal, Log, chart) and a Steps screen with 7/30-day bars against the
-   goal. **Still open:** HealthKit import (needs a real device and permissions — can't be
-   tested in the simulator); the Log sheet, like Log Weight, closes and drops what was typed
-   if you tap the dimmed area above it.
+   goal. Decisions worth knowing:
+   - **One total per day.** Steps are a running daily count, not separate readings like
+     weigh-ins, so logging a day that already has a total replaces it. The Log sheet shows
+     the picked day's current total, opens with the keyboard up, and won't pick future dates.
+   - **The summary counts logged days only** ("Average per logged day", "Goal met: 1 of 2
+     days"). With manual entry a blank day usually means "didn't log", not "didn't walk".
+     Switching to every day in the range is a small change in `StepsHistoryView.summary`.
+   - Bars are green when the goal is met, blue otherwise; the goal is a grey dashed line.
+     The 30-day axis uses explicit weekly marks because automatic ones clipped the last label.
+   - `stepGoal` is defaulted where it's declared (10,000), which is what lets existing
+     stores migrate without a versioned schema — checked against the real simulator data.
+
+   **Still open:** HealthKit import (needs a real device and permissions — can't be tested
+   in the simulator); the Log Steps sheet, like Log Weight, closes and drops what was typed if
+   you tap the dimmed area above it; Log Weight doesn't focus its field on open the way Log
+   Steps now does.
 2. **Body map polish.** First pass is shipped but rough: the figures read as a stiff
    mannequin, untrained muscles are barely darker than the silhouette, the back-view traps
    look odd, abs are one flat block. Also worth trying the "Weekly" toggle from the reference
    image (level vs. this-week's training).
 3. **Exercise progress graphic** (the open P3 above), and give it a "progress toward
    something" element — the third success criterion in the discovery doc is still unmet.
+   Seen on 2026-09-22: the Exercise Progress chart has no date labels on its x-axis, and the
+   tracking screen's "% of best 1RM" compares a first-ever set against itself (logging 95 lb ×
+   8 as the only Barbell Row showed "79% of 120.3 lb", the 1RM estimated from that same set).
 4. **Faster logging for unplanned workouts.** Plan-driven logging is fast now (one check per
    set, prefilled), but "Log an Unplanned Workout" still uses the old flow: + → Add Set →
    Choose Exercise → fields, up to three sheets deep. The tap-count baseline the discovery doc
@@ -105,6 +139,16 @@ macros); Remove from Plan. Rough edges found are in the Backlog, sourced "Simula
 - The simulator with this data is the **iPhone 17 Pro**; its store is the app-group
   `MacroPal.sqlite` (open it with `sqlite3 -readonly` to check what an edit actually saved).
 - Untracked and left alone: `MacroPal.xcodeproj/xcshareddata/` and `scratchpad/`.
+- **Testing in the simulator — gotchas from 2026-09-22:**
+  - `xcodebuild test` runs on a clone and leaves the iPhone 17 Pro shut down; boot it again
+    (`xcrun simctl boot <udid>`) before launching the app.
+  - After that reboot, the simulator tool's screenshots failed every time (`captureFailed`)
+    while taps still worked. `xcrun simctl io <udid> screenshot <file>.png` works instead.
+  - Sheets slide up when the keyboard opens, so the Save button moves — re-check its position
+    before tapping. To close a date-picker popover, tap inside the sheet; tapping the dimmed
+    area closes the whole sheet and loses the input.
+  - SwiftData autosaves a moment later, so a `sqlite3` read right after an edit can still show
+    the old value — wait a few seconds before concluding a save failed.
 - Adding a database model is now two steps — list it in `AppSchema.models`, and add its file
   to the widget target's membership — see the discovery doc's implementation notes.
 
