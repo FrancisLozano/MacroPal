@@ -165,6 +165,18 @@ struct ExerciseTrackView: View {
                 exercise: exercise, weightKg: unit.toKg(weight), reps: reps, context: modelContext
             )
             isEditing = false
+            fillForward(from: row.wrappedValue)
+        }
+    }
+
+    /// Copies a just-logged set into the later rows that don't have a weight yet, so on a
+    /// first-ever session the weight only has to be typed once. Rows with a weight are left
+    /// alone — that's either a prefill from history or something the user typed.
+    private func fillForward(from logged: SetRow) {
+        guard let index = rows.firstIndex(where: { $0.id == logged.id }) else { return }
+        for later in rows.indices where later > index && rows[later].entry == nil && rows[later].weightText.isEmpty {
+            rows[later].weightText = logged.weightText
+            rows[later].repsText = logged.repsText
         }
     }
 
@@ -188,7 +200,7 @@ struct ExerciseTrackView: View {
     }
 
     private func blankRow() -> SetRow {
-        if let last = rows.last(where: { $0.entry == nil }) ?? rows.last {
+        if let last = rows.last(where: { !$0.weightText.isEmpty }) ?? rows.last {
             return SetRow(weightText: last.weightText, repsText: last.repsText)
         }
         if let exercise, let last = WorkoutViewModel.lastSet(for: exercise, in: sessions) {
