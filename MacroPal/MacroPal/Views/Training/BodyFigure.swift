@@ -26,15 +26,41 @@ enum LevelPalette {
     }
 }
 
+/// Colors for the four weekly-volume bands (see `WeeklyMuscleVolume`) — one blue, light to
+/// dark, so "more" reads as "deeper" and it can't be mistaken for the level colors.
+enum VolumePalette {
+    static let colors: [Color] = [
+        Color(red: 0.62, green: 0.78, blue: 0.98),
+        Color(red: 0.40, green: 0.63, blue: 0.96),
+        Color(red: 0.20, green: 0.45, blue: 0.88),
+        Color(red: 0.10, green: 0.26, blue: 0.68),
+    ]
+
+    /// `band` is 1…4 (0 = untrained this week, which isn't a palette color).
+    static func color(forBand band: Int) -> Color {
+        colors[min(max(band, 1), colors.count) - 1]
+    }
+
+    /// The lightest band is too pale for white text.
+    static func labelColor(forBand band: Int) -> Color {
+        band <= 1 ? Color(red: 0.08, green: 0.2, blue: 0.5) : .white
+    }
+}
+
 /// A stylized front or back figure whose muscles are filled from `colors`. Muscles missing
 /// from `colors` draw in the neutral "untrained" gray.
+///
+/// Every outline is a list of points joined by a smooth curve (see `smoothPath`), so the
+/// shapes read as muscle rather than as a faceted mannequin. Muscles are kept a little apart
+/// from each other so the silhouette shows through as thin separation lines.
 struct BodyFigure: View {
     let side: BodySide
     var colors: [Muscle: Color] = [:]
 
     private struct Part {
         let muscle: Muscle
-        /// Left-half outline in a 100 × 210 space; `mirrored` adds the right-hand copy.
+        /// Outline in a 100 × 210 space, on the figure's left half (screen left) unless
+        /// `mirrored` is false; mirrored parts also draw a right-hand copy.
         let points: [CGPoint]
         let mirrored: Bool
     }
@@ -48,51 +74,78 @@ struct BodyFigure: View {
     }
 
     // Shared by both sides.
-    private static let shoulders = part(.shoulders, [(29, 30), (21, 34), (18, 44), (24, 48), (30, 42), (31, 33)])
-    private static let forearms = part(.forearms, [(15, 67), (22, 68), (20, 86), (17, 98), (11, 98), (13, 84)])
-    private static let upperArm: [(Double, Double)] = [(18, 49), (25, 50), (25, 63), (21, 67), (15, 63)]
+    private static let forearms = part(.forearms, [(14.5, 72), (21, 71.5), (22, 77), (18.5, 92), (13, 93), (12, 84)])
 
-    // Drawn back-to-front, so later parts sit on top of earlier ones.
     private static let frontParts: [Part] = [
-        part(.quads, [(36, 106), (49, 106), (48, 130), (46, 148), (37, 148), (33, 130)]),
-        part(.calves, [(36, 158), (45, 158), (44, 190), (38, 194), (35, 176)]),
-        part(.obliques, [(36, 54), (43, 54), (43, 92), (37, 90), (35, 72)]),
-        part(.abs, [(44, 52), (56, 52), (56, 92), (44, 92)], mirrored: false),
-        part(.chest, [(49, 31), (37, 30), (31, 35), (31, 44), (37, 50), (49, 49)]),
-        shoulders,
-        part(.biceps, upperArm),
+        part(.shoulders, [(30, 36), (24, 37.5), (20.5, 43), (20, 51), (23.5, 53), (27, 46), (31, 40)]),
+        part(.chest, [(48.5, 38), (40, 37), (32.5, 40.5), (29.5, 46), (32, 52.5), (40, 56), (48.5, 54)]),
+        part(.biceps, [(20.5, 56), (26, 55.5), (27, 61), (24.5, 69), (19.5, 69.5), (18, 63)]),
         forearms,
+        // Six-pack: three rows plus the tapering lower abs, each side mirrored.
+        part(.abs, [(43.5, 58.5), (49, 58), (49, 66.5), (43.5, 67)]),
+        part(.abs, [(43.5, 69), (49, 68.5), (49, 77), (43.5, 77.5)]),
+        part(.abs, [(43.5, 79.5), (49, 79), (49, 88), (44, 88.5)]),
+        part(.abs, [(44, 90.5), (49, 90), (49, 104), (46.5, 102)]),
+        part(.obliques, [(34, 60), (41.5, 60.5), (42, 74), (41.5, 88), (38.5, 91), (35.5, 82), (33.5, 70)]),
+        part(.quads, [(34.5, 108), (41, 106), (46, 113), (45.5, 125), (42.5, 136), (39.5, 146.5), (36, 146.5), (33.5, 134), (33, 120)]),
+        part(.quads, [(47.5, 121), (48.5, 130), (47.5, 142), (44.5, 148), (41.5, 147.5), (43, 141), (45.5, 131)]),
+        part(.calves, [(35.5, 158), (39, 156.5), (40.5, 167), (39, 183), (36.5, 180), (35, 169)]),
+        part(.calves, [(43, 157), (46.5, 158.5), (46.5, 170), (44.5, 182), (42.5, 170)]),
     ]
 
     private static let backParts: [Part] = [
-        part(.lats, [(49, 54), (41, 42), (33, 46), (34, 62), (40, 84), (49, 86)]),
-        part(.lowerBack, [(50, 86), (44, 86), (43, 98), (50, 98)]),
-        part(.glutes, [(50, 100), (36, 100), (34, 114), (40, 122), (50, 120)]),
-        part(.hamstrings, [(49, 124), (35, 122), (33, 140), (36, 150), (47, 150), (48, 138)]),
-        part(.calves, [(36, 156), (45, 156), (45, 176), (42, 190), (37, 184), (35, 170)]),
-        shoulders,
-        part(.triceps, upperArm),
+        part(.traps, [(46.5, 25), (44.5, 30.5), (34, 34.5), (30.5, 37.5), (40, 42), (46, 52), (50, 64),
+                      (54, 52), (60, 42), (69.5, 37.5), (66, 34.5), (55.5, 30.5), (53.5, 25)], mirrored: false),
+        part(.shoulders, [(28.5, 37.5), (23.5, 38.5), (20.5, 43), (20, 51), (23.5, 53), (27.5, 46), (32, 41)]),
+        part(.triceps, [(20, 55.5), (26, 55), (27, 61), (25, 69), (20, 69.5), (18, 62)]),
         forearms,
-        part(.traps, [(50, 24), (40, 28), (33, 32), (41, 40), (50, 52)]),
+        part(.lats, [(44.5, 57), (38, 45.5), (32, 46), (31.5, 56), (35, 72), (40.5, 86), (45, 82), (46.5, 68)]),
+        part(.lowerBack, [(48.5, 67), (49, 99), (43, 99.5), (42.5, 90), (46.5, 82)]),
+        part(.glutes, [(49, 102), (40.5, 101.5), (34.5, 106), (33, 116), (37.5, 123), (45.5, 122.5), (49, 118)]),
+        part(.hamstrings, [(34.5, 127), (40, 126), (41, 136), (39.5, 150), (36, 150), (33.5, 140)]),
+        part(.hamstrings, [(42, 126), (47.5, 127.5), (47.5, 140), (45, 150), (41.5, 150), (42.5, 138)]),
+        part(.calves, [(35.5, 157), (40.5, 155.5), (41, 167), (39.5, 180), (36.5, 177), (34.5, 167)]),
+        part(.calves, [(42, 155.5), (46.5, 157), (47, 168), (44.5, 183), (41.5, 170)]),
     ]
 
-    // Silhouette pieces (left half; mirrored). Torso runs top-centre to bottom-centre so its
-    // mirror closes into a single outline.
-    private static let torso = pts([(50, 26), (38, 27), (28, 30), (26, 38), (32, 52), (35, 70), (37, 90), (35, 104), (50, 106)])
-    private static let arm = pts([(28, 29), (20, 33), (15, 62), (11, 98), (10, 108), (17, 109), (19, 98), (24, 66), (31, 46)])
-    private static let leg = pts([(35, 102), (32, 128), (35, 152), (34, 174), (37, 198), (35, 207), (45, 207), (45, 198), (46, 174), (47, 152), (49, 128), (50, 110), (50, 102)])
-    private static let neck = pts([(46, 19), (54, 19), (54, 27), (46, 27)])
+    /// Left half of the whole body, from the side of the neck down the outside of the arm,
+    /// back up its inside, down the torso and leg, ending at the crotch on the centre line.
+    /// Mirrored and joined, it closes into one outline.
+    private static let outline = pts([
+        (45, 14), (44.5, 25), (44, 31), (36, 33), (27, 34.5), (21.5, 38.5), (18.5, 46), (17, 57), (14.5, 70),
+        (11.5, 84), (9.5, 97), (7.5, 103), (7.5, 111), (11, 114.5), (14.5, 108), (15.5, 99),
+        (19.5, 86), (23, 73), (27, 60), (29, 51), (31.5, 58), (33.5, 72), (35.5, 86), (33.5, 98),
+        (32, 112), (32.5, 130), (35, 150), (34, 166), (36, 184), (38.5, 197), (35.5, 203.5),
+        (37, 207.5), (46, 207.5), (46.5, 198), (46.5, 184), (47, 166), (47.5, 150), (48.5, 132),
+        (49.5, 114), (50, 112),
+    ])
 
     private static func mirror(_ points: [CGPoint]) -> [CGPoint] {
         points.map { CGPoint(x: 100 - $0.x, y: $0.y) }
     }
 
-    private static func path(_ points: [CGPoint]) -> Path {
+    /// A closed Catmull-Rom curve through `points` — passes through every point, with no
+    /// corners anywhere.
+    private static func smoothPath(_ points: [CGPoint]) -> Path {
         var path = Path()
-        path.addLines(points)
+        let n = points.count
+        guard n > 2 else { return path }
+        path.move(to: points[0])
+        for i in 0..<n {
+            let p0 = points[(i - 1 + n) % n], p1 = points[i]
+            let p2 = points[(i + 1) % n], p3 = points[(i + 2) % n]
+            path.addCurve(
+                to: p2,
+                control1: CGPoint(x: p1.x + (p2.x - p0.x) / 6, y: p1.y + (p2.y - p0.y) / 6),
+                control2: CGPoint(x: p2.x - (p3.x - p1.x) / 6, y: p2.y - (p3.y - p1.y) / 6)
+            )
+        }
         path.closeSubpath()
         return path
     }
+
+    private static let bodyPath = smoothPath(outline + mirror(outline).reversed())
+    private static let headPath = Path(ellipseIn: CGRect(x: 40.5, y: 1.5, width: 19, height: 23))
 
     var body: some View {
         Canvas { context, size in
@@ -101,29 +154,18 @@ struct BodyFigure: View {
                 a: scale, b: 0, c: 0, d: scale,
                 tx: (size.width - 100 * scale) / 2, ty: (size.height - 210 * scale) / 2
             )
-            let silhouette = Color(.systemGray5)
-            let untrained = Color(.systemGray3)
+            let untrained = Color(.systemGray2)
 
-            func fill(_ path: Path, _ color: Color) {
-                let scaled = path.applying(transform)
-                context.fill(scaled, with: .color(color))
-                // A same-color stroke rounds the polygon corners so shapes read as muscle.
-                context.stroke(scaled, with: .color(color), style: StrokeStyle(lineWidth: 1.5 * scale, lineJoin: .round))
-            }
-
-            fill(Path(ellipseIn: CGRect(x: 41.5, y: 3.5, width: 17, height: 17)), silhouette)
-            fill(Self.path(Self.neck), silhouette)
-            fill(Self.path(Self.torso + Self.mirror(Self.torso).reversed()), silhouette)
-            for outline in [Self.arm, Self.leg] {
-                fill(Self.path(outline), silhouette)
-                fill(Self.path(Self.mirror(outline)), silhouette)
+            // Separate fills: as one path, the head and neck overlap would cancel out.
+            for path in [Self.headPath, Self.bodyPath] {
+                context.fill(path.applying(transform), with: .color(Color(.systemGray5)))
             }
 
             for part in side == .front ? Self.frontParts : Self.backParts {
                 let color = colors[part.muscle] ?? untrained
-                fill(Self.path(part.points), color)
+                context.fill(Self.smoothPath(part.points).applying(transform), with: .color(color))
                 if part.mirrored {
-                    fill(Self.path(Self.mirror(part.points)), color)
+                    context.fill(Self.smoothPath(Self.mirror(part.points)).applying(transform), with: .color(color))
                 }
             }
         }

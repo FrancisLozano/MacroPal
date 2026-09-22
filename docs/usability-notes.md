@@ -5,7 +5,7 @@
 
 ## Progress summary (as of 2026-09-22)
 
-20 of 29 triaged backlog items are Done, 1 was verified as "No change needed", 8 are open
+21 of 30 triaged backlog items are Done, 1 was verified as "No change needed", 8 are open
 (4 of the open ones are small rough edges from the 2026-09-22 simulator pass).
 (The 09-15 summary said "9 of 16"; the table actually held 17 rows then — the counts below
 are recounted from the table.)
@@ -28,6 +28,7 @@ whiteboard. Commits, in order:
 - `cbeb8e2` — notes for the steps goal.
 - Later the same day: closed the food-history row (already done by `ab68f73`/`4e02e89`) and
   added Cancel buttons to the Log Workout and Add Set sheets.
+- Then: body map polish and the Level/Weekly toggle (next-steps item 2).
 
 Remaining open items, by priority:
 - **P2** — Replace Insights page with contextual info icons.
@@ -41,7 +42,8 @@ Remaining open items, by priority:
 
 ### Next steps on the Training page
 
-**Start here next session:** item 2 (body map polish). Item 1 (steps goal) is built with
+**Start here next session:** item 3 (exercise progress graphic). Item 2 (body map polish +
+Weekly toggle) was done on 2026-09-22 — see below. Item 1 (steps goal) is built with
 manual entry — see below and the Backlog row. The click-through of the "Not yet verified" list
 was done on 2026-09-22 (see below); it turned up no broken features, just seven rough edges
 that are now in the Backlog. The two worst (tracking-screen prefill, and routine edits
@@ -67,10 +69,23 @@ Roughly in the order I'd do them:
    in the simulator); the Log Steps sheet, like Log Weight, closes and drops what was typed if
    you tap the dimmed area above it; Log Weight doesn't focus its field on open the way Log
    Steps now does.
-2. **Body map polish.** First pass is shipped but rough: the figures read as a stiff
-   mannequin, untrained muscles are barely darker than the silhouette, the back-view traps
-   look odd, abs are one flat block. Also worth trying the "Weekly" toggle from the reference
-   image (level vs. this-week's training).
+2. ~~**Body map polish.**~~ Done 2026-09-22. All four complaints addressed in
+   `BodyFigure.swift`: every outline is now a smooth closed curve (Catmull-Rom through the
+   points) instead of a polygon, with new proportions and the muscles kept slightly apart so
+   thin separation lines show; untrained muscles use `systemGray2` instead of `systemGray3`;
+   the traps are a rounded kite from the neck to mid-back; abs are a six-pack plus lower abs;
+   the quads gained a separate inner teardrop, the hamstrings and calves are split in two.
+   The exercise-row thumbnails use the same drawing, so they changed too.
+   - **Weekly toggle** (Level | Weekly, remembered between launches): colors each muscle by
+     sets this calendar week — a main mover (involvement ≥ 0.8) counts 1, an assisting muscle
+     (≥ 0.5) counts ½ — in four blue bands, 1–4 / 5–9 / 10–19 / 20+ sets, loosely after the
+     "10–20 sets per muscle per week" rule of thumb. `WeeklyMuscleVolume` +
+     `WeeklyMuscleVolumeTests`. The week follows the phone's locale (Sunday start in the US).
+   - The card is a little shorter in Weekly mode (one legend row instead of two), so what's
+     below it shifts when you switch.
+   - Tip for future drawing work: the figure was iterated with a macOS harness that renders
+     `BodyFigure` to PNG via `ImageRenderer` (system grays swapped for fixed RGB), far faster
+     than a simulator round trip. It lived in the session scratchpad, not the repo.
 3. **Exercise progress graphic** (the open P3 above), and give it a "progress toward
    something" element — the third success criterion in the discovery doc is still unmet.
    Seen on 2026-09-22: the Exercise Progress chart has no date labels on its x-axis, and the
@@ -188,8 +203,8 @@ actually improving or just accumulating complaints.
 | Likes | 1 |
 | Dislikes | 13 |
 | Suggestions | 7 |
-| Triaged (in Backlog) | 29 |
-| Done | 20 |
+| Triaged (in Backlog) | 30 |
+| Done | 21 |
 | No change needed | 1 |
 | Won't Fix | 0 |
 
@@ -221,6 +236,7 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P2 | Show body weight and lift weights in lb (default) or kg via a toggle on the Goals card; stored in kg underneath; Log Weight sheet shortened and Notes field removed | User request (direct, 2026-09-19) | Done (a2003ed, ca6b473) |
 | P2 | Starter exercise catalog (38 common lifts, seeded once) and day-based "Suggested" exercises in the picker — the picker was empty on a fresh install | Found while testing the plan feature | Done (60f1dc9) |
 | P2 | Progress body map: front/back figures colored Beginner → World Class per muscle from logged lifts vs. bodyweight, tenure-capped; muscle-highlight thumbnails on exercise rows | User request (direct, 2026-09-19, whiteboard sketch + reference image) | Done (b581523) — first pass, drawing needs polish; see next steps |
+| P2 | Body map polish (smooth curved figures, clearer untrained muscles, reshaped traps, six-pack abs) and a Level/Weekly toggle showing sets per muscle this week; `WeeklyMuscleVolumeTests` | Next steps on the Training page, item 2 (2026-09-19 first pass) | Done — checked in the simulator 2026-09-22 |
 | P3 | Nicer-looking exercise graph / add a workout-progress graphic | Dislikes → Workouts (2026-09-08, "exercise graph doesn't look good") + Suggestions → Workouts (2026-09-08, workout-progress graphic) | Triaged |
 | P1 | Tracking screen: the first time you do an exercise, the weight has to be typed on every set — rows are only prefilled when the screen opens, so typing 95 lb in set 1 leaves sets 2–4 at 0 lb, and Add Set copies the empty row rather than the one just logged — logging a set now fills its weight × reps into the later rows that have no weight yet, and Add Set copies the last row that has one | Simulator pass (2026-09-22) | Done (fc7d42a) |
 | P1 | Edit Routine silently deletes a day's exercises when that day's name drops out of the new split (e.g. 5 → 4 days removes Pull and its exercises with no warning) — the editor now shows "Pull's exercise will be removed." under the split preview; the day-matching rule was pulled out into `RoutineTemplate.match` and unit-tested (`RoutineTemplateTests`) | Simulator pass (2026-09-22) | Done (ab0bd10) |
