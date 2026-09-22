@@ -17,6 +17,7 @@ enum AppSchema {
         MealIngredient.self,
         FoodEntry.self,
         WeightEntry.self,
+        StepEntry.self,
         Exercise.self,
         WorkoutSession.self,
         WorkoutSetEntry.self,

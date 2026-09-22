@@ -62,6 +62,9 @@ final class UserProfile {
     var proteinTargetG: Int
     var carbTargetG: Int
     var fatTargetG: Int
+    /// Daily steps target. Defaulted at the declaration so stores created before it existed
+    /// migrate automatically.
+    var stepGoal: Int = 10_000
 
     init(
         heightCm: Double = 170,

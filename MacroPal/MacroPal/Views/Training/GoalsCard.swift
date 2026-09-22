@@ -10,10 +10,15 @@ import SwiftData
 /// tapping the value edits the goal, and the chart icon opens that goal's progress graph.
 struct GoalsCard: View {
     @Query private var profiles: [UserProfile]
+    @Query private var stepEntries: [StepEntry]
     @AppStorage(WeightUnit.storageKey) private var unit: WeightUnit = .lb
 
     @State private var isPresentingGoalWeightSheet = false
     @State private var isPresentingLogWeightSheet = false
+    @State private var isPresentingStepGoalSheet = false
+    @State private var isPresentingLogStepsSheet = false
+
+    private let stepsViewModel = StepsViewModel()
 
     private var profile: UserProfile? { profiles.first }
 
@@ -65,6 +70,10 @@ struct GoalsCard: View {
                 .buttonStyle(.bordered)
                 .accessibilityLabel("Weight progress")
             }
+
+            Divider()
+
+            stepsRow
         }
         .padding()
         .background(.background.secondary, in: RoundedRectangle(cornerRadius: 12))
@@ -81,6 +90,62 @@ struct GoalsCard: View {
                 LogWeightEntryView()
             }
         }
+        .sheet(isPresented: $isPresentingStepGoalSheet) {
+            if let profile {
+                NavigationStack {
+                    StepGoalEditView(profile: profile)
+                }
+            }
+        }
+        .sheet(isPresented: $isPresentingLogStepsSheet) {
+            NavigationStack {
+                LogStepsView()
+            }
+        }
+    }
+
+    /// Today's steps against the goal; tapping the numbers edits the goal.
+    private var stepsRow: some View {
+        let today = stepsViewModel.steps(on: .now, in: stepEntries)
+        let goal = profile?.stepGoal ?? 10_000
+        return HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Steps today")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Button {
+                    isPresentingStepGoalSheet = true
+                } label: {
+                    HStack(alignment: .firstTextBaseline, spacing: 4) {
+                        Text(today, format: .number)
+                            .font(.title3.bold())
+                        Text("/ \(goal.formatted())")
+                            .foregroundStyle(.secondary)
+                        if today >= goal {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(.green)
+                        }
+                    }
+                    .foregroundStyle(Color.primary)
+                }
+                .accessibilityLabel("\(today) of \(goal) steps today. Edit steps goal")
+            }
+            Spacer()
+            Button {
+                isPresentingLogStepsSheet = true
+            } label: {
+                Label("Log", systemImage: "plus")
+            }
+            .buttonStyle(.bordered)
+            NavigationLink {
+                StepsHistoryView()
+            } label: {
+                Image(systemName: "chart.bar.fill")
+                    .padding(8)
+            }
+            .buttonStyle(.bordered)
+            .accessibilityLabel("Steps progress")
+        }
     }
 
     private var goalText: String {
@@ -93,5 +158,5 @@ struct GoalsCard: View {
     NavigationStack {
         GoalsCard()
     }
-    .modelContainer(for: [WeightEntry.self, UserProfile.self], inMemory: true)
+    .modelContainer(for: [WeightEntry.self, StepEntry.self, UserProfile.self], inMemory: true)
 }
