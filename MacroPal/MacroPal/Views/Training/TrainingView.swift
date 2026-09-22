@@ -25,9 +25,7 @@ struct TrainingView: View {
         }
         .navigationTitle("Training")
         .sheet(isPresented: $isPresentingLogWorkoutSheet) {
-            NavigationStack {
-                LogWorkoutSessionView()
-            }
+            UnplannedWorkoutView()
         }
         .task {
             _ = UserProfile.current(in: modelContext)

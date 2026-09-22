@@ -68,6 +68,9 @@ struct ExercisePickerView: View {
         .searchable(text: $searchText, prompt: "Search exercises")
         .navigationTitle("Choose Exercise")
         .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") { dismiss() }
+            }
             ToolbarItem(placement: .primaryAction) {
                 Button {
                     isPresentingNewExerciseForm = true
@@ -117,6 +120,9 @@ private struct NewExerciseView: View {
         }
         .navigationTitle("New Exercise")
         .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") { dismiss() }
+            }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") { save() }
                     .disabled(!isValid)

@@ -5,7 +5,7 @@
 
 ## Progress summary (as of 2026-09-22)
 
-22 of 30 triaged backlog items are Done, 1 was verified as "No change needed", 7 are open
+23 of 31 triaged backlog items are Done, 1 was verified as "No change needed", 7 are open
 (4 of the open ones are small rough edges from the 2026-09-22 simulator pass).
 (The 09-15 summary said "9 of 16"; the table actually held 17 rows then — the counts below
 are recounted from the table.)
@@ -30,6 +30,7 @@ whiteboard. Commits, in order:
   added Cancel buttons to the Log Workout and Add Set sheets.
 - Then: body map polish and the Level/Weekly toggle (next-steps item 2).
 - Then: the Exercise Progress redesign, with progress toward the next strength level (item 3).
+- Then: faster unplanned-workout logging, 12 taps → 8 (item 4).
 
 Remaining open items, by priority:
 - **P2** — Replace Insights page with contextual info icons.
@@ -41,8 +42,8 @@ Remaining open items, by priority:
 
 ### Next steps on the Training page
 
-**Start here next session:** item 4 (faster logging for unplanned workouts). Items 2 and 3
-(body map polish, exercise progress graphic) were done on 2026-09-22 — see below.
+**Start here next session:** item 5 (plan editing gaps). Items 2–4 (body map polish, exercise
+progress graphic, faster unplanned logging) were done on 2026-09-22 — see below.
 **Before trusting any strength level in the simulator:** its latest weigh-in is stored as
 227 kg (500 lb), probably the mystery "227" entry below typed in the wrong unit, so every
 target reads about 3× too high. Fix or delete that entry first. Item 1 (steps goal) is built with
@@ -115,10 +116,26 @@ Roughly in the order I'd do them:
    Barbell Row data is one session) and the "% of best" fix (Barbell Row is no longer in the
    plan). A per-lift goal you set yourself would be the natural next step — it'd need a new
    model field.
-4. **Faster logging for unplanned workouts.** Plan-driven logging is fast now (one check per
-   set, prefilled), but "Log an Unplanned Workout" still uses the old flow: + → Add Set →
-   Choose Exercise → fields, up to three sheets deep. The tap-count baseline the discovery doc
-   asked for was never measured, so the "fewer taps" criterion can't be formally checked.
+4. ~~**Faster logging for unplanned workouts.**~~ Done 2026-09-22. "Log an Unplanned Workout"
+   now opens `UnplannedWorkoutView`: straight into the exercise picker, then the same
+   tracking screen plan days use (`ExerciseTrackView` now takes either a plan exercise or an
+   exercise + date). Sets save as they're checked, so there's no Save step, and closing the
+   sheet loses nothing.
+   - **Tap count** for 3 sets of an exercise with no history (baseline from the old code,
+     new flow counted in the simulator): **12 → 8.** Old: open, Add Set, Choose exercise,
+     pick, weight field, reps field, Add, then Add Set + Add twice, Save — three sheets
+     deep. New: open, pick, reps field, weight field, three checks, Done. With history to
+     prefill from it's 6 (open, pick, three checks, Done).
+   - The workout screen lists the exercises logged that day (including plan sets), with
+     thumbnails and set counts, plus Add Exercise; a date picker (no future dates) back-dates
+     a forgotten workout.
+   - **Dropped:** RPE and session notes, which only the old form could enter. Old sessions
+     still show theirs. Easy to bring back if they're missed.
+   - The old form (`LogWorkoutSessionView`) and its draft-set code in `WorkoutViewModel` are
+     deleted. The exercise picker and the New Exercise form gained Cancel buttons (the
+     picker now opens on its own, so it needed a way out other than swiping).
+   - Unplanned exercises start with 3 empty rows; unused rows just aren't logged. (Still no
+     way to delete an extra row — the P3 below.)
 5. **Plan editing gaps.** Reps are a single number (the reference app uses a range like 8–10);
    exercises within a day can't be reordered; the exercise name shows twice on the tracking
    screen (nav bar + header card); the New Exercise form defaults to Full Body, which hides a
@@ -227,8 +244,8 @@ actually improving or just accumulating complaints.
 | Likes | 1 |
 | Dislikes | 13 |
 | Suggestions | 7 |
-| Triaged (in Backlog) | 30 |
-| Done | 22 |
+| Triaged (in Backlog) | 31 |
+| Done | 23 |
 | No change needed | 1 |
 | Won't Fix | 0 |
 
@@ -265,7 +282,8 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P1 | Tracking screen: the first time you do an exercise, the weight has to be typed on every set — rows are only prefilled when the screen opens, so typing 95 lb in set 1 leaves sets 2–4 at 0 lb, and Add Set copies the empty row rather than the one just logged — logging a set now fills its weight × reps into the later rows that have no weight yet, and Add Set copies the last row that has one | Simulator pass (2026-09-22) | Done (fc7d42a) |
 | P1 | Edit Routine silently deletes a day's exercises when that day's name drops out of the new split (e.g. 5 → 4 days removes Pull and its exercises with no warning) — the editor now shows "Pull's exercise will be removed." under the split preview; the day-matching rule was pulled out into `RoutineTemplate.match` and unit-tested (`RoutineTemplateTests`) | Simulator pass (2026-09-22) | Done (ab0bd10) |
 | P3 | Edit Routine carries exercises to the *first* day with the same name, so they can move day (4-day Upper/Lower: Saturday's Lower exercises land on Tuesday's Lower) | Simulator pass (2026-09-22) | Triaged |
-| P2 | Log Workout (unplanned) sheet has no Cancel button — swipe-down is the only way out — added Cancel to it and to its Add Set sheet, which had the same gap | Simulator pass (2026-09-22) | Done — checked in the simulator 2026-09-22 |
+| P2 | Log Workout (unplanned) sheet has no Cancel button — swipe-down is the only way out — added Cancel to it and to its Add Set sheet, which had the same gap | Simulator pass (2026-09-22) | Done — checked in the simulator 2026-09-22; that sheet was later replaced by `UnplannedWorkoutView` (Done button, nothing to cancel) |
+| P1 | Faster unplanned-workout logging — picker first, then the plan's per-set tracking screen, sets saved on check; 12 → 8 taps for 3 sets of a new exercise; old draft form deleted; Cancel added to the exercise picker and New Exercise form | Next steps on the Training page, item 4 + discovery doc success criterion 2 | Done — checked in the simulator 2026-09-22 (test sets unchecked afterwards) |
 | P3 | No way to delete an extra, unlogged row added with Add Set on the tracking screen | Simulator pass (2026-09-22) | Triaged |
 | P3 | Medium widget lists macros Carbs / Fat / Protein; the app uses Protein / Carbs / Fat | Simulator pass (2026-09-22) | Triaged |
 | P3 | Workout History rows show only date + set count, not the plan day ("Pull") or exercises | Simulator pass (2026-09-22) | Triaged |

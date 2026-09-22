@@ -63,9 +63,10 @@ Option 2: merge into a single Training-oriented surface where a weigh-in is a fa
 ## Success criteria — where they stand
 
 1. *Weight and a workout session loggable without switching tabs* — **met.**
-2. *Fewer taps than the old `LogWorkoutSessionView` flow* — **met for plan-driven logging**
-   (one check per set, prefilled from the last set); **unmet for unplanned workouts**, which
-   still use the old flow, and the baseline tap count was never measured.
+2. *Fewer taps than the old `LogWorkoutSessionView` flow* — **met (2026-09-22).** Plan-driven
+   logging is one check per set, prefilled from the last set. Unplanned workouts now use the
+   same tracking screen: 3 sets of a new exercise went from 12 taps (baseline counted from the
+   old code before it was deleted) to 8, counted in the simulator; 6 with history.
 3. *Exercise progress communicates progress toward something* — **met (2026-09-22).**
    Exercise Progress shows each lift's progress toward its next strength level (same
    bodyweight standards as the body map, via `LiftStandard`), and the chart draws that target

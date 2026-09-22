@@ -6,15 +6,34 @@
 import SwiftUI
 import SwiftData
 
-/// Track one exercise's sets for today. Each row is a set: reps × weight, how heavy that is
-/// against your best estimated 1RM, and a check to log it. Rows start prefilled from your last
-/// set so a repeat set is a single tap.
+/// Track one exercise's sets for a day (today, unless an unplanned workout is back-dated). Each
+/// row is a set: reps × weight, how heavy that is against your best estimated 1RM, and a check
+/// to log it. Rows start prefilled from your last set so a repeat set is a single tap. Used
+/// from a plan day (with its sets × reps target) and from an unplanned workout (no target).
 struct ExerciseTrackView: View {
     @Environment(\.modelContext) private var modelContext
     @AppStorage(WeightUnit.storageKey) private var unit: WeightUnit = .lb
     @Query(sort: \WorkoutSession.date, order: .reverse) private var sessions: [WorkoutSession]
 
-    let planExercise: PlanExercise
+    let exercise: Exercise?
+    /// The plan's sets × reps, or nil for an unplanned workout.
+    let target: (sets: Int, reps: Int)?
+    let date: Date
+
+    /// Rows to start with when there's no plan target.
+    private static let unplannedRows = 3
+
+    init(planExercise: PlanExercise) {
+        exercise = planExercise.exercise
+        target = (planExercise.targetSets, planExercise.targetReps)
+        date = .now
+    }
+
+    init(exercise: Exercise, date: Date) {
+        self.exercise = exercise
+        target = nil
+        self.date = date
+    }
 
     @State private var rows: [SetRow] = []
     @FocusState private var isEditing: Bool
@@ -29,12 +48,10 @@ struct ExerciseTrackView: View {
         var entry: WorkoutSetEntry?
     }
 
-    private var exercise: Exercise? { planExercise.exercise }
-
     private var referenceKg: Double? {
         guard let exercise else { return nil }
         return WorkoutViewModel.bestEstimated1RMKg(
-            for: exercise, in: sessions, before: Calendar.current.startOfDay(for: .now)
+            for: exercise, in: sessions, before: Calendar.current.startOfDay(for: date)
         )
     }
 
@@ -70,7 +87,7 @@ struct ExerciseTrackView: View {
             Text(exercise?.name ?? "Unknown exercise")
                 .font(.title3.bold())
                 .multilineTextAlignment(.center)
-            Text("Sets: \(planExercise.targetSets)  ·  \(loggedCount) done")
+            Text(target.map { "Sets: \($0.sets)  ·  \(loggedCount) done" } ?? "\(loggedCount) done")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -165,7 +182,7 @@ struct ExerciseTrackView: View {
         } else if let exercise, isValid(row.wrappedValue),
                   let weight = Double(row.wrappedValue.weightText), let reps = Int(row.wrappedValue.repsText) {
             row.wrappedValue.entry = viewModel.logSet(
-                exercise: exercise, weightKg: unit.toKg(weight), reps: reps, context: modelContext
+                exercise: exercise, weightKg: unit.toKg(weight), reps: reps, on: date, context: modelContext
             )
             isEditing = false
             fillForward(from: row.wrappedValue)
@@ -183,11 +200,11 @@ struct ExerciseTrackView: View {
         }
     }
 
-    /// Today's already-logged sets first (checked), then blank rows up to the target, all
+    /// The day's already-logged sets first (checked), then blank rows up to the target, all
     /// prefilled from the last set of this exercise.
     private func buildRows() {
         guard rows.isEmpty, let exercise else { return }
-        let logged = (sessions.first { Calendar.current.isDateInToday($0.date) }?.setEntries ?? [])
+        let logged = (sessions.first { Calendar.current.isDate($0.date, inSameDayAs: date) }?.setEntries ?? [])
             .filter { $0.exercise == exercise }
             .sorted { $0.setNumber < $1.setNumber }
         rows = logged.map { entry in
@@ -197,7 +214,7 @@ struct ExerciseTrackView: View {
                 entry: entry
             )
         }
-        while rows.count < planExercise.targetSets {
+        while rows.count < target?.sets ?? Self.unplannedRows {
             rows.append(blankRow())
         }
     }
@@ -209,6 +226,6 @@ struct ExerciseTrackView: View {
         if let exercise, let last = WorkoutViewModel.lastSet(for: exercise, in: sessions) {
             return SetRow(weightText: unit.formattedLift(fromKg: last.weightKg), repsText: String(last.reps))
         }
-        return SetRow(weightText: "", repsText: String(planExercise.targetReps))
+        return SetRow(weightText: "", repsText: target.map { String($0.reps) } ?? "")
     }
 }
