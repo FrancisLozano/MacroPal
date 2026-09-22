@@ -7,7 +7,7 @@ import SwiftUI
 import SwiftData
 
 /// One planned workout as a list of exercises. Tap an exercise to track its sets; the ellipsis
-/// edits its sets × reps or removes it.
+/// edits its sets × reps, moves it up or down, or removes it.
 ///
 /// Rows live in a `ScrollView` rather than a `List` so their buttons stay live as exercises
 /// come and go (see the Daily Log chevron bug).
@@ -37,10 +37,16 @@ struct PlanDayDetailView: View {
                         .multilineTextAlignment(.center)
                         .padding(.vertical, 24)
                 }
-                ForEach(day.sortedExercises) { planExercise in
+                let exercises = day.sortedExercises
+                ForEach(exercises) { planExercise in
                     PlanExerciseRow(
                         planExercise: planExercise,
-                        setsLoggedToday: setsLoggedToday(for: planExercise)
+                        setsLoggedToday: setsLoggedToday(for: planExercise),
+                        canMoveUp: planExercise !== exercises.first,
+                        canMoveDown: planExercise !== exercises.last,
+                        onMove: { offset in
+                            withAnimation { day.move(planExercise, by: offset) }
+                        }
                     ) {
                         remove(planExercise)
                     }

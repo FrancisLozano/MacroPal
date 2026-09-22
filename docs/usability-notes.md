@@ -5,7 +5,7 @@
 
 ## Progress summary (as of 2026-09-22)
 
-23 of 31 triaged backlog items are Done, 1 was verified as "No change needed", 7 are open
+24 of 32 triaged backlog items are Done, 1 was verified as "No change needed", 7 are open
 (4 of the open ones are small rough edges from the 2026-09-22 simulator pass).
 (The 09-15 summary said "9 of 16"; the table actually held 17 rows then — the counts below
 are recounted from the table.)
@@ -31,6 +31,7 @@ whiteboard. Commits, in order:
 - Then: body map polish and the Level/Weekly toggle (next-steps item 2).
 - Then: the Exercise Progress redesign, with progress toward the next strength level (item 3).
 - Then: faster unplanned-workout logging, 12 taps → 8 (item 4).
+- Then: the plan editing gaps (item 5), plus a fix for a launch crash they exposed.
 
 Remaining open items, by priority:
 - **P2** — Replace Insights page with contextual info icons.
@@ -42,8 +43,9 @@ Remaining open items, by priority:
 
 ### Next steps on the Training page
 
-**Start here next session:** item 5 (plan editing gaps). Items 2–4 (body map polish, exercise
-progress graphic, faster unplanned logging) were done on 2026-09-22 — see below.
+**Start here next session:** the Training list is done apart from item 6, which was left
+out on purpose. Next up are the open P2s in the Backlog: macro breakdown on tap, Insights as
+info icons, Profile subpages. Items 2–5 were done on 2026-09-22 — see below.
 **Before trusting any strength level in the simulator:** its latest weigh-in is stored as
 227 kg (500 lb), probably the mystery "227" entry below typed in the wrong unit, so every
 target reads about 3× too high. Fix or delete that entry first. Item 1 (steps goal) is built with
@@ -136,10 +138,25 @@ Roughly in the order I'd do them:
      picker now opens on its own, so it needed a way out other than swiping).
    - Unplanned exercises start with 3 empty rows; unused rows just aren't logged. (Still no
      way to delete an extra row — the P3 below.)
-5. **Plan editing gaps.** Reps are a single number (the reference app uses a range like 8–10);
-   exercises within a day can't be reordered; the exercise name shows twice on the tracking
-   screen (nav bar + header card); the New Exercise form defaults to Full Body, which hides a
-   custom exercise from the day-based "Suggested" list.
+5. ~~**Plan editing gaps.**~~ Done 2026-09-22, all four:
+   - **Rep ranges:** Edit Sets & Reps has a Rep Range switch (on → bottom + 2, e.g. 8–10) and
+     From / To steppers; stepping the bottom up past the top pushes the top along. Rows and the
+     tracking screen show "3 sets x 8–10 reps"; empty set rows prefill with the bottom of the
+     range. New field `PlanExercise.targetRepsMax` (optional, defaulted, so the store migrated
+     without a versioned schema — checked in the simulator store).
+   - **Reorder within a day:** Move Up / Move Down in each exercise's ellipsis menu (disabled
+     at the ends). Not drag — the day screen deliberately avoids `List` (the button-detachment
+     bug), and a menu works without it. `PlanDay.move(_:by:)` + `PlanDayTests`.
+   - **Name twice:** the tracking screen's header card now shows the muscle thumbnail and
+     "4 sets × 11–12 reps / 0 of 4 done"; the name is only in the nav bar.
+   - **New Exercise default:** starts on the plan day's first suggested muscle group (Legs on
+     Lower) instead of Full Body; Full Body only when there are no suggestions.
+   - **Launch crash found on the way:** the first launch after adding the field crashed in
+     `MacroPalApp.sharedModelContainer` — the widget extension started migrating the shared
+     store at the same instant and the app lost the race ("store version hashes didn't
+     migrate"). The app now waits half a second and retries once before giving up. The race
+     couldn't be reproduced afterwards (the store was already migrated), so the retry is
+     untested; watch for it on the next schema change.
 6. **Rest timer / target icons** from the tracking-screen reference — deliberately left out.
 
 ### Things to know about the muscle levels
@@ -200,6 +217,7 @@ macros); Remove from Plan. Rough edges found are in the Backlog, sourced "Simula
   - Sheets slide up when the keyboard opens, so the Save button moves — re-check its position
     before tapping. To close a date-picker popover, tap inside the sheet; tapping the dimmed
     area closes the whole sheet and loses the input.
+  - The simulator tool's taps don't flip a `Toggle` switch; swipe across the knob instead.
   - SwiftData autosaves a moment later, so a `sqlite3` read right after an edit can still show
     the old value — wait a few seconds before concluding a save failed.
 - Adding a database model is now two steps — list it in `AppSchema.models`, and add its file
@@ -244,8 +262,8 @@ actually improving or just accumulating complaints.
 | Likes | 1 |
 | Dislikes | 13 |
 | Suggestions | 7 |
-| Triaged (in Backlog) | 31 |
-| Done | 23 |
+| Triaged (in Backlog) | 32 |
+| Done | 24 |
 | No change needed | 1 |
 | Won't Fix | 0 |
 
@@ -283,6 +301,7 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P1 | Edit Routine silently deletes a day's exercises when that day's name drops out of the new split (e.g. 5 → 4 days removes Pull and its exercises with no warning) — the editor now shows "Pull's exercise will be removed." under the split preview; the day-matching rule was pulled out into `RoutineTemplate.match` and unit-tested (`RoutineTemplateTests`) | Simulator pass (2026-09-22) | Done (ab0bd10) |
 | P3 | Edit Routine carries exercises to the *first* day with the same name, so they can move day (4-day Upper/Lower: Saturday's Lower exercises land on Tuesday's Lower) | Simulator pass (2026-09-22) | Triaged |
 | P2 | Log Workout (unplanned) sheet has no Cancel button — swipe-down is the only way out — added Cancel to it and to its Add Set sheet, which had the same gap | Simulator pass (2026-09-22) | Done — checked in the simulator 2026-09-22; that sheet was later replaced by `UnplannedWorkoutView` (Done button, nothing to cancel) |
+| P2 | Plan editing gaps: rep ranges (`targetRepsMax`), Move Up/Down within a day, name no longer repeated on the tracking screen, New Exercise defaults to the day's suggested group; plus a retry for a launch crash when the app and widget migrate the store at once | Next steps on the Training page, item 5 | Done — checked in the simulator 2026-09-22 (plan put back to 3 × 10 afterwards) |
 | P1 | Faster unplanned-workout logging — picker first, then the plan's per-set tracking screen, sets saved on check; 12 → 8 taps for 3 sets of a new exercise; old draft form deleted; Cancel added to the exercise picker and New Exercise form | Next steps on the Training page, item 4 + discovery doc success criterion 2 | Done — checked in the simulator 2026-09-22 (test sets unchecked afterwards) |
 | P3 | No way to delete an extra, unlogged row added with Add Set on the tracking screen | Simulator pass (2026-09-22) | Triaged |
 | P3 | Medium widget lists macros Carbs / Fat / Protein; the app uses Protein / Carbs / Fat | Simulator pass (2026-09-22) | Triaged |

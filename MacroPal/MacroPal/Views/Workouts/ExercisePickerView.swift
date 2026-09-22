@@ -81,7 +81,7 @@ struct ExercisePickerView: View {
         }
         .sheet(isPresented: $isPresentingNewExerciseForm) {
             NavigationStack {
-                NewExerciseView { newExercise in
+                NewExerciseView(muscleGroup: suggestedGroups.first ?? .fullBody) { newExercise in
                     onSelect(newExercise)
                     dismiss()
                 }
@@ -97,8 +97,15 @@ private struct NewExerciseView: View {
     let onCreate: (Exercise) -> Void
 
     @State private var name = ""
-    @State private var muscleGroup: MuscleGroup = .fullBody
+    @State private var muscleGroup: MuscleGroup
     @State private var equipment = ""
+
+    /// `muscleGroup` starts on the plan day's first suggested group, so a custom exercise shows
+    /// up under that day's "Suggested" list rather than only under All.
+    init(muscleGroup: MuscleGroup, onCreate: @escaping (Exercise) -> Void) {
+        _muscleGroup = State(initialValue: muscleGroup)
+        self.onCreate = onCreate
+    }
 
     private var isValid: Bool {
         !name.trimmingCharacters(in: .whitespaces).isEmpty

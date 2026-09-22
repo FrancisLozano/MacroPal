@@ -59,6 +59,18 @@ final class PlanDay {
     var sortedExercises: [PlanExercise] {
         exercises.sorted { $0.order < $1.order }
     }
+
+    /// Moves an exercise `offset` places up (negative) or down (positive) the day's list,
+    /// clamped to the ends, and renumbers `order` so it stays contiguous.
+    func move(_ planExercise: PlanExercise, by offset: Int) {
+        var ordered = sortedExercises
+        guard let index = ordered.firstIndex(where: { $0 === planExercise }) else { return }
+        let target = min(max(index + offset, 0), ordered.count - 1)
+        ordered.insert(ordered.remove(at: index), at: target)
+        for (order, exercise) in ordered.enumerated() {
+            exercise.order = order
+        }
+    }
 }
 
 /// An exercise slotted into a plan day, with its target sets × reps.
@@ -66,7 +78,11 @@ final class PlanDay {
 final class PlanExercise {
     var order: Int
     var targetSets: Int
+    /// The target reps, or the bottom of the range when `targetRepsMax` is set.
     var targetReps: Int
+    /// Top of a rep range ("8–10"), or nil for a single number. Defaulted where it's declared
+    /// so existing stores migrate without a versioned schema.
+    var targetRepsMax: Int? = nil
     var exercise: Exercise?
     var day: PlanDay?
 
@@ -75,5 +91,11 @@ final class PlanExercise {
         self.exercise = exercise
         self.targetSets = targetSets
         self.targetReps = targetReps
+    }
+
+    /// "10" or "8–10".
+    var repsLabel: String {
+        guard let targetRepsMax, targetRepsMax > targetReps else { return "\(targetReps)" }
+        return "\(targetReps)–\(targetRepsMax)"
     }
 }

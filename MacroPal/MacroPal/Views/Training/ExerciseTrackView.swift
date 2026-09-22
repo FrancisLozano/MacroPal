@@ -16,8 +16,9 @@ struct ExerciseTrackView: View {
     @Query(sort: \WorkoutSession.date, order: .reverse) private var sessions: [WorkoutSession]
 
     let exercise: Exercise?
-    /// The plan's sets × reps, or nil for an unplanned workout.
-    let target: (sets: Int, reps: Int)?
+    /// The plan's sets × reps (`reps` prefills rows — the bottom of a range; `repsLabel` is
+    /// "10" or "8–10"), or nil for an unplanned workout.
+    let target: (sets: Int, reps: Int, repsLabel: String)?
     let date: Date
 
     /// Rows to start with when there's no plan target.
@@ -25,7 +26,7 @@ struct ExerciseTrackView: View {
 
     init(planExercise: PlanExercise) {
         exercise = planExercise.exercise
-        target = (planExercise.targetSets, planExercise.targetReps)
+        target = (planExercise.targetSets, planExercise.targetReps, planExercise.repsLabel)
         date = .now
     }
 
@@ -82,16 +83,25 @@ struct ExerciseTrackView: View {
         .onAppear(perform: buildRows)
     }
 
+    /// The target and progress. The exercise's name is already the navigation title, so the
+    /// card shows what it works instead of repeating it.
     private var header: some View {
-        VStack(spacing: 4) {
-            Text(exercise?.name ?? "Unknown exercise")
-                .font(.title3.bold())
-                .multilineTextAlignment(.center)
-            Text(target.map { "Sets: \($0.sets)  ·  \(loggedCount) done" } ?? "\(loggedCount) done")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+        HStack(spacing: 12) {
+            ExerciseThumbnail(exercise: exercise)
+            VStack(alignment: .leading, spacing: 4) {
+                if let target {
+                    Text("\(target.sets) sets × \(target.repsLabel) reps")
+                        .font(.headline)
+                    Text("\(loggedCount) of \(target.sets) done")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text(loggedCount == 1 ? "1 set done" : "\(loggedCount) sets done")
+                        .font(.headline)
+                }
+            }
+            Spacer(minLength: 0)
         }
-        .frame(maxWidth: .infinity)
         .padding()
         .background(.background.secondary, in: RoundedRectangle(cornerRadius: 14))
     }
