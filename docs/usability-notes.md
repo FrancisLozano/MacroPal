@@ -3,9 +3,10 @@
 **Status:** Living document — ongoing, not tied to a phase
 **Started:** 2026-09-06
 
-## Progress summary (as of 2026-09-19, end of day)
+## Progress summary (as of 2026-09-22)
 
-15 of 21 triaged backlog items are Done, 1 was verified as "No change needed", 5 are open.
+17 of 28 triaged backlog items are Done, 1 was verified as "No change needed", 10 are open
+(5 of the open ones are small rough edges from the 2026-09-22 simulator pass).
 (The 09-15 summary said "9 of 16"; the table actually held 17 rows then — the counts below
 are recounted from the table.)
 
@@ -25,8 +26,10 @@ Remaining open items, by priority:
 
 ### Next steps on the Training page
 
-**Start here next session:** spend ~10 minutes clicking through the "Not yet verified" list
-below (it's the cheapest way to catch bugs in what's already shipped), then take item 1.
+**Start here next session:** take item 1. The click-through of the "Not yet verified" list
+was done on 2026-09-22 (see below); it turned up no broken features, just seven rough edges
+that are now in the Backlog. The two worst (tracking-screen prefill, and routine edits
+silently dropping exercises) were fixed the same day and checked in the simulator.
 
 Roughly in the order I'd do them:
 
@@ -77,19 +80,27 @@ Suggested/All picker; body map colors after a squat session (quads + glutes Begi
 it read the shared store and updated from 2,000 to 1,950 cal after logging a 50 kcal food.
 (Small widget only; not tried on a real device.)
 
-**Not yet verified:** exercise-row muscle thumbnails; unchecking a set; Add Set on the
-tracking screen; the ellipsis menu (edit sets & reps / remove); dragging to reorder in the
-week view; editing an existing routine (exercises should carry over for days that keep their
-name); the bottom "more" list on the Training page (Workout History / Exercise Progress / Log
-an Unplanned Workout); sessions logged from a plan day appearing in Workout History; the
-medium-size widget; anything on a physical device.
+**Verified (2026-09-22):** exercise-row muscle thumbnails (Barbell Row → back, arms fainter);
+Edit Sets & Reps (3 × 10 → 4 × 8, reflected on the row and the tracking screen); unchecking a
+set (deletes it, "0 done", fields editable again — re-checking doesn't double-count); Add Set;
+dragging to reorder in the week view (names move, weekdays stay); editing an existing routine
+(5 → 4 days kept Lower's exercises, checked in the store; no orphaned rows); Workout History
+showing a session logged from a plan day, and its detail screen; Exercise Progress; Log an
+Unplanned Workout opens; the medium-size widget (reads the shared store, calories + three
+macros); Remove from Plan. Rough edges found are in the Backlog, sourced "Simulator pass
+(2026-09-22)".
+
+**Not yet verified:** anything on a physical device.
 
 ### Housekeeping
 
 - The simulator has leftover test data from these sessions: a "rwoaw" food entry logged for
   today (50 kcal), a Back Squat with 3 sets of 135 lb × 10, a 5-day plan, and a weight entry
   of 227 lb whose origin is unknown (it appeared between two runs; I didn't knowingly log it).
-  None of it is in the repo.
+  None of it is in the repo. The 2026-09-22 pass added one Barbell Row set (95 lb × 8) to that
+  day's Workout History; the plan and home-screen widget were put back as they were.
+- The simulator with this data is the **iPhone 17 Pro**; its store is the app-group
+  `MacroPal.sqlite` (open it with `sqlite3 -readonly` to check what an edit actually saved).
 - Untracked and left alone: `MacroPal.xcodeproj/xcshareddata/` and `scratchpad/`.
 - Adding a database model is now two steps — list it in `AppSchema.models`, and add its file
   to the widget target's membership — see the discovery doc's implementation notes.
@@ -133,8 +144,8 @@ actually improving or just accumulating complaints.
 | Likes | 1 |
 | Dislikes | 13 |
 | Suggestions | 7 |
-| Triaged (in Backlog) | 21 |
-| Done | 15 |
+| Triaged (in Backlog) | 28 |
+| Done | 17 |
 | No change needed | 1 |
 | Won't Fix | 0 |
 
@@ -167,6 +178,13 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P2 | Starter exercise catalog (38 common lifts, seeded once) and day-based "Suggested" exercises in the picker — the picker was empty on a fresh install | Found while testing the plan feature | Done (60f1dc9) |
 | P2 | Progress body map: front/back figures colored Beginner → World Class per muscle from logged lifts vs. bodyweight, tenure-capped; muscle-highlight thumbnails on exercise rows | User request (direct, 2026-09-19, whiteboard sketch + reference image) | Done (b581523) — first pass, drawing needs polish; see next steps |
 | P3 | Nicer-looking exercise graph / add a workout-progress graphic | Dislikes → Workouts (2026-09-08, "exercise graph doesn't look good") + Suggestions → Workouts (2026-09-08, workout-progress graphic) | Triaged |
+| P1 | Tracking screen: the first time you do an exercise, the weight has to be typed on every set — rows are only prefilled when the screen opens, so typing 95 lb in set 1 leaves sets 2–4 at 0 lb, and Add Set copies the empty row rather than the one just logged — logging a set now fills its weight × reps into the later rows that have no weight yet, and Add Set copies the last row that has one | Simulator pass (2026-09-22) | Done (fc7d42a) |
+| P1 | Edit Routine silently deletes a day's exercises when that day's name drops out of the new split (e.g. 5 → 4 days removes Pull and its exercises with no warning) — the editor now shows "Pull's exercise will be removed." under the split preview; the day-matching rule was pulled out into `RoutineTemplate.match` and unit-tested (`RoutineTemplateTests`) | Simulator pass (2026-09-22) | Done (ab0bd10) |
+| P3 | Edit Routine carries exercises to the *first* day with the same name, so they can move day (4-day Upper/Lower: Saturday's Lower exercises land on Tuesday's Lower) | Simulator pass (2026-09-22) | Triaged |
+| P2 | Log Workout (unplanned) sheet has no Cancel button — swipe-down is the only way out | Simulator pass (2026-09-22) | Triaged |
+| P3 | No way to delete an extra, unlogged row added with Add Set on the tracking screen | Simulator pass (2026-09-22) | Triaged |
+| P3 | Medium widget lists macros Carbs / Fat / Protein; the app uses Protein / Carbs / Fat | Simulator pass (2026-09-22) | Triaged |
+| P3 | Workout History rows show only date + set count, not the plan day ("Pull") or exercises | Simulator pass (2026-09-22) | Triaged |
 
 Priority scale: **P1** (actively annoying, fix soon) / **P2** (worth doing, no rush) /
 **P3** (nice-to-have, may never happen). Status: `Triaged` → `In Progress` → `Done` (link the
