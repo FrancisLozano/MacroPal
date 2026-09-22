@@ -5,7 +5,7 @@
 
 ## Progress summary (as of 2026-09-22)
 
-17 of 28 triaged backlog items are Done, 1 was verified as "No change needed", 10 are open
+18 of 29 triaged backlog items are Done, 1 was verified as "No change needed", 10 are open
 (5 of the open ones are small rough edges from the 2026-09-22 simulator pass).
 (The 09-15 summary said "9 of 16"; the table actually held 17 rows then — the counts below
 are recounted from the table.)
@@ -26,17 +26,19 @@ Remaining open items, by priority:
 
 ### Next steps on the Training page
 
-**Start here next session:** take item 1. The click-through of the "Not yet verified" list
+**Start here next session:** item 1 (steps goal) is built — manual entry, see the Backlog row;
+next is item 2. The click-through of the "Not yet verified" list
 was done on 2026-09-22 (see below); it turned up no broken features, just seven rough edges
 that are now in the Backlog. The two worst (tracking-screen prefill, and routine edits
 silently dropping exercises) were fixed the same day and checked in the simulator.
 
 Roughly in the order I'd do them:
 
-1. **Steps goal + bar chart.** The whiteboard's Goals card has goal weight (line graph, done)
-   *and* a steps goal (bar chart, not started). Needs a steps model and goal. Plan: manual
-   entry first; HealthKit later (needs a real device and permissions — can't be tested in the
-   simulator).
+1. ~~**Steps goal + bar chart.**~~ Done 2026-09-22 with manual entry: a Steps row on the
+   Goals card (today vs. goal, Log, chart) and a Steps screen with 7/30-day bars against the
+   goal. **Still open:** HealthKit import (needs a real device and permissions — can't be
+   tested in the simulator); the Log sheet, like Log Weight, closes and drops what was typed
+   if you tap the dimmed area above it.
 2. **Body map polish.** First pass is shipped but rough: the figures read as a stiff
    mannequin, untrained muscles are barely darker than the silhouette, the back-view traps
    look odd, abs are one flat block. Also worth trying the "Weekly" toggle from the reference
@@ -98,7 +100,8 @@ macros); Remove from Plan. Rough edges found are in the Backlog, sourced "Simula
   today (50 kcal), a Back Squat with 3 sets of 135 lb × 10, a 5-day plan, and a weight entry
   of 227 lb whose origin is unknown (it appeared between two runs; I didn't knowingly log it).
   None of it is in the repo. The 2026-09-22 pass added one Barbell Row set (95 lb × 8) to that
-  day's Workout History; the plan and home-screen widget were put back as they were.
+  day's Workout History; the plan and home-screen widget were put back as they were. The
+  steps work logged 11,200 steps for 2026-09-22 and 8,000 for 2026-09-21.
 - The simulator with this data is the **iPhone 17 Pro**; its store is the app-group
   `MacroPal.sqlite` (open it with `sqlite3 -readonly` to check what an edit actually saved).
 - Untracked and left alone: `MacroPal.xcodeproj/xcshareddata/` and `scratchpad/`.
@@ -144,8 +147,8 @@ actually improving or just accumulating complaints.
 | Likes | 1 |
 | Dislikes | 13 |
 | Suggestions | 7 |
-| Triaged (in Backlog) | 28 |
-| Done | 17 |
+| Triaged (in Backlog) | 29 |
+| Done | 18 |
 | No change needed | 1 |
 | Won't Fix | 0 |
 
@@ -185,6 +188,7 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P3 | No way to delete an extra, unlogged row added with Add Set on the tracking screen | Simulator pass (2026-09-22) | Triaged |
 | P3 | Medium widget lists macros Carbs / Fat / Protein; the app uses Protein / Carbs / Fat | Simulator pass (2026-09-22) | Triaged |
 | P3 | Workout History rows show only date + set count, not the plan day ("Pull") or exercises | Simulator pass (2026-09-22) | Triaged |
+| P1 | Steps goal with a bar chart (whiteboard Goals card) — `StepEntry` (one total per day; logging a day again replaces it), `UserProfile.stepGoal` (default 10,000, migrates existing stores), Steps row on the Goals card, Steps screen with 7/30-day bars (green when the goal is met), dashed goal line, and average / goal-met counted over logged days; `StepsViewModelTests` | User request (direct, 2026-09-19, whiteboard sketch) | Done (a46cfe9) |
 
 Priority scale: **P1** (actively annoying, fix soon) / **P2** (worth doing, no rush) /
 **P3** (nice-to-have, may never happen). Status: `Triaged` → `In Progress` → `Done` (link the
