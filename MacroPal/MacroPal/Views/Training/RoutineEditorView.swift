@@ -59,6 +59,12 @@ struct RoutineEditorView: View {
                             Text(item.slot.name)
                         }
                     }
+                    ForEach(losingExercises) { day in
+                        Label(removalWarning(for: day), systemImage: "exclamationmark.triangle.fill")
+                            .font(.subheadline)
+                            .foregroundStyle(.orange)
+                            .padding(.top, 4)
+                    }
                 } else {
                     Text("Pick between \(RoutineTemplate.daysPerWeekRange.lowerBound) and \(RoutineTemplate.daysPerWeekRange.upperBound) days.")
                         .foregroundStyle(.secondary)
@@ -78,6 +84,16 @@ struct RoutineEditorView: View {
                     .disabled(!isValid)
             }
         }
+    }
+
+    /// Days whose name drops out of the new split — saving deletes their exercises.
+    private var losingExercises: [PlanDay] {
+        RoutineTemplate.daysLosingExercises(weekdays: selectedWeekdays, plan: plan)
+    }
+
+    private func removalWarning(for day: PlanDay) -> String {
+        let count = day.exercises.count
+        return "\(day.name)'s \(count == 1 ? "exercise" : "\(count) exercises") will be removed."
     }
 
     private var countCaption: String {

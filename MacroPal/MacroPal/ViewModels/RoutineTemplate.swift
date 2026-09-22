@@ -46,6 +46,26 @@ enum RoutineTemplate {
         }
     }
 
+    /// Pairs each slot with the first not-yet-claimed day of the same name. `claimed[i]` is the
+    /// day slot `i` takes over (nil if none); `leftover` is every day no slot claimed — those
+    /// get deleted, exercises and all, when the new split is applied.
+    static func match<Day>(slots: [Slot], to days: [Day], name: (Day) -> String) -> (claimed: [Day?], leftover: [Day]) {
+        var leftover = days
+        let claimed = slots.map { slot -> Day? in
+            guard let index = leftover.firstIndex(where: { name($0) == slot.name }) else { return nil }
+            return leftover.remove(at: index)
+        }
+        return (claimed, leftover)
+    }
+
+    /// Days of `plan` that would lose their exercises if the split changed to `weekdays`.
+    static func daysLosingExercises(weekdays: Set<Int>, plan: WorkoutPlan?) -> [PlanDay] {
+        guard let plan else { return [] }
+        return match(slots: slots(forDaysPerWeek: weekdays.count), to: plan.sortedDays, name: \.name)
+            .leftover
+            .filter { !$0.exercises.isEmpty }
+    }
+
     /// Replaces `plan`'s days with a split for `weekdays` (`Calendar` weekday numbers), keeping
     /// the exercises of any day whose name carries over. Creates the plan if there isn't one.
     @discardableResult
@@ -56,14 +76,14 @@ enum RoutineTemplate {
             return new
         }()
 
-        var leftover = plan.sortedDays
+        let sortedWeekdays = weekdays.sorted()
+        let newSlots = slots(forDaysPerWeek: sortedWeekdays.count)
+        let (claimed, leftover) = match(slots: newSlots, to: plan.sortedDays, name: \.name)
         plan.days = []
 
-        let sortedWeekdays = weekdays.sorted()
-        for (slot, weekday) in zip(slots(forDaysPerWeek: sortedWeekdays.count), sortedWeekdays) {
+        for ((slot, weekday), old) in zip(zip(newSlots, sortedWeekdays), claimed) {
             let day = PlanDay(name: slot.name, focus: slot.focus, weekday: weekday)
-            if let match = leftover.firstIndex(where: { $0.name == slot.name }) {
-                let old = leftover.remove(at: match)
+            if let old {
                 day.exercises = old.exercises
                 old.exercises = []
                 context.delete(old)
