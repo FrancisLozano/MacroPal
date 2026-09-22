@@ -5,8 +5,8 @@
 
 ## Progress summary (as of 2026-09-22)
 
-18 of 29 triaged backlog items are Done, 1 was verified as "No change needed", 10 are open
-(5 of the open ones are small rough edges from the 2026-09-22 simulator pass).
+20 of 29 triaged backlog items are Done, 1 was verified as "No change needed", 8 are open
+(4 of the open ones are small rough edges from the 2026-09-22 simulator pass).
 (The 09-15 summary said "9 of 16"; the table actually held 17 rows then — the counts below
 are recounted from the table.)
 
@@ -26,16 +26,13 @@ whiteboard. Commits, in order:
 - `a46cfe9` — daily steps goal with a bar chart (`StepEntry`, `UserProfile.stepGoal`,
   `StepsViewModelTests`).
 - `cbeb8e2` — notes for the steps goal.
+- Later the same day: closed the food-history row (already done by `ab68f73`/`4e02e89`) and
+  added Cancel buttons to the Log Workout and Add Set sheets.
 
 Remaining open items, by priority:
-- **P2** — Redesign food history (calories vs. target, per-entry macros, better scaling).
-  **Probably stale:** `ab68f73` turned Food History into a day-by-day diary and `4e02e89`
-  redesigned the Daily Log header and macros card, but the row was never updated. Check the
-  current screen against the three original dislikes before closing it.
 - **P2** — Replace Insights page with contextual info icons.
 - **P2** — Clicking a macro shows which foods contributed to it.
 - **P2** — Split Profile page into subpages.
-- **P2** — Log Workout (unplanned) sheet has no Cancel button.
 - **P3** — Nicer-looking exercise graph / workout-progress graphic (not touched by the
   Training redesign — `WorkoutProgressChart` is still the plain two-line chart).
 - **P3** — Small rough edges from the 2026-09-22 pass: Edit Routine carries exercises to the
@@ -192,7 +189,7 @@ actually improving or just accumulating complaints.
 | Dislikes | 13 |
 | Suggestions | 7 |
 | Triaged (in Backlog) | 29 |
-| Done | 18 |
+| Done | 20 |
 | No change needed | 1 |
 | Won't Fix | 0 |
 
@@ -209,7 +206,7 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P1 | Redesign nutrition summary — revised twice: first pass (00a444b) condensed macros into a compact row; second pass (0665d86) replaced that with a single Apple Health-style ring whose filled arc is segmented by macro color, plus a toggle icon that also recolors the ring | Dislikes → General UI (2026-09-07) + Suggestions → General UI (2026-09-07) + Suggestions → Nutrition (2026-09-08, macro filter) | Done (0665d86) |
 | P1 | Redesign Workouts page (visual appeal + faster set logging) — done as part of the merged Training tab: plan-driven workout list, per-set tracking screen (reps × weight, % of best estimated 1RM, check to log, prefilled from last set) | Dislikes → Workouts (2026-09-08, "lacks visual appeal...") | Done (3c6d1d3) — unplanned-workout flow still the old slow one, see next steps |
 | P2 | Food database integration (search/brands, not manual-only) — Open Food Facts search, barcode scanning, and relevance-ranked results | Dislikes → Nutrition (2026-09-08, "no brands...") + Suggestions → Nutrition (2026-09-08, "larger variety...") | Done (1a3b380) — status corrected 2026-09-15, this shipped before it was marked here |
-| P2 | Redesign food history (show calories vs. target, show macros per entry, scale better with more entries) | Dislikes → Nutrition (2026-09-08, three food-history entries) | Triaged |
+| P2 | Redesign food history (show calories vs. target, show macros per entry, scale better with more entries) — became the Daily Log: a one-day-at-a-time diary with a calories bar against the target ("X/2,000 kcal", "left"/"over"), a macros card, and a p/c/f line on every entry | Dislikes → Nutrition (2026-09-08, three food-history entries) | Done (ab68f73, 4e02e89) — status corrected 2026-09-22 after checking `FoodHistoryView` against the three dislikes |
 | P2 | Fold Body page into another page instead of standalone — Body and Workouts merged into one Training tab; weight is a Goals-card row with a log button and a chart link | Dislikes → Body (2026-09-08) | Done (4d4f8dc, 41b27b9) |
 | P2 | Replace Insights page with contextual info icons at point of relevance | Dislikes → Insights (2026-09-08) + Suggestions → Insights (2026-09-08) | Triaged |
 | P2 | Add oz as a serving-size unit alongside grams | Dislikes → Nutrition (2026-09-08, "serving size is only in grams") | Done (1a3b380) — status corrected 2026-09-15; cdb333f later added cups/tbsp/tsp and fraction input on top of it |
@@ -228,7 +225,7 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P1 | Tracking screen: the first time you do an exercise, the weight has to be typed on every set — rows are only prefilled when the screen opens, so typing 95 lb in set 1 leaves sets 2–4 at 0 lb, and Add Set copies the empty row rather than the one just logged — logging a set now fills its weight × reps into the later rows that have no weight yet, and Add Set copies the last row that has one | Simulator pass (2026-09-22) | Done (fc7d42a) |
 | P1 | Edit Routine silently deletes a day's exercises when that day's name drops out of the new split (e.g. 5 → 4 days removes Pull and its exercises with no warning) — the editor now shows "Pull's exercise will be removed." under the split preview; the day-matching rule was pulled out into `RoutineTemplate.match` and unit-tested (`RoutineTemplateTests`) | Simulator pass (2026-09-22) | Done (ab0bd10) |
 | P3 | Edit Routine carries exercises to the *first* day with the same name, so they can move day (4-day Upper/Lower: Saturday's Lower exercises land on Tuesday's Lower) | Simulator pass (2026-09-22) | Triaged |
-| P2 | Log Workout (unplanned) sheet has no Cancel button — swipe-down is the only way out | Simulator pass (2026-09-22) | Triaged |
+| P2 | Log Workout (unplanned) sheet has no Cancel button — swipe-down is the only way out — added Cancel to it and to its Add Set sheet, which had the same gap | Simulator pass (2026-09-22) | Done — checked in the simulator 2026-09-22 |
 | P3 | No way to delete an extra, unlogged row added with Add Set on the tracking screen | Simulator pass (2026-09-22) | Triaged |
 | P3 | Medium widget lists macros Carbs / Fat / Protein; the app uses Protein / Carbs / Fat | Simulator pass (2026-09-22) | Triaged |
 | P3 | Workout History rows show only date + set count, not the plan day ("Pull") or exercises | Simulator pass (2026-09-22) | Triaged |

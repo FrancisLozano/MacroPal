@@ -50,6 +50,9 @@ struct LogWorkoutSessionView: View {
         }
         .navigationTitle("Log Workout")
         .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") { dismiss() }
+            }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") { save() }
                     .disabled(viewModel.draftSets.isEmpty)
@@ -142,6 +145,9 @@ private struct AddSetView: View {
         }
         .navigationTitle("Add Set")
         .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") { dismiss() }
+            }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Add") { addSet() }
                     .disabled(!isValid)
