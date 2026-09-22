@@ -66,9 +66,10 @@ Option 2: merge into a single Training-oriented surface where a weigh-in is a fa
 2. *Fewer taps than the old `LogWorkoutSessionView` flow* — **met for plan-driven logging**
    (one check per set, prefilled from the last set); **unmet for unplanned workouts**, which
    still use the old flow, and the baseline tap count was never measured.
-3. *Exercise progress communicates progress toward something* — **not done.**
-   `WorkoutProgressChart` is unchanged. (The tracking screen's "% of best 1RM" bar and the
-   body map are new progress signals, but not the chart the criterion was about.)
+3. *Exercise progress communicates progress toward something* — **met (2026-09-22).**
+   Exercise Progress shows each lift's progress toward its next strength level (same
+   bodyweight standards as the body map, via `LiftStandard`), and the chart draws that target
+   as a dashed line. See the usability notes, "Next steps on the Training page", item 3.
 
 ## Implementation notes (for whoever touches this next)
 

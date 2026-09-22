@@ -5,7 +5,7 @@
 
 ## Progress summary (as of 2026-09-22)
 
-21 of 30 triaged backlog items are Done, 1 was verified as "No change needed", 8 are open
+22 of 30 triaged backlog items are Done, 1 was verified as "No change needed", 7 are open
 (4 of the open ones are small rough edges from the 2026-09-22 simulator pass).
 (The 09-15 summary said "9 of 16"; the table actually held 17 rows then — the counts below
 are recounted from the table.)
@@ -29,21 +29,23 @@ whiteboard. Commits, in order:
 - Later the same day: closed the food-history row (already done by `ab68f73`/`4e02e89`) and
   added Cancel buttons to the Log Workout and Add Set sheets.
 - Then: body map polish and the Level/Weekly toggle (next-steps item 2).
+- Then: the Exercise Progress redesign, with progress toward the next strength level (item 3).
 
 Remaining open items, by priority:
 - **P2** — Replace Insights page with contextual info icons.
 - **P2** — Clicking a macro shows which foods contributed to it.
 - **P2** — Split Profile page into subpages.
-- **P3** — Nicer-looking exercise graph / workout-progress graphic (not touched by the
-  Training redesign — `WorkoutProgressChart` is still the plain two-line chart).
 - **P3** — Small rough edges from the 2026-09-22 pass: Edit Routine carries exercises to the
   first same-named day; no way to delete an extra Add Set row; widget macro order differs
   from the app; Workout History rows don't show the plan day or exercises.
 
 ### Next steps on the Training page
 
-**Start here next session:** item 3 (exercise progress graphic). Item 2 (body map polish +
-Weekly toggle) was done on 2026-09-22 — see below. Item 1 (steps goal) is built with
+**Start here next session:** item 4 (faster logging for unplanned workouts). Items 2 and 3
+(body map polish, exercise progress graphic) were done on 2026-09-22 — see below.
+**Before trusting any strength level in the simulator:** its latest weigh-in is stored as
+227 kg (500 lb), probably the mystery "227" entry below typed in the wrong unit, so every
+target reads about 3× too high. Fix or delete that entry first. Item 1 (steps goal) is built with
 manual entry — see below and the Backlog row. The click-through of the "Not yet verified" list
 was done on 2026-09-22 (see below); it turned up no broken features, just seven rough edges
 that are now in the Backlog. The two worst (tracking-screen prefill, and routine edits
@@ -86,11 +88,33 @@ Roughly in the order I'd do them:
    - Tip for future drawing work: the figure was iterated with a macOS harness that renders
      `BodyFigure` to PNG via `ImageRenderer` (system grays swapped for fixed RGB), far faster
      than a simulator round trip. It lived in the session scratchpad, not the repo.
-3. **Exercise progress graphic** (the open P3 above), and give it a "progress toward
-   something" element — the third success criterion in the discovery doc is still unmet.
-   Seen on 2026-09-22: the Exercise Progress chart has no date labels on its x-axis, and the
-   tracking screen's "% of best 1RM" compares a first-ever set against itself (logging 95 lb ×
-   8 as the only Barbell Row showed "79% of 120.3 lb", the 1RM estimated from that same set).
+3. ~~**Exercise progress graphic.**~~ Done 2026-09-22 — closes the discovery doc's third
+   success criterion. Exercise Progress now shows, top to bottom:
+   - **Best estimated 1RM** as a headline number, with "+12 lb since Aug 3" once there are
+     two or more sessions.
+   - **Progress to the next strength level** for that lift: "Novice → Intermediate" chips in
+     the level colors, a bar, "147 of 176 lb · 29 lb to go", and what the target means
+     ("starts at an estimated 1RM of 1.5× your bodyweight"). `LiftStandard` +
+     `LiftStandardTests`. It uses the body map's standards but *not* its tenure cap (a
+     footnote says the body map can show a muscle lower). Dumbbell targets are per dumbbell,
+     the number you'd type into a set. No bodyweight → a prompt to log it; bodyweight
+     movements → no standard.
+   - **The chart:** one line (estimated 1RM per session) instead of two, with a dashed line
+     for the next level's target (the y-axis always includes it, so the gap shows), date
+     labels that no longer vanish (the x-range is at least a week wide), and tap a session
+     to see its date, estimated 1RM and top set (tap again to clear). The tap replaces
+     Swift Charts' default press-and-drag, which fought the List's scrolling and cleared
+     the moment the finger lifted.
+   - Each session's point now uses its *best* set's estimated 1RM, not the heaviest set's,
+     so the headline always matches the top of the chart. `StrengthStallRule` only reads the
+     top set, so it isn't affected.
+   - **"% of best 1RM" fix:** the tracking screen now only compares against sets from before
+     today, so a first-ever set shows no bar instead of ~80% of itself.
+
+   **Not checked in the simulator:** a chart with several sessions (the simulator's only
+   Barbell Row data is one session) and the "% of best" fix (Barbell Row is no longer in the
+   plan). A per-lift goal you set yourself would be the natural next step — it'd need a new
+   model field.
 4. **Faster logging for unplanned workouts.** Plan-driven logging is fast now (one check per
    set, prefilled), but "Log an Unplanned Workout" still uses the old flow: + → Add Set →
    Choose Exercise → fields, up to three sheets deep. The tap-count baseline the discovery doc
@@ -204,7 +228,7 @@ actually improving or just accumulating complaints.
 | Dislikes | 13 |
 | Suggestions | 7 |
 | Triaged (in Backlog) | 30 |
-| Done | 21 |
+| Done | 22 |
 | No change needed | 1 |
 | Won't Fix | 0 |
 
@@ -237,7 +261,7 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P2 | Starter exercise catalog (38 common lifts, seeded once) and day-based "Suggested" exercises in the picker — the picker was empty on a fresh install | Found while testing the plan feature | Done (60f1dc9) |
 | P2 | Progress body map: front/back figures colored Beginner → World Class per muscle from logged lifts vs. bodyweight, tenure-capped; muscle-highlight thumbnails on exercise rows | User request (direct, 2026-09-19, whiteboard sketch + reference image) | Done (b581523) — first pass, drawing needs polish; see next steps |
 | P2 | Body map polish (smooth curved figures, clearer untrained muscles, reshaped traps, six-pack abs) and a Level/Weekly toggle showing sets per muscle this week; `WeeklyMuscleVolumeTests` | Next steps on the Training page, item 2 (2026-09-19 first pass) | Done — checked in the simulator 2026-09-22 |
-| P3 | Nicer-looking exercise graph / add a workout-progress graphic | Dislikes → Workouts (2026-09-08, "exercise graph doesn't look good") + Suggestions → Workouts (2026-09-08, workout-progress graphic) | Triaged |
+| P3 | Nicer-looking exercise graph / add a workout-progress graphic — Exercise Progress redesigned: best estimated 1RM, progress to the next strength level for that lift (`LiftStandard`), one-line chart with a dashed target, date labels, tap-to-inspect; also fixed "% of best 1RM" comparing today's sets against themselves | Dislikes → Workouts (2026-09-08, "exercise graph doesn't look good") + Suggestions → Workouts (2026-09-08, workout-progress graphic) | Done — checked in the simulator 2026-09-22 (one-session data only) |
 | P1 | Tracking screen: the first time you do an exercise, the weight has to be typed on every set — rows are only prefilled when the screen opens, so typing 95 lb in set 1 leaves sets 2–4 at 0 lb, and Add Set copies the empty row rather than the one just logged — logging a set now fills its weight × reps into the later rows that have no weight yet, and Add Set copies the last row that has one | Simulator pass (2026-09-22) | Done (fc7d42a) |
 | P1 | Edit Routine silently deletes a day's exercises when that day's name drops out of the new split (e.g. 5 → 4 days removes Pull and its exercises with no warning) — the editor now shows "Pull's exercise will be removed." under the split preview; the day-matching rule was pulled out into `RoutineTemplate.match` and unit-tested (`RoutineTemplateTests`) | Simulator pass (2026-09-22) | Done (ab0bd10) |
 | P3 | Edit Routine carries exercises to the *first* day with the same name, so they can move day (4-day Upper/Lower: Saturday's Lower exercises land on Tuesday's Lower) | Simulator pass (2026-09-22) | Triaged |

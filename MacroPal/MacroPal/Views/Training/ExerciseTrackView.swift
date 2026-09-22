@@ -33,7 +33,9 @@ struct ExerciseTrackView: View {
 
     private var referenceKg: Double? {
         guard let exercise else { return nil }
-        return WorkoutViewModel.bestEstimated1RMKg(for: exercise, in: sessions)
+        return WorkoutViewModel.bestEstimated1RMKg(
+            for: exercise, in: sessions, before: Calendar.current.startOfDay(for: .now)
+        )
     }
 
     private var loggedCount: Int {
@@ -126,7 +128,8 @@ struct ExerciseTrackView: View {
         .background(.background.secondary, in: RoundedRectangle(cornerRadius: 14))
     }
 
-    /// "30% of 130 lb" with a colored bar; hidden until there's a logged history to compare to.
+    /// "30% of 130 lb" with a colored bar; hidden until there's history from an earlier day to
+    /// compare to.
     @ViewBuilder
     private func intensityBar(for row: SetRow) -> some View {
         if let referenceKg, let weight = Double(row.weightText), weight > 0 {

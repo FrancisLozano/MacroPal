@@ -44,7 +44,9 @@ final class WorkoutProgressViewModel {
     }
 
     /// One point per session containing the exercise, using that session's top set (max
-    /// weight, tie-broken by higher reps). Sessions without the exercise are skipped
+    /// weight, tie-broken by higher reps). `estimated1RM` is the best estimate from *any* set
+    /// that session — a lighter set for more reps can out-estimate the top set, and the chart's
+    /// headline "best estimated 1RM" must match its highest point. Sessions without the exercise are skipped
     /// entirely — unlike the macro chart, workout days are irregular by nature, so
     /// zero-filling would be misleading rather than informative.
     func progression(for exercise: Exercise, in sessions: [WorkoutSession]) -> [ExerciseProgressPoint] {
@@ -57,7 +59,7 @@ final class WorkoutProgressViewModel {
                 date: session.date,
                 topSetWeightKg: topSet.weightKg,
                 topSetReps: topSet.reps,
-                estimated1RM: OneRepMaxEstimator.epley(weightKg: topSet.weightKg, reps: topSet.reps)
+                estimated1RM: sets.map { OneRepMaxEstimator.epley(weightKg: $0.weightKg, reps: $0.reps) }.max() ?? 0
             )
         }
         .sorted { $0.date < $1.date }
