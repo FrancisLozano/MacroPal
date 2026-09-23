@@ -5,8 +5,8 @@
 
 ## Progress summary (as of 2026-09-22, late evening)
 
-33 of 35 triaged backlog items are Done, 1 was verified as "No change needed", and 1 is open —
-a small P3 rough edge. (2026-09-23: the widget macro order is done.) **Every P1 and P2 item is done.** (The 09-15 summary said
+34 of 35 triaged backlog items are Done and 1 was verified as "No change needed" — **the
+backlog is empty.** (2026-09-23: the widget macro order and Edit Routine day matching are done.) (The 09-15 summary said
 "9 of 16"; the table actually held 17 rows then — counts are recounted from the table.)
 
 The 2026-09-19 stretch merged Body and Workouts into **one Training tab**, following
@@ -65,6 +65,11 @@ Details for each are in the Backlog rows and the "Next steps on the Training pag
   `MuscleLevelEngine.levelMinimumMonths` (the tenure cap now reads from that array) — so the
   ⓘ sheet can't drift from how levels are computed. Change a threshold there and the sheet
   follows.
+- **Edit Routine matches days by weekday, then name.** When the split changes, a day keeps
+  its exercises on the same weekday if the new split has a day of that name there, and
+  otherwise moves to the nearest same-named day (Sat–Sun counts as 1 apart). Closest pairs
+  are claimed first, so as many days carry over as the names allow. The warning and `apply`
+  share `RoutineTemplate.match`, so what the editor warns about is what gets deleted.
 - **Removable set rows:** only unlogged rows *past* the baseline (the plan's set count, or
   the default sets for an unplanned exercise). Baseline rows would just come back the next
   time the screen opens; logged rows are still removed by unchecking.
@@ -77,9 +82,7 @@ Details for each are in the Backlog rows and the "Next steps on the Training pag
 
 ### Remaining open items
 
-- **P3** — Edit Routine carries exercises to the *first* day with the same name.
-
-Known follow-ups that aren't Backlog rows yet: a notification when rest ends in the
+None in the Backlog. Known follow-ups that aren't Backlog rows yet: a notification when rest ends in the
 background; a per-lift goal you set yourself on Exercise Progress (needs a model field);
 HealthKit step import (needs a real device); Log Weight / Log Steps lose typed input if you tap
 the dimmed area; Default Time from the reference screenshot (no timed exercises exist); a log
@@ -89,18 +92,12 @@ line in the launch-crash retry (see Watch for).
 
 **Start here next session:**
 
-1. **P3: Edit Routine day matching** — carry exercises to the same-named day in the same
-   position, not the first one. The rule is `RoutineTemplate.match` (unit-tested in
-   `RoutineTemplateTests`); it pairs each slot with the first leftover day of that name.
-   Reproduce first with the case from the Backlog row (4-day Upper/Lower: Saturday's Lower
-   exercises land on Tuesday's Lower), write it as a failing test, then fix. Keep the
-   "…'s exercises will be removed" warning in the editor consistent — it uses the same rule.
-2. **Quick re-checks nobody has done yet:** Exercise Progress and the body map with the
+1. **Quick re-checks nobody has done yet:** Exercise Progress and the body map with the
    corrected 227 lb bodyweight (targets were ~3× too high before); the ⓘ sheet with no weight
    logged (should show multiples only and a "Log your weight" line) and with sex set to female
    in Profile (targets × 0.65).
 
-After that the backlog is empty, so the most useful next step is **a week of real use**: log
+The backlog is empty, so after that the most useful next step is **a week of real use**: log
 food and workouts for real and add new Likes / Dislikes / Suggestions below — the raw log
 hasn't had an entry since 2026-09-08, and everything since has been built from it. Things
 worth noticing during that week: whether the Training page now feels as calm as Nutrition,
@@ -348,7 +345,7 @@ actually improving or just accumulating complaints.
 | Dislikes | 13 |
 | Suggestions | 7 |
 | Triaged (in Backlog) | 35 |
-| Done | 33 |
+| Done | 34 |
 | No change needed | 1 |
 | Won't Fix | 0 |
 
@@ -385,7 +382,7 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P3 | Nicer-looking exercise graph / add a workout-progress graphic — Exercise Progress redesigned: best estimated 1RM, progress to the next strength level for that lift (`LiftStandard`), one-line chart with a dashed target, date labels, tap-to-inspect; also fixed "% of best 1RM" comparing today's sets against themselves | Dislikes → Workouts (2026-09-08, "exercise graph doesn't look good") + Suggestions → Workouts (2026-09-08, workout-progress graphic) | Done — checked in the simulator 2026-09-22 (one-session data only) |
 | P1 | Tracking screen: the first time you do an exercise, the weight has to be typed on every set — rows are only prefilled when the screen opens, so typing 95 lb in set 1 leaves sets 2–4 at 0 lb, and Add Set copies the empty row rather than the one just logged — logging a set now fills its weight × reps into the later rows that have no weight yet, and Add Set copies the last row that has one | Simulator pass (2026-09-22) | Done (fc7d42a) |
 | P1 | Edit Routine silently deletes a day's exercises when that day's name drops out of the new split (e.g. 5 → 4 days removes Pull and its exercises with no warning) — the editor now shows "Pull's exercise will be removed." under the split preview; the day-matching rule was pulled out into `RoutineTemplate.match` and unit-tested (`RoutineTemplateTests`) | Simulator pass (2026-09-22) | Done (ab0bd10) |
-| P3 | Edit Routine carries exercises to the *first* day with the same name, so they can move day (4-day Upper/Lower: Saturday's Lower exercises land on Tuesday's Lower) | Simulator pass (2026-09-22) | Triaged |
+| P3 | Edit Routine carries exercises to the *first* day with the same name, so they can move day (4-day Upper/Lower: Saturday's Lower exercises land on Tuesday's Lower) — the repro was 5 → 4 days keeping Saturday: the 5-day plan's only Lower is on Saturday, and the 4-day split's first Lower is Tuesday. `RoutineTemplate.match` now takes the new split's weekdays: every same-named (slot, day) pair is sorted by how many days apart they are (going round the week), and the closest pairs claim first. A day stays on its weekday when it can and otherwise moves to the nearest same-named day. The old rule also lost exercises going back up (4 → 5 gave Saturday's slot Tuesday's empty Lower and deleted Saturday's). New `RoutineTemplate.split(for:)` pairs slots with weekdays for the editor preview, the warning and `apply`. Four new `RoutineTemplateTests` (all failed on the old rule) | Simulator pass (2026-09-22) | Done — checked in the simulator 2026-09-23 (5 → 4 → 5 days: Saturday's Lower kept its 2 exercises both ways, no warning, no orphaned rows; plan back to Mon/Tue/Wed/Fri/Sat) |
 | P2 | Log Workout (unplanned) sheet has no Cancel button — swipe-down is the only way out — added Cancel to it and to its Add Set sheet, which had the same gap | Simulator pass (2026-09-22) | Done — checked in the simulator 2026-09-22; that sheet was later replaced by `UnplannedWorkoutView` (Done button, nothing to cancel) |
 | P2 | Plan editing gaps: rep ranges (`targetRepsMax`), Move Up/Down within a day, name no longer repeated on the tracking screen, New Exercise defaults to the day's suggested group; plus a retry for a launch crash when the app and widget migrate the store at once | Next steps on the Training page, item 5 | Done — checked in the simulator 2026-09-22 (plan put back to 3 × 10 afterwards) |
 | P1 | Faster unplanned-workout logging — picker first, then the plan's per-set tracking screen, sets saved on check; 12 → 8 taps for 3 sets of a new exercise; old draft form deleted; Cancel added to the exercise picker and New Exercise form | Next steps on the Training page, item 4 + discovery doc success criterion 2 | Done — checked in the simulator 2026-09-22 (test sets unchecked afterwards) |

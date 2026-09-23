@@ -28,8 +28,7 @@ struct RoutineEditorView: View {
     }
 
     private var preview: [(weekday: Int, slot: RoutineTemplate.Slot)] {
-        let slots = RoutineTemplate.slots(forDaysPerWeek: selectedWeekdays.count)
-        return Array(zip(selectedWeekdays.sorted(), slots)).map { (weekday: $0, slot: $1) }
+        RoutineTemplate.split(for: selectedWeekdays)
     }
 
     var body: some View {
