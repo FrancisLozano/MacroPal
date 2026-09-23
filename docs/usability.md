@@ -549,6 +549,24 @@ commit) / `No change needed` (verified the behavior already exists — say how y
 
 *(newest first)*
 
+- 2026-09-23 (Training) — The "Training" headline sits lower than "Nutrition" does on the
+  Nutrition page; line them up at the same height.
+- 2026-09-23 (Training) — Scroll like the Nutrition page: once scrolled down, the "Training"
+  title doesn't need to stay pinned at the top.
+- 2026-09-23 (Training) — Hide the scroll bar on the Training page.
+- 2026-09-23 (Training) — Muscle colors should track volume moved, not the one-rep max — e.g.
+  2 sets × 8 reps × 35 lb = 560 lb moved. Keep the 1RM as a data point, but volume is what
+  I want to track.
+- 2026-09-23 (Training) — Current Plan card: heading "Gym Workout", subheading "5 Days a
+  Week" (replacing the quads, hamstrings, glutes, core list), then a line under it "Today:
+  Legs & Abs". No arrow to press.
+- 2026-09-23 (Training) — Tapping the Gym Workout / 5 Days a Week section shows all the
+  week's workouts; tapping a workout opens its exercises. No arrows.
+- 2026-09-23 (Training) — Replace the calendar icon with a ⋯ menu offering Reorder and Edit
+  Routine. Reorder happens right on the main page, with a Save. Edit opens a short popup
+  where you describe the routine in a message, e.g. "4 days a week, focusing on an upper and
+  lower routine."
+
 - 2026-09-08 (Nutrition) — Clicking on a nutrition/macro should show which foods contributed
   to that macro's total for the day — a breakdown, not just the aggregate number.
 - 2026-09-08 (Insights) — Instead of a separate Insights page, use an info ("i") icon at the
