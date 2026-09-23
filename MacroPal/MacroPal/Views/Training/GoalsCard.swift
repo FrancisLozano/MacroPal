@@ -33,56 +33,53 @@ struct GoalsCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // lb/kg lives in Profile → Units & Measurements.
-            Text("Goals")
-                .font(.headline)
-
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Goal weight")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Button {
-                        isPresentingGoalWeightSheet = true
-                    } label: {
-                        HStack(alignment: .firstTextBaseline, spacing: 4) {
-                            Text(goalText)
-                                .font(.title3.bold())
-                            Text(unit.symbol)
-                                .foregroundStyle(.secondary)
+        // lb/kg lives in Profile → Units & Measurements.
+        TrainingSection("Goals") {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Goal weight")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Button {
+                            isPresentingGoalWeightSheet = true
+                        } label: {
+                            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                                Text(goalText)
+                                    .font(.title3.bold())
+                                Text(unit.symbol)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .foregroundStyle(Color.primary)
                         }
-                        .foregroundStyle(Color.primary)
                     }
+                    Spacer()
+                    Button {
+                        isPresentingLogWeightSheet = true
+                    } label: {
+                        Label("Log", systemImage: "plus")
+                    }
+                    .buttonStyle(.bordered)
+                    NavigationLink {
+                        WeightHistoryView()
+                    } label: {
+                        Image(systemName: "chart.line.uptrend.xyaxis")
+                            .padding(8)
+                    }
+                    .buttonStyle(.bordered)
+                    .accessibilityLabel("Weight progress")
                 }
-                Spacer()
-                Button {
-                    isPresentingLogWeightSheet = true
-                } label: {
-                    Label("Log", systemImage: "plus")
+
+                ForEach(weightFindings) { finding in
+                    InsightCallout(finding: finding)
                 }
-                .buttonStyle(.bordered)
-                NavigationLink {
-                    WeightHistoryView()
-                } label: {
-                    Image(systemName: "chart.line.uptrend.xyaxis")
-                        .padding(8)
-                }
-                .buttonStyle(.bordered)
-                .accessibilityLabel("Weight progress")
+
+                Divider()
+
+                stepsRow
             }
-
-            ForEach(weightFindings) { finding in
-                InsightCallout(finding: finding)
-            }
-
-            Divider()
-
-            stepsRow
+            .padding()
         }
-        .padding()
-        .background(.background.secondary, in: RoundedRectangle(cornerRadius: 12))
-        .padding(.horizontal)
         .sheet(isPresented: $isPresentingGoalWeightSheet) {
             if let profile {
                 NavigationStack {

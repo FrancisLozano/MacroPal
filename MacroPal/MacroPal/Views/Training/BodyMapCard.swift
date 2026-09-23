@@ -40,35 +40,30 @@ struct BodyMapCard: View {
     var body: some View {
         let colors = muscleColors
 
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Progress")
-                    .font(.headline)
-                Spacer()
-                Button {
-                    isShowingInfo = true
-                } label: {
-                    Image(systemName: "info.circle")
+        TrainingSection("Progress") {
+            Button {
+                isShowingInfo = true
+            } label: {
+                Image(systemName: "info.circle")
+            }
+            .accessibilityLabel("How levels work")
+        } content: {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 24) {
+                    BodyFigure(side: .front, colors: colors)
+                    BodyFigure(side: .back, colors: colors)
                 }
-                .accessibilityLabel("How levels work")
-            }
+                .frame(height: 200)
+                .frame(maxWidth: .infinity)
 
-            HStack(spacing: 24) {
-                BodyFigure(side: .front, colors: colors)
-                BodyFigure(side: .back, colors: colors)
+                if let prompt = prompt(hasColors: !colors.isEmpty) {
+                    Text(prompt)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
-            .frame(height: 200)
-            .frame(maxWidth: .infinity)
-
-            if let prompt = prompt(hasColors: !colors.isEmpty) {
-                Text(prompt)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+            .padding()
         }
-        .padding()
-        .background(.background.secondary, in: RoundedRectangle(cornerRadius: 12))
-        .padding(.horizontal)
         .sheet(isPresented: $isShowingInfo) {
             MuscleLevelInfoView()
         }

@@ -15,7 +15,7 @@ struct TrainingView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 12) {
+            VStack(spacing: 20) {
                 BodyMapCard()
                 CurrentPlanCard()
                 GoalsCard()
@@ -23,6 +23,7 @@ struct TrainingView: View {
             }
             .padding(.vertical)
         }
+        .background(Color(.systemGroupedBackground))
         .navigationTitle("Training")
         .sheet(isPresented: $isPresentingLogWorkoutSheet) {
             UnplannedWorkoutView()
@@ -33,28 +34,28 @@ struct TrainingView: View {
     }
 
     private var moreCard: some View {
-        VStack(spacing: 0) {
-            NavigationLink {
-                WorkoutHistoryView()
-            } label: {
-                moreRow("Workout History", systemImage: "clock.arrow.circlepath")
+        TrainingSection(nil) {
+            VStack(spacing: 0) {
+                NavigationLink {
+                    WorkoutHistoryView()
+                } label: {
+                    moreRow("Workout History", systemImage: "clock.arrow.circlepath")
+                }
+                Divider().padding(.leading, 44)
+                NavigationLink {
+                    ExerciseProgressView()
+                } label: {
+                    moreRow("Exercise Progress", systemImage: "chart.line.uptrend.xyaxis")
+                }
+                Divider().padding(.leading, 44)
+                Button {
+                    isPresentingLogWorkoutSheet = true
+                } label: {
+                    moreRow("Log an Unplanned Workout", systemImage: "plus.circle", showsChevron: false)
+                }
             }
-            Divider().padding(.leading, 44)
-            NavigationLink {
-                ExerciseProgressView()
-            } label: {
-                moreRow("Exercise Progress", systemImage: "chart.line.uptrend.xyaxis")
-            }
-            Divider().padding(.leading, 44)
-            Button {
-                isPresentingLogWorkoutSheet = true
-            } label: {
-                moreRow("Log an Unplanned Workout", systemImage: "plus.circle", showsChevron: false)
-            }
+            .buttonStyle(.plain)
         }
-        .buttonStyle(.plain)
-        .background(.background.secondary, in: RoundedRectangle(cornerRadius: 12))
-        .padding(.horizontal)
     }
 
     private func moreRow(_ title: String, systemImage: String, showsChevron: Bool = true) -> some View {
