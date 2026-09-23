@@ -15,6 +15,8 @@ struct LogStepsView: View {
 
     @State private var date: Date = .now
     @State private var stepsText: String = ""
+    /// What the field was filled with for the chosen day, so an unchanged prefill isn't an edit.
+    @State private var loadedStepsText: String = ""
     @FocusState private var isStepsFocused: Bool
 
     private let viewModel = StepsViewModel()
@@ -40,6 +42,8 @@ struct LogStepsView: View {
         .navigationTitle("Log Steps")
         .navigationBarTitleDisplayMode(.inline)
         .presentationDetents([.height(260)])
+        // A tap above the sheet would otherwise drop the typed steps; Cancel still discards them.
+        .interactiveDismissDisabled(stepsText != loadedStepsText)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") { dismiss() }
@@ -59,6 +63,7 @@ struct LogStepsView: View {
     private func showExistingTotal() {
         let existing = viewModel.steps(on: date, in: entries)
         stepsText = existing > 0 ? String(existing) : ""
+        loadedStepsText = stepsText
     }
 
     private func save() {

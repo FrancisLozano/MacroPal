@@ -14,6 +14,7 @@ struct LogWeightEntryView: View {
 
     @State private var date: Date = .now
     @State private var weightText: String = ""
+    @FocusState private var isWeightFocused: Bool
 
     private var weightKg: Double? {
         Double(weightText).map(unit.toKg)
@@ -30,6 +31,7 @@ struct LogWeightEntryView: View {
                 HStack {
                     TextField("Weight", text: $weightText)
                         .keyboardType(.decimalPad)
+                        .focused($isWeightFocused)
                     Text(unit.symbol)
                         .foregroundStyle(.secondary)
                 }
@@ -39,12 +41,18 @@ struct LogWeightEntryView: View {
         .navigationTitle("Log Weight")
         .navigationBarTitleDisplayMode(.inline)
         .presentationDetents([.height(260)])
+        // A tap above the sheet would otherwise drop the typed weight; Cancel still discards it.
+        .interactiveDismissDisabled(!weightText.isEmpty)
         .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") { dismiss() }
+            }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") { save() }
                     .disabled(!isValid)
             }
         }
+        .onAppear { isWeightFocused = true }
     }
 
     private func save() {
