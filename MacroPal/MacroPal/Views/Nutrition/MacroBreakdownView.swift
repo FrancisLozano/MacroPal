@@ -6,8 +6,8 @@
 import SwiftUI
 import SwiftData
 
-/// Which foods a day's protein (or carbs, or fat) came from, biggest share first. Reached by
-/// tapping a macro row on the Nutrition screen.
+/// Which foods a day's protein (or carbs, or fat) came from, biggest share first, as grams and
+/// % of the day's total. Reached by tapping a macro row on the Nutrition screen.
 struct MacroBreakdownView: View {
     @Query(sort: \FoodEntry.date) private var allEntries: [FoodEntry]
     @Query private var profiles: [UserProfile]
@@ -88,31 +88,22 @@ struct MacroBreakdownView: View {
 
     private func row(_ contribution: MacroContribution) -> some View {
         let entry = contribution.entry
-        return VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(entry.nameSnapshot)
-                    Text(entry.mealType.displayName)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text("\(formattedGrams(contribution.grams))g")
-                        .fontWeight(.semibold)
-                    Text("\(Int((contribution.share * 100).rounded()))%")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+        return HStack(alignment: .firstTextBaseline) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(entry.nameSnapshot)
+                Text(entry.mealType.displayName)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
-            // Share of the day's total, so the biggest sources stand out at a glance.
-            GeometryReader { proxy in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(Color.secondary.opacity(0.15))
-                    Capsule().fill(color).frame(width: proxy.size.width * contribution.share)
-                }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("\(formattedGrams(contribution.grams))g")
+                    .fontWeight(.semibold)
+                // Share of the day's total for this macro.
+                Text("\(Int((contribution.share * 100).rounded()))%")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
-            .frame(height: 4)
         }
         .padding(.vertical, 2)
         .accessibilityElement(children: .combine)

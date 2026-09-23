@@ -586,6 +586,7 @@ struct DailySummaryView: View {
         } label: {
             label()
         }
+        .navigationLinkIndicatorVisibility(.hidden)
     }
 
     private func macroStat(name: String, color: Color, eaten: Double, target: Double, remaining: Double, hideDot: Bool = false) -> some View {
