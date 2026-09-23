@@ -73,15 +73,12 @@ enum MuscleLevelEngine {
         thresholds.filter { ratio >= $0 }.count
     }
 
+    /// Months a muscle has to have been trained before each level (Beginner … World Class) is
+    /// allowed — the tenure cap, also shown in the body map's level explanation.
+    static let levelMinimumMonths: [Double] = [0, 1, 4, 12, 36, 60]
+
     /// Highest level allowed for a muscle trained for `months`.
     static func tenureCap(months: Double) -> Int {
-        switch months {
-        case ..<1: 1
-        case ..<4: 2
-        case ..<12: 3
-        case ..<36: 4
-        case ..<60: 5
-        default: 6
-        }
+        levelMinimumMonths.filter { months >= $0 }.count
     }
 }

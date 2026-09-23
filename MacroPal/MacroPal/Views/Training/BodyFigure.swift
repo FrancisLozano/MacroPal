@@ -26,27 +26,6 @@ enum LevelPalette {
     }
 }
 
-/// Colors for the four weekly-volume bands (see `WeeklyMuscleVolume`) — one blue, light to
-/// dark, so "more" reads as "deeper" and it can't be mistaken for the level colors.
-enum VolumePalette {
-    static let colors: [Color] = [
-        Color(red: 0.62, green: 0.78, blue: 0.98),
-        Color(red: 0.40, green: 0.63, blue: 0.96),
-        Color(red: 0.20, green: 0.45, blue: 0.88),
-        Color(red: 0.10, green: 0.26, blue: 0.68),
-    ]
-
-    /// `band` is 1…4 (0 = untrained this week, which isn't a palette color).
-    static func color(forBand band: Int) -> Color {
-        colors[min(max(band, 1), colors.count) - 1]
-    }
-
-    /// The lightest band is too pale for white text.
-    static func labelColor(forBand band: Int) -> Color {
-        band <= 1 ? Color(red: 0.08, green: 0.2, blue: 0.5) : .white
-    }
-}
-
 /// A stylized front or back figure whose muscles are filled from `colors`. Muscles missing
 /// from `colors` draw in the neutral "untrained" gray.
 ///

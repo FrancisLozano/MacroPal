@@ -5,7 +5,7 @@
 
 ## Progress summary (as of 2026-09-22, end of day)
 
-30 of 33 triaged backlog items are Done, 1 was verified as "No change needed", and 2 are open —
+31 of 34 triaged backlog items are Done, 1 was verified as "No change needed", and 2 are open —
 both are small P3 rough edges. **Every P1 and P2 item is done.** (The 09-15 summary said
 "9 of 16"; the table actually held 17 rows then — counts are recounted from the table.)
 
@@ -116,13 +116,14 @@ a real test with the widget on the home screen; adding a log line to the retry w
    the traps are a rounded kite from the neck to mid-back; abs are a six-pack plus lower abs;
    the quads gained a separate inner teardrop, the hamstrings and calves are split in two.
    The exercise-row thumbnails use the same drawing, so they changed too.
-   - **Weekly toggle** (Level | Weekly, remembered between launches): colors each muscle by
+   - **Weekly toggle — removed later on 2026-09-22** (user: not needed, the card took too much
+     space; see the Backlog row "Progress card: ⓘ instead of the Level/Weekly toggle"). What it
+     was, in case it comes back — the code is in git history before that commit
+     (Level | Weekly, remembered between launches): colors each muscle by
      sets this calendar week — a main mover (involvement ≥ 0.8) counts 1, an assisting muscle
      (≥ 0.5) counts ½ — in four blue bands, 1–4 / 5–9 / 10–19 / 20+ sets, loosely after the
      "10–20 sets per muscle per week" rule of thumb. `WeeklyMuscleVolume` +
      `WeeklyMuscleVolumeTests`. The week follows the phone's locale (Sunday start in the US).
-   - The card is a little shorter in Weekly mode (one legend row instead of two), so what's
-     below it shifts when you switch.
    - Tip for future drawing work: the figure was iterated with a macOS harness that renders
      `BodyFigure` to PNG via `ImageRenderer` (system grays swapped for fixed RGB), far faster
      than a simulator round trip. It lived in the session scratchpad, not the repo.
@@ -307,8 +308,8 @@ actually improving or just accumulating complaints.
 | Likes | 1 |
 | Dislikes | 13 |
 | Suggestions | 7 |
-| Triaged (in Backlog) | 33 |
-| Done | 30 |
+| Triaged (in Backlog) | 34 |
+| Done | 31 |
 | No change needed | 1 |
 | Won't Fix | 0 |
 
@@ -352,6 +353,7 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P3 | No way to delete an extra, unlogged row added with Add Set on the tracking screen — rows past the baseline (the plan's set count, or the default sets for an unplanned exercise) show a red minus badge on the set number while unlogged; tapping it removes the row and the rest renumber. Baseline rows can't be removed (`buildRows` would add them back on the next visit), and a logged row is removed by unchecking it, as before. Not a swipe: the screen deliberately isn't a `List` | Simulator pass (2026-09-22) | Done (50884c7) — checked in the simulator 2026-09-22 (unplanned Barbell Curl: 5 rows → minus on 4 and 5 only; removing 4 renumbered 5; a logged extra row loses the badge; test set unchecked afterwards) |
 | P3 | Medium widget lists macros Carbs / Fat / Protein; the app uses Protein / Carbs / Fat | Simulator pass (2026-09-22) | Triaged |
 | P3 | Workout History rows show only date + set count, not the plan day ("Pull") or exercises — each row now shows the plan day as its headline ("Lower"; "Push + Pull" on a mixed day), then "date · N sets", then the exercises in the order first logged. Unplanned sessions and ones logged before this keep the date as the headline. The day name is stored on each set (`WorkoutSetEntry.planDayName`, optional and defaulted, so the store migrated without a versioned schema) as a copy of the name, not a link to `PlanDay`, so history survives plan edits; the session's label is derived from its sets, so unchecking a plan set takes the label with it. A first version stored the name once on the session and kept "Lower" after its only Lower set was unchecked, which is why it moved to the set. `WorkoutSessionTests` | Simulator pass (2026-09-22) | Done — checked in the simulator 2026-09-22 (a Back Squat set from Lower labelled today's session "Lower"; unchecking it put the date back; test set unchecked afterwards) |
+| P2 | Progress card: ⓘ instead of the Level/Weekly toggle — the card was too tall. It's now just "Progress", an ⓘ and the two figures: the Weekly view is gone (`WeeklyMuscleVolume`, its tests and `VolumePalette` deleted), and so are the color chips and the description under the figures. The ⓘ opens **How Levels Work** (`MuscleLevelInfoView`): the two things a muscle needs to move up (strength vs. bodyweight from the last 90 days, and time trained), then each level in its color with what it means, the Squat and Bench targets in the user's unit from their logged bodyweight (rounded to 5 lb / 2.5 kg; multiples only if no weight is logged; female standards applied from Profile), and the time required. The numbers come from the same `StrengthClass` thresholds and a new `MuscleLevelEngine.levelMinimumMonths` (the tenure cap now reads from it), so the sheet can't drift from the engine. The card still shows a one-line prompt when there's no bodyweight or no workout, since the figures can't say that themselves | User request (direct, 2026-09-22, screenshot of the legend) | Done — checked in the simulator 2026-09-22 |
 | P1 | Steps goal with a bar chart (whiteboard Goals card) — `StepEntry` (one total per day; logging a day again replaces it), `UserProfile.stepGoal` (default 10,000, migrates existing stores), Steps row on the Goals card, Steps screen with 7/30-day bars (green when the goal is met), dashed goal line, and average / goal-met counted over logged days; `StepsViewModelTests` | User request (direct, 2026-09-19, whiteboard sketch) | Done (a46cfe9) |
 
 Priority scale: **P1** (actively annoying, fix soon) / **P2** (worth doing, no rush) /
