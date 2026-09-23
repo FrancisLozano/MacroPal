@@ -3,7 +3,7 @@
 **Status:** Living document — ongoing, not tied to a phase
 **Started:** 2026-09-06
 
-## Progress summary (as of 2026-09-22, end of day)
+## Progress summary (as of 2026-09-22, late evening)
 
 32 of 35 triaged backlog items are Done, 1 was verified as "No change needed", and 2 are open —
 both are small P3 rough edges. **Every P1 and P2 item is done.** (The 09-15 summary said
@@ -12,7 +12,8 @@ both are small P3 rough edges. **Every P1 and P2 item is done.** (The 09-15 summ
 The 2026-09-19 stretch merged Body and Workouts into **one Training tab**, following
 [discovery-workouts-body-redesign.md](discovery-workouts-body-redesign.md) (Option 2) and the
 user's whiteboard sketch — body map on top, Current Plan, Goals below. On 2026-09-22 all three
-of that doc's success criteria were met.
+of that doc's success criteria were met, and in the evening the tab was restyled to match
+Nutrition.
 
 ### What changed on 2026-09-22
 
@@ -23,13 +24,18 @@ and the steps goal with a bar chart (`a46cfe9`). Then, in order:
 | Commit | What |
 |---|---|
 | `651389f` | Cancel on the Log Workout / Add Set sheets; food-history row closed (already done by `ab68f73`/`4e02e89`) |
-| `cb532ed` | Body map redrawn (smooth curves, clearer untrained muscles, six-pack, kite traps) + Level/Weekly toggle |
+| `cb532ed` | Body map redrawn (smooth curves, clearer untrained muscles, six-pack, kite traps) + Level/Weekly toggle (the toggle was removed again in `373f28e`) |
 | `ba0d917` | Exercise Progress: best 1RM, progress to the next strength level, one-line chart with a target line, tap to inspect; "% of best" no longer compares today's sets against themselves |
 | `1737ed2` | Unplanned workouts use the plan's per-set tracking screen — 12 taps → 8 |
 | `7cfc42b` | Plan rep ranges (8–10), Move Up/Down within a day, New Exercise defaults to the day's group; launch-crash retry |
 | `dab0aea`, `78417fe` | Tap a macro → which foods it came from (grams + % of the day; no chevrons, no per-food bars — user feedback) |
 | `209bc15` | Insights tab replaced by inline callouts with an ⓘ sheet (protein on Nutrition, weight on the Goals card, stalls on Exercise Progress) |
 | `be8196a`, `e973f41`, `8e3dbb2` | Profile in sections — Personal / Workout / Goal & Daily Targets / Units & Measurements; Workout settings page (from a reference screenshot) and a rest timer; lb/kg moved off the Goals card; height in cm or ft/in |
+| — (simulator data) | The bad weigh-in fixed: the 227 kg entry deleted, re-logged as 227 lb dated 2026-09-22 |
+| `50884c7` | Extra, unlogged Add Set rows can be removed (minus badge on the set number, rows past the plan's set count only) |
+| `de05aa8` | Workout History rows show the plan day ("Lower"), "date · N sets" and the exercises |
+| `373f28e` | Progress card: Level/Weekly toggle, color chips and description removed; an ⓘ opens **How Levels Work** |
+| `15466e8` | Training page laid out like Nutrition — gray headings (Progress, Current Plan, Goals) above white cards, section buttons in the headings |
 
 Details for each are in the Backlog rows and the "Next steps on the Training page" list below.
 
@@ -50,34 +56,60 @@ Details for each are in the Backlog rows and the "Next steps on the Training pag
   old sessions still show theirs).
 - **Exercise targets and body-map levels use the same strength standards**, but Exercise
   Progress skips the body map's tenure cap (it judges the lift, not the muscle).
+- **The plan day is stored per set, as a copied name** (`WorkoutSetEntry.planDayName`), not
+  on the session and not as a link to `PlanDay`. A session's label ("Pull", "Push + Pull") is
+  derived from the sets it still has, so unchecking a plan set takes the label with it, and
+  history survives plan edits. A session-level field was tried first and kept a stale label.
+  Sessions from before 2026-09-22 have no day and show the date.
+- **The levels explainer reads the engine's own numbers** — `StrengthClass` thresholds and
+  `MuscleLevelEngine.levelMinimumMonths` (the tenure cap now reads from that array) — so the
+  ⓘ sheet can't drift from how levels are computed. Change a threshold there and the sheet
+  follows.
+- **Removable set rows:** only unlogged rows *past* the baseline (the plan's set count, or
+  the default sets for an unplanned exercise). Baseline rows would just come back the next
+  time the screen opens; logged rows are still removed by unchecking.
+- **Training is styled like Nutrition but isn't a `List`.** `TrainingSection` draws the gray
+  heading + white card from stacks, because the cards are full of buttons and a `List` is
+  where the button-detachment bug lives. Any new Training card should use `TrainingSection`
+  (title optional, accessory button optional).
+- **The Weekly body-map view is deleted, not hidden** (`WeeklyMuscleVolume`, its tests and
+  `VolumePalette`). It's in git history before `373f28e` if it's ever wanted back.
 
 ### Remaining open items
 
-- **P3** — Edit Routine carries exercises to the *first* day with the same name.
 - **P3** — Medium widget lists macros Carbs / Fat / Protein; the app uses Protein / Carbs / Fat.
+- **P3** — Edit Routine carries exercises to the *first* day with the same name.
 
 Known follow-ups that aren't Backlog rows yet: a notification when rest ends in the
 background; a per-lift goal you set yourself on Exercise Progress (needs a model field);
 HealthKit step import (needs a real device); Log Weight / Log Steps lose typed input if you tap
-the dimmed area; Default Time from the reference screenshot (no timed exercises exist).
+the dimmed area; Default Time from the reference screenshot (no timed exercises exist); a log
+line in the launch-crash retry (see Watch for).
 
 ## Next task
 
 **Start here next session:**
 
-1. **P3: widget macro order** — match the app (Protein / Carbs / Fat). A one-liner in
-   `MacroPalWidget`.
+1. **P3: widget macro order** — match the app (Protein / Carbs / Fat). Reorder the three
+   `macroColumn` calls in `MacroPalWidget/MacroPalWidget.swift` (~line 140) so Protein comes
+   first, and check the small widget for the same order. Verify on the home screen in the
+   simulator (the medium widget was added there on 2026-09-22).
 2. **P3: Edit Routine day matching** — carry exercises to the same-named day in the same
-   position, not the first one.
-
-(Done 2026-09-22, evening: the bad weigh-in — the 227 kg entry was deleted from Weight History
-and re-logged as 227 lb, dated 2026-09-22 — removing an extra Add Set row, and Workout History
-rows showing the plan day and exercises; see the Backlog. Exercise Progress with the corrected
-bodyweight hasn't been re-checked yet.)
+   position, not the first one. The rule is `RoutineTemplate.match` (unit-tested in
+   `RoutineTemplateTests`); it pairs each slot with the first leftover day of that name.
+   Reproduce first with the case from the Backlog row (4-day Upper/Lower: Saturday's Lower
+   exercises land on Tuesday's Lower), write it as a failing test, then fix. Keep the
+   "…'s exercises will be removed" warning in the editor consistent — it uses the same rule.
+3. **Quick re-checks nobody has done yet:** Exercise Progress and the body map with the
+   corrected 227 lb bodyweight (targets were ~3× too high before); the ⓘ sheet with no weight
+   logged (should show multiples only and a "Log your weight" line) and with sex set to female
+   in Profile (targets × 0.65).
 
 After that the backlog is empty, so the most useful next step is **a week of real use**: log
 food and workouts for real and add new Likes / Dislikes / Suggestions below — the raw log
-hasn't had an entry since 2026-09-08, and everything since has been built from it.
+hasn't had an entry since 2026-09-08, and everything since has been built from it. Things
+worth noticing during that week: whether the Training page now feels as calm as Nutrition,
+and whether the Weekly view is missed.
 
 **Watch for:** the launch-crash retry (`7cfc42b`) is still unconfirmed. The Workout History
 change migrated the store twice on 2026-09-22 (a field added to `WorkoutSession`, then moved to
@@ -235,11 +267,16 @@ macros); Remove from Plan. Rough edges found are in the Backlog, sourced "Simula
 (one session only) and tap-to-inspect; the unplanned-workout flow and its tap count; rep
 ranges, Move Up/Down and the tracking header; the macro breakdown (one- and two-food days);
 the goal-reached callout and its sheet; the Profile sections, Workout settings, weight-first
-rows and the rest timer (auto-start, carry-over to the day list, ±15s, Skip).
+rows and the rest timer (auto-start, carry-over to the day list, ±15s, Skip). In the
+evening: removing extra Add Set rows (badge only past the baseline, renumbering, a logged row
+loses its badge); Workout History labels (a Lower set labelled the day "Lower", unchecking it
+put the date back); both store migrations (app opened first time); the Progress ⓘ sheet with
+a 227 lb bodyweight; the Nutrition-style Training layout and the calendar heading button.
 
 **Not seen live yet:** the protein and strength-stall callouts (need 4 logged days / 4
-sessions of one lift), an Exercise Progress chart with several sessions, and the ft/in height
-entry.
+sessions of one lift), an Exercise Progress chart with several sessions, the ft/in height
+entry, a "Push + Pull" History label (unit-tested only), and the ⓘ sheet with no bodyweight
+or with sex set to female.
 
 **Not yet verified:** anything on a physical device.
 
@@ -249,9 +286,10 @@ entry.
   "Chicken breast bites" entry on 2026-09-19, a Back Squat with 3 sets of 135 lb × 10, a 5-day
   plan (Lower has Back Squat + Bulgarian Split Squat, 3 × 10), one Barbell Row set (95 lb × 8)
   on 2026-09-22, steps for 2026-09-21/22, and one weigh-in of 227 lb on 2026-09-22 (it replaced
-  an entry stored as 227 kg — the "227" typed in the wrong unit). None of it is in the repo. Every test set logged on 2026-09-22
-  was unchecked afterwards, the goal was put back to Maintain, and the Workout preferences
-  were put back to their defaults.
+  an entry stored as 227 kg — the "227" typed in the wrong unit). None of it is in the repo.
+  Every test set logged on 2026-09-22 was unchecked afterwards, the goal was put back to
+  Maintain, and the Workout preferences were put back to their defaults. The Pull day in the
+  plan has no exercises, so plan-day testing used Lower's Back Squat from the week view.
 - The simulator with this data is the **iPhone 17 Pro**; its store is the app-group
   `MacroPal.sqlite` (open it with `sqlite3 -readonly` to check what an edit actually saved).
 - Untracked and left alone: `MacroPal.xcodeproj/xcshareddata/` and `scratchpad/`.
@@ -265,9 +303,15 @@ entry.
     area closes the whole sheet and loses the input.
   - The simulator tool's taps don't flip a `Toggle` switch; swipe across the knob instead.
   - SwiftData autosaves a moment later, so a `sqlite3` read right after an edit can still show
-    the old value — wait a few seconds before concluding a save failed.
+    the old value — wait a few seconds (up to ~15) before concluding a save failed.
+  - Tap coordinates: `simctl io` screenshots are 1206×2622 px for a 402×874 pt screen (3×);
+    shrunk to 800 px tall they're ~1.09× the tap coordinates.
+  - To check that each commit in a split builds on its own, build it from a temporary
+    `git worktree` — that's how the three evening commits were checked.
 - Adding a database model is now two steps — list it in `AppSchema.models`, and add its file
-  to the widget target's membership — see the discovery doc's implementation notes.
+  to the widget target's membership — see the discovery doc's implementation notes. Adding a
+  *field* to an existing model is one step if it's optional or defaulted where it's declared
+  (`targetRepsMax`, `stepGoal`, `planDayName` all migrated that way).
 
 ## Purpose
 
