@@ -83,11 +83,10 @@ Details for each are in the Backlog rows and the "Next steps on the Training pag
 
 ### Remaining open items
 
-None in the Backlog. Known follow-ups that aren't Backlog rows yet: a notification when rest ends in the
-background; a per-lift goal you set yourself on Exercise Progress (needs a model field);
-HealthKit step import (needs a real device); Log Weight / Log Steps lose typed input if you tap
-the dimmed area; Default Time from the reference screenshot (no timed exercises exist); a log
-line in the launch-crash retry (see Watch for).
+None in the Backlog. Known follow-ups that aren't Backlog rows yet: a notification when rest
+ends in the background; a per-lift goal you set yourself on Exercise Progress (needs a model
+field); HealthKit step import (needs a real device); Log Weight / Log Steps lose typed input if
+you tap the dimmed area; Default Time from the reference screenshot (no timed exercises exist).
 
 ## Next task
 
@@ -96,15 +95,20 @@ line in the launch-crash retry (see Watch for).
 The backlog is empty and the re-checks are done (2026-09-23, below), so the most useful next
 step is **a week of real use**: log food and workouts for real and add new Likes / Dislikes /
 Suggestions below — the raw log hasn't had an entry since 2026-09-08, and everything since
-has been built from it. Things
-worth noticing during that week: whether the Training page now feels as calm as Nutrition,
-and whether the Weekly view is missed.
+has been built from it. Things worth noticing during that week: whether the Training page now
+feels as calm as Nutrition, and whether the Weekly view is missed.
 
-**Watch for:** the launch-crash retry (`7cfc42b`) is still unconfirmed. The Workout History
-change migrated the store twice on 2026-09-22 (a field added to `WorkoutSession`, then moved to
-`WorkoutSetEntry`) and the app opened first time both times — but the retry doesn't log, so
-there's no telling whether the race happened and was caught or just didn't happen. It's only
-a real test with the widget on the home screen; adding a log line to the retry would settle it.
+**Watch for:** the launch-crash retry (`7cfc42b`) is still unconfirmed in a real race. It logs
+now (2026-09-23): an error "Opening the store failed, retrying: …" with the reason, then a
+notice "Opening the store succeeded on retry" — silence means the first attempt worked. On
+the next schema change, with the widget on the home screen, launch the new build and run:
+
+```
+xcrun simctl spawn booted log show --last 5m --predicate 'subsystem == "com.francislozano.MacroPal" AND category == "Store"' --info
+```
+
+Both messages were checked by forcing the first attempt to fail with a temporary throw
+(removed before committing); a normal launch logs nothing.
 
 ## Details and reference
 

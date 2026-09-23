@@ -7,6 +7,9 @@
 
 import SwiftUI
 import SwiftData
+import os
+
+private let storeLog = Logger(subsystem: "com.francislozano.MacroPal", category: "Store")
 
 @main
 struct MacroPalApp: App {
@@ -28,9 +31,12 @@ struct MacroPalApp: App {
             // loser fails with "store version hashes didn't migrate" (seen 2026-09-22 when
             // `PlanExercise.targetRepsMax` was added). By the time it fails the other process
             // is nearly done, so wait briefly and try once more before giving up.
+            storeLog.error("Opening the store failed, retrying: \(error, privacy: .public)")
             Thread.sleep(forTimeInterval: 0.5)
             do {
-                return try ModelContainer(for: schema, configurations: [modelConfiguration])
+                let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
+                storeLog.notice("Opening the store succeeded on retry")
+                return container
             } catch {
                 fatalError("Could not create ModelContainer: \(error)")
             }
