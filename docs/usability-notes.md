@@ -5,7 +5,7 @@
 
 ## Progress summary (as of 2026-09-22)
 
-24 of 32 triaged backlog items are Done, 1 was verified as "No change needed", 7 are open
+25 of 32 triaged backlog items are Done, 1 was verified as "No change needed", 6 are open
 (4 of the open ones are small rough edges from the 2026-09-22 simulator pass).
 (The 09-15 summary said "9 of 16"; the table actually held 17 rows then — the counts below
 are recounted from the table.)
@@ -32,10 +32,10 @@ whiteboard. Commits, in order:
 - Then: the Exercise Progress redesign, with progress toward the next strength level (item 3).
 - Then: faster unplanned-workout logging, 12 taps → 8 (item 4).
 - Then: the plan editing gaps (item 5), plus a fix for a launch crash they exposed.
+- Then: tapping a macro on the Nutrition screen shows which foods it came from.
 
 Remaining open items, by priority:
 - **P2** — Replace Insights page with contextual info icons.
-- **P2** — Clicking a macro shows which foods contributed to it.
 - **P2** — Split Profile page into subpages.
 - **P3** — Small rough edges from the 2026-09-22 pass: Edit Routine carries exercises to the
   first same-named day; no way to delete an extra Add Set row; widget macro order differs
@@ -44,8 +44,8 @@ Remaining open items, by priority:
 ### Next steps on the Training page
 
 **Start here next session:** the Training list is done apart from item 6, which was left
-out on purpose. Next up are the open P2s in the Backlog: macro breakdown on tap, Insights as
-info icons, Profile subpages. Items 2–5 were done on 2026-09-22 — see below.
+out on purpose. Next up are the open P2s in the Backlog: Insights as info icons, Profile
+subpages. (The macro breakdown was done on 2026-09-22.) Items 2–5 were done on 2026-09-22 — see below.
 **Before trusting any strength level in the simulator:** its latest weigh-in is stored as
 227 kg (500 lb), probably the mystery "227" entry below typed in the wrong unit, so every
 target reads about 3× too high. Fix or delete that entry first. Item 1 (steps goal) is built with
@@ -263,7 +263,7 @@ actually improving or just accumulating complaints.
 | Dislikes | 13 |
 | Suggestions | 7 |
 | Triaged (in Backlog) | 32 |
-| Done | 24 |
+| Done | 25 |
 | No change needed | 1 |
 | Won't Fix | 0 |
 
@@ -285,7 +285,7 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P2 | Replace Insights page with contextual info icons at point of relevance | Dislikes → Insights (2026-09-08) + Suggestions → Insights (2026-09-08) | Triaged |
 | P2 | Add oz as a serving-size unit alongside grams | Dislikes → Nutrition (2026-09-08, "serving size is only in grams") | Done (1a3b380) — status corrected 2026-09-15; cdb333f later added cups/tbsp/tsp and fraction input on top of it |
 | P2 | Daily logged-food list scales better as more foods are added — replaced the flat "Logged Today" list with a swipeable Breakfast/Lunch/Dinner carousel; each card is a fixed-size two-line summary (what's logged + calories) instead of growing with every entry | Dislikes → Nutrition (2026-09-08, "day's logged-food list...") | Done (c3a8e87) |
-| P2 | Clicking a macro shows which foods contributed to it | Suggestions → Nutrition (2026-09-08) | Triaged |
+| P2 | Clicking a macro shows which foods contributed to it — each Macros row on the Nutrition screen now opens a breakdown for the selected day: total vs. target, then every food with that macro, biggest first, with grams, % of the day's total and a bar in the macro's color (`MacroBreakdownView`; `NutritionViewModel.contributions` + `MacroContributionTests`). Rows stay tappable after the protein-only toggle changes the section's shape | Suggestions → Nutrition (2026-09-08) | Done (dab0aea) — checked in the simulator 2026-09-22 (one-food day only; ranking is unit-tested) |
 | P2 | Split Profile page into subpages to reduce visual overload | Dislikes → General UI (2026-09-08, "Profile page needs subpages") | Triaged |
 | P1 | My Meals recipes: build a meal from existing foods (97d8f36), show/edit its ingredients while logging (872e9f8, 4ec4ce1), flexible serving units + fraction input (cdb333f), consistent rounded display everywhere (614f4fe), and edit a saved meal's ingredients after the fact via swipe-to-edit (92cdcef) | User request (direct, 2026-09-12 → 2026-09-15, not from the log below) | Done (92cdcef) |
 | P2 | New Food form asks for macros per the entered serving size (e.g. "36g, as printed on the label") instead of per 100g, converting to the stored per-100g value at save time | User request (direct, 2026-09-15) | Done (6b9da81) |
