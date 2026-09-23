@@ -81,7 +81,7 @@ private struct ProfileOverview: View {
                 }
             }
 
-            Section("Goal") {
+            Section("Goal & Daily Targets") {
                 // One picker doesn't need a page of its own.
                 Picker(selection: $profile.goal) {
                     ForEach(Goal.allCases) { goal in
@@ -90,9 +90,6 @@ private struct ProfileOverview: View {
                 } label: {
                     Label("Goal", systemImage: "target")
                 }
-            }
-
-            Section("Daily Targets") {
                 NavigationLink {
                     DailyTargetsView(profile: profile)
                 } label: {
@@ -109,7 +106,7 @@ private struct ProfileOverview: View {
                 }
             }
 
-            Section {
+            Section("Units & Measurements") {
                 Picker(selection: $weightUnit) {
                     ForEach(WeightUnit.allCases) { unit in
                         Text(unit.symbol).tag(unit)
@@ -124,10 +121,6 @@ private struct ProfileOverview: View {
                 } label: {
                     Label("Height", systemImage: "ruler")
                 }
-            } header: {
-                Text("Units & Measurements")
-            } footer: {
-                Text("Weight covers body weight and lifts. Goal weight and the step goal are on the Training tab's Goals card.")
             }
         }
     }
