@@ -295,7 +295,10 @@ entry, and a "Push + Pull" History label (unit-tested only).
   plan has no exercises, so plan-day testing used Lower's Back Squat from the week view.
 - The simulator with this data is the **iPhone 17 Pro**; its store is the app-group
   `MacroPal.sqlite` (open it with `sqlite3 -readonly` to check what an edit actually saved).
-- Untracked and left alone: `MacroPal.xcodeproj/xcshareddata/` and `scratchpad/`.
+- The shared schemes (`MacroPal.xcodeproj/xcshareddata/xcschemes/`, MacroPal and
+  MacroPalWidgetExtension) are committed as of 2026-09-23 — they're the only scheme files, so
+  `xcodebuild -scheme MacroPal` depends on them. The old untracked `scratchpad/` (a Sep 8
+  Nutrition gauge mockup, superseded by the ring) was deleted.
 - **Testing in the simulator — gotchas from 2026-09-22:**
   - `xcodebuild test` runs on a clone and leaves the iPhone 17 Pro shut down; boot it again
     (`xcrun simctl boot <udid>`) before launching the app.
