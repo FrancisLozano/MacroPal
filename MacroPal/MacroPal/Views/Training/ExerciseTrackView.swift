@@ -28,17 +28,21 @@ struct ExerciseTrackView: View {
     /// "10" or "8–10"), or nil for an unplanned workout.
     let target: (sets: Int, reps: Int, repsLabel: String)?
     let date: Date
+    /// Recorded on each logged set so Workout History can say "Pull".
+    let planDayName: String?
 
     init(planExercise: PlanExercise) {
         exercise = planExercise.exercise
         target = (planExercise.targetSets, planExercise.targetReps, planExercise.repsLabel)
         date = .now
+        planDayName = planExercise.day?.name
     }
 
     init(exercise: Exercise, date: Date) {
         self.exercise = exercise
         target = nil
         self.date = date
+        planDayName = nil
     }
 
     @State private var rows: [SetRow] = []
@@ -252,7 +256,8 @@ struct ExerciseTrackView: View {
         } else if let exercise, isValid(row.wrappedValue),
                   let weight = Double(row.wrappedValue.weightText), let reps = Int(row.wrappedValue.repsText) {
             row.wrappedValue.entry = viewModel.logSet(
-                exercise: exercise, weightKg: unit.toKg(weight), reps: reps, on: date, context: modelContext
+                exercise: exercise, weightKg: unit.toKg(weight), reps: reps, on: date,
+                planDayName: planDayName, context: modelContext
             )
             isEditing = false
             fillForward(from: row.wrappedValue)

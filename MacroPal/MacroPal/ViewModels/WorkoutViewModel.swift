@@ -12,7 +12,10 @@ final class WorkoutViewModel {
     /// Logs one set straight into the session for `date`'s day, creating that session if this
     /// is the first set of the day.
     @discardableResult
-    func logSet(exercise: Exercise, weightKg: Double, reps: Int, on date: Date = .now, context: ModelContext) -> WorkoutSetEntry {
+    func logSet(
+        exercise: Exercise, weightKg: Double, reps: Int, on date: Date = .now,
+        planDayName: String? = nil, context: ModelContext
+    ) -> WorkoutSetEntry {
         let dayStart = Calendar.current.startOfDay(for: date)
         let dayEnd = Calendar.current.date(byAdding: .day, value: 1, to: dayStart) ?? date
         let descriptor = FetchDescriptor<WorkoutSession>(
@@ -32,6 +35,7 @@ final class WorkoutViewModel {
             reps: reps,
             exercise: exercise
         )
+        setEntry.planDayName = planDayName
         setEntry.session = session
         context.insert(setEntry)
         return setEntry

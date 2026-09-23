@@ -5,8 +5,8 @@
 
 ## Progress summary (as of 2026-09-22, end of day)
 
-29 of 33 triaged backlog items are Done, 1 was verified as "No change needed", and 3 are open —
-all three are small P3 rough edges. **Every P1 and P2 item is done.** (The 09-15 summary said
+30 of 33 triaged backlog items are Done, 1 was verified as "No change needed", and 2 are open —
+both are small P3 rough edges. **Every P1 and P2 item is done.** (The 09-15 summary said
 "9 of 16"; the table actually held 17 rows then — counts are recounted from the table.)
 
 The 2026-09-19 stretch merged Body and Workouts into **one Training tab**, following
@@ -55,7 +55,6 @@ Details for each are in the Backlog rows and the "Next steps on the Training pag
 
 - **P3** — Edit Routine carries exercises to the *first* day with the same name.
 - **P3** — Medium widget lists macros Carbs / Fat / Protein; the app uses Protein / Carbs / Fat.
-- **P3** — Workout History rows show only date + set count, not the plan day or exercises.
 
 Known follow-ups that aren't Backlog rows yet: a notification when rest ends in the
 background; a per-lift goal you set yourself on Exercise Progress (needs a model field);
@@ -66,23 +65,25 @@ the dimmed area; Default Time from the reference screenshot (no timed exercises 
 
 **Start here next session:**
 
-1. **P3: Workout History rows** — show the plan day ("Pull") and the exercises, not just date
-   + set count.
-2. **P3: widget macro order** — match the app (Protein / Carbs / Fat). A one-liner in
+1. **P3: widget macro order** — match the app (Protein / Carbs / Fat). A one-liner in
    `MacroPalWidget`.
-3. **P3: Edit Routine day matching** — carry exercises to the same-named day in the same
+2. **P3: Edit Routine day matching** — carry exercises to the same-named day in the same
    position, not the first one.
 
 (Done 2026-09-22, evening: the bad weigh-in — the 227 kg entry was deleted from Weight History
-and re-logged as 227 lb, dated 2026-09-22 — and removing an extra Add Set row; see the Backlog.
-Exercise Progress with the corrected bodyweight hasn't been re-checked yet.)
+and re-logged as 227 lb, dated 2026-09-22 — removing an extra Add Set row, and Workout History
+rows showing the plan day and exercises; see the Backlog. Exercise Progress with the corrected
+bodyweight hasn't been re-checked yet.)
 
 After that the backlog is empty, so the most useful next step is **a week of real use**: log
 food and workouts for real and add new Likes / Dislikes / Suggestions below — the raw log
 hasn't had an entry since 2026-09-08, and everything since has been built from it.
 
-**Watch for:** the launch-crash retry (`7cfc42b`) is untested — the next time a `@Model`
-gains a field, launch the app with the widget installed and confirm it opens first time.
+**Watch for:** the launch-crash retry (`7cfc42b`) is still unconfirmed. The Workout History
+change migrated the store twice on 2026-09-22 (a field added to `WorkoutSession`, then moved to
+`WorkoutSetEntry`) and the app opened first time both times — but the retry doesn't log, so
+there's no telling whether the race happened and was caught or just didn't happen. It's only
+a real test with the widget on the home screen; adding a log line to the retry would settle it.
 
 ## Details and reference
 
@@ -307,7 +308,7 @@ actually improving or just accumulating complaints.
 | Dislikes | 13 |
 | Suggestions | 7 |
 | Triaged (in Backlog) | 33 |
-| Done | 29 |
+| Done | 30 |
 | No change needed | 1 |
 | Won't Fix | 0 |
 
@@ -350,7 +351,7 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P1 | Faster unplanned-workout logging — picker first, then the plan's per-set tracking screen, sets saved on check; 12 → 8 taps for 3 sets of a new exercise; old draft form deleted; Cancel added to the exercise picker and New Exercise form | Next steps on the Training page, item 4 + discovery doc success criterion 2 | Done — checked in the simulator 2026-09-22 (test sets unchecked afterwards) |
 | P3 | No way to delete an extra, unlogged row added with Add Set on the tracking screen — rows past the baseline (the plan's set count, or the default sets for an unplanned exercise) show a red minus badge on the set number while unlogged; tapping it removes the row and the rest renumber. Baseline rows can't be removed (`buildRows` would add them back on the next visit), and a logged row is removed by unchecking it, as before. Not a swipe: the screen deliberately isn't a `List` | Simulator pass (2026-09-22) | Done (50884c7) — checked in the simulator 2026-09-22 (unplanned Barbell Curl: 5 rows → minus on 4 and 5 only; removing 4 renumbered 5; a logged extra row loses the badge; test set unchecked afterwards) |
 | P3 | Medium widget lists macros Carbs / Fat / Protein; the app uses Protein / Carbs / Fat | Simulator pass (2026-09-22) | Triaged |
-| P3 | Workout History rows show only date + set count, not the plan day ("Pull") or exercises | Simulator pass (2026-09-22) | Triaged |
+| P3 | Workout History rows show only date + set count, not the plan day ("Pull") or exercises — each row now shows the plan day as its headline ("Lower"; "Push + Pull" on a mixed day), then "date · N sets", then the exercises in the order first logged. Unplanned sessions and ones logged before this keep the date as the headline. The day name is stored on each set (`WorkoutSetEntry.planDayName`, optional and defaulted, so the store migrated without a versioned schema) as a copy of the name, not a link to `PlanDay`, so history survives plan edits; the session's label is derived from its sets, so unchecking a plan set takes the label with it. A first version stored the name once on the session and kept "Lower" after its only Lower set was unchecked, which is why it moved to the set. `WorkoutSessionTests` | Simulator pass (2026-09-22) | Done — checked in the simulator 2026-09-22 (a Back Squat set from Lower labelled today's session "Lower"; unchecking it put the date back; test set unchecked afterwards) |
 | P1 | Steps goal with a bar chart (whiteboard Goals card) — `StepEntry` (one total per day; logging a day again replaces it), `UserProfile.stepGoal` (default 10,000, migrates existing stores), Steps row on the Goals card, Steps screen with 7/30-day bars (green when the goal is met), dashed goal line, and average / goal-met counted over logged days; `StepsViewModelTests` | User request (direct, 2026-09-19, whiteboard sketch) | Done (a46cfe9) |
 
 Priority scale: **P1** (actively annoying, fix soon) / **P2** (worth doing, no rush) /
