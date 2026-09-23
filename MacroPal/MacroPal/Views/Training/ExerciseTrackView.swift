@@ -127,10 +127,24 @@ struct ExerciseTrackView: View {
     private func setRow(_ row: Binding<SetRow>, number: Int) -> some View {
         let isLogged = row.wrappedValue.entry != nil
         return HStack(spacing: 10) {
-            Text("\(number)")
-                .font(.title3.bold())
-                .frame(width: 32, height: 40)
-                .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 8))
+            if isRemovable(row.wrappedValue, number: number) {
+                Button {
+                    remove(row.wrappedValue)
+                } label: {
+                    setNumber(number)
+                        .overlay(alignment: .topLeading) {
+                            Image(systemName: "minus.circle.fill")
+                                .symbolRenderingMode(.palette)
+                                .foregroundStyle(.white, .red)
+                                .font(.body)
+                                .offset(x: -8, y: -8)
+                        }
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Remove set \(number)")
+            } else {
+                setNumber(number)
+            }
 
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 4) {
@@ -172,6 +186,13 @@ struct ExerciseTrackView: View {
         }
         .padding(12)
         .background(.background.secondary, in: RoundedRectangle(cornerRadius: 14))
+    }
+
+    private func setNumber(_ number: Int) -> some View {
+        Text("\(number)")
+            .font(.title3.bold())
+            .frame(width: 32, height: 40)
+            .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 8))
     }
 
     private func repsField(_ row: Binding<SetRow>) -> some View {
@@ -241,6 +262,22 @@ struct ExerciseTrackView: View {
         }
     }
 
+    /// The rows `buildRows` pads up to every time the screen opens.
+    private var baselineRowCount: Int {
+        target?.sets ?? defaultSets
+    }
+
+    /// Only an unlogged row past the baseline can go — a baseline row would just come back the
+    /// next time the screen opens, and a logged one is removed by unchecking it.
+    private func isRemovable(_ row: SetRow, number: Int) -> Bool {
+        row.entry == nil && number > baselineRowCount
+    }
+
+    private func remove(_ row: SetRow) {
+        isEditing = false
+        rows.removeAll { $0.id == row.id }
+    }
+
     /// Copies a just-logged set into the later rows that don't have a weight yet, so on a
     /// first-ever session the weight only has to be typed once. Rows with a weight are left
     /// alone — that's either a prefill from history or something the user typed.
@@ -266,7 +303,7 @@ struct ExerciseTrackView: View {
                 entry: entry
             )
         }
-        while rows.count < target?.sets ?? defaultSets {
+        while rows.count < baselineRowCount {
             rows.append(blankRow())
         }
     }

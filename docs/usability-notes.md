@@ -5,8 +5,8 @@
 
 ## Progress summary (as of 2026-09-22, end of day)
 
-28 of 33 triaged backlog items are Done, 1 was verified as "No change needed", and 4 are open —
-all four are small P3 rough edges. **Every P1 and P2 item is done.** (The 09-15 summary said
+29 of 33 triaged backlog items are Done, 1 was verified as "No change needed", and 3 are open —
+all three are small P3 rough edges. **Every P1 and P2 item is done.** (The 09-15 summary said
 "9 of 16"; the table actually held 17 rows then — counts are recounted from the table.)
 
 The 2026-09-19 stretch merged Body and Workouts into **one Training tab**, following
@@ -54,8 +54,6 @@ Details for each are in the Backlog rows and the "Next steps on the Training pag
 ### Remaining open items
 
 - **P3** — Edit Routine carries exercises to the *first* day with the same name.
-- **P3** — No way to delete an extra, unlogged Add Set row (more noticeable now that the
-  default set count is adjustable).
 - **P3** — Medium widget lists macros Carbs / Fat / Protein; the app uses Protein / Carbs / Fat.
 - **P3** — Workout History rows show only date + set count, not the plan day or exercises.
 
@@ -68,18 +66,16 @@ the dimmed area; Default Time from the reference screenshot (no timed exercises 
 
 **Start here next session:**
 
-1. **Fix the simulator's bad weigh-in first** (5 minutes). The only weight entry is stored as
-   **227 kg (500 lb)** — almost certainly the mystery "227" typed in the wrong unit. It makes
-   every strength target ~3× too high and fires "Goal weight reached" on Bulk. Delete it or
-   re-log it in lb from Weight History, then re-check Exercise Progress and the body map.
-2. **P3: delete an extra Add Set row** on the tracking screen — a swipe or an ⓧ on unlogged
-   rows only. Smallest and most noticeable of the four.
-3. **P3: Workout History rows** — show the plan day ("Pull") and the exercises, not just date
+1. **P3: Workout History rows** — show the plan day ("Pull") and the exercises, not just date
    + set count.
-4. **P3: widget macro order** — match the app (Protein / Carbs / Fat). A one-liner in
+2. **P3: widget macro order** — match the app (Protein / Carbs / Fat). A one-liner in
    `MacroPalWidget`.
-5. **P3: Edit Routine day matching** — carry exercises to the same-named day in the same
+3. **P3: Edit Routine day matching** — carry exercises to the same-named day in the same
    position, not the first one.
+
+(Done 2026-09-22, evening: the bad weigh-in — the 227 kg entry was deleted from Weight History
+and re-logged as 227 lb, dated 2026-09-22 — and removing an extra Add Set row; see the Backlog.
+Exercise Progress with the corrected bodyweight hasn't been re-checked yet.)
 
 After that the backlog is empty, so the most useful next step is **a week of real use**: log
 food and workouts for real and add new Likes / Dislikes / Suggestions below — the raw log
@@ -250,8 +246,8 @@ entry.
 - The simulator has leftover test data from these sessions: a "rwoaw" food entry and a
   "Chicken breast bites" entry on 2026-09-19, a Back Squat with 3 sets of 135 lb × 10, a 5-day
   plan (Lower has Back Squat + Bulgarian Split Squat, 3 × 10), one Barbell Row set (95 lb × 8)
-  on 2026-09-22, steps for 2026-09-21/22, and a weight entry stored as **227 kg** whose origin
-  is unknown (see Next task). None of it is in the repo. Every test set logged on 2026-09-22
+  on 2026-09-22, steps for 2026-09-21/22, and one weigh-in of 227 lb on 2026-09-22 (it replaced
+  an entry stored as 227 kg — the "227" typed in the wrong unit). None of it is in the repo. Every test set logged on 2026-09-22
   was unchecked afterwards, the goal was put back to Maintain, and the Workout preferences
   were put back to their defaults.
 - The simulator with this data is the **iPhone 17 Pro**; its store is the app-group
@@ -311,7 +307,7 @@ actually improving or just accumulating complaints.
 | Dislikes | 13 |
 | Suggestions | 7 |
 | Triaged (in Backlog) | 33 |
-| Done | 28 |
+| Done | 29 |
 | No change needed | 1 |
 | Won't Fix | 0 |
 
@@ -352,7 +348,7 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P2 | Log Workout (unplanned) sheet has no Cancel button — swipe-down is the only way out — added Cancel to it and to its Add Set sheet, which had the same gap | Simulator pass (2026-09-22) | Done — checked in the simulator 2026-09-22; that sheet was later replaced by `UnplannedWorkoutView` (Done button, nothing to cancel) |
 | P2 | Plan editing gaps: rep ranges (`targetRepsMax`), Move Up/Down within a day, name no longer repeated on the tracking screen, New Exercise defaults to the day's suggested group; plus a retry for a launch crash when the app and widget migrate the store at once | Next steps on the Training page, item 5 | Done — checked in the simulator 2026-09-22 (plan put back to 3 × 10 afterwards) |
 | P1 | Faster unplanned-workout logging — picker first, then the plan's per-set tracking screen, sets saved on check; 12 → 8 taps for 3 sets of a new exercise; old draft form deleted; Cancel added to the exercise picker and New Exercise form | Next steps on the Training page, item 4 + discovery doc success criterion 2 | Done — checked in the simulator 2026-09-22 (test sets unchecked afterwards) |
-| P3 | No way to delete an extra, unlogged row added with Add Set on the tracking screen | Simulator pass (2026-09-22) | Triaged |
+| P3 | No way to delete an extra, unlogged row added with Add Set on the tracking screen — rows past the baseline (the plan's set count, or the default sets for an unplanned exercise) show a red minus badge on the set number while unlogged; tapping it removes the row and the rest renumber. Baseline rows can't be removed (`buildRows` would add them back on the next visit), and a logged row is removed by unchecking it, as before. Not a swipe: the screen deliberately isn't a `List` | Simulator pass (2026-09-22) | Done — checked in the simulator 2026-09-22 (unplanned Barbell Curl: 5 rows → minus on 4 and 5 only; removing 4 renumbered 5; a logged extra row loses the badge; test set unchecked afterwards) |
 | P3 | Medium widget lists macros Carbs / Fat / Protein; the app uses Protein / Carbs / Fat | Simulator pass (2026-09-22) | Triaged |
 | P3 | Workout History rows show only date + set count, not the plan day ("Pull") or exercises | Simulator pass (2026-09-22) | Triaged |
 | P1 | Steps goal with a bar chart (whiteboard Goals card) — `StepEntry` (one total per day; logging a day again replaces it), `UserProfile.stepGoal` (default 10,000, migrates existing stores), Steps row on the Goals card, Steps screen with 7/30-day bars (green when the goal is met), dashed goal line, and average / goal-met counted over logged days; `StepsViewModelTests` | User request (direct, 2026-09-19, whiteboard sketch) | Done (a46cfe9) |
