@@ -119,9 +119,9 @@ struct MacroPalWidgetEntryView: View {
     private var totalGramsEaten: Double {
         entry.eaten.proteinG + entry.eaten.carbG + entry.eaten.fatG
     }
+    private var proteinPercent: Double { totalGramsEaten > 0 ? entry.eaten.proteinG / totalGramsEaten : 0 }
     private var carbPercent: Double { totalGramsEaten > 0 ? entry.eaten.carbG / totalGramsEaten : 0 }
     private var fatPercent: Double { totalGramsEaten > 0 ? entry.eaten.fatG / totalGramsEaten : 0 }
-    private var proteinPercent: Double { totalGramsEaten > 0 ? entry.eaten.proteinG / totalGramsEaten : 0 }
 
     private var remainingCalories: Double { entry.target.calories - entry.eaten.calories }
     private var calorieFraction: Double {
@@ -137,9 +137,9 @@ struct MacroPalWidgetEntryView: View {
         HStack(spacing: 14) {
             calorieRing(diameter: 74)
             Spacer(minLength: 4)
+            macroColumn(name: "Protein", percent: proteinPercent, grams: entry.eaten.proteinG, color: .orange)
             macroColumn(name: "Carbs", percent: carbPercent, grams: entry.eaten.carbG, color: .green)
             macroColumn(name: "Fat", percent: fatPercent, grams: entry.eaten.fatG, color: .purple)
-            macroColumn(name: "Protein", percent: proteinPercent, grams: entry.eaten.proteinG, color: .orange)
         }
         .padding()
     }

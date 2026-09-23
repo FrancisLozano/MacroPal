@@ -5,8 +5,8 @@
 
 ## Progress summary (as of 2026-09-22, late evening)
 
-32 of 35 triaged backlog items are Done, 1 was verified as "No change needed", and 2 are open —
-both are small P3 rough edges. **Every P1 and P2 item is done.** (The 09-15 summary said
+33 of 35 triaged backlog items are Done, 1 was verified as "No change needed", and 1 is open —
+a small P3 rough edge. (2026-09-23: the widget macro order is done.) **Every P1 and P2 item is done.** (The 09-15 summary said
 "9 of 16"; the table actually held 17 rows then — counts are recounted from the table.)
 
 The 2026-09-19 stretch merged Body and Workouts into **one Training tab**, following
@@ -77,7 +77,6 @@ Details for each are in the Backlog rows and the "Next steps on the Training pag
 
 ### Remaining open items
 
-- **P3** — Medium widget lists macros Carbs / Fat / Protein; the app uses Protein / Carbs / Fat.
 - **P3** — Edit Routine carries exercises to the *first* day with the same name.
 
 Known follow-ups that aren't Backlog rows yet: a notification when rest ends in the
@@ -90,17 +89,13 @@ line in the launch-crash retry (see Watch for).
 
 **Start here next session:**
 
-1. **P3: widget macro order** — match the app (Protein / Carbs / Fat). Reorder the three
-   `macroColumn` calls in `MacroPalWidget/MacroPalWidget.swift` (~line 140) so Protein comes
-   first, and check the small widget for the same order. Verify on the home screen in the
-   simulator (the medium widget was added there on 2026-09-22).
-2. **P3: Edit Routine day matching** — carry exercises to the same-named day in the same
+1. **P3: Edit Routine day matching** — carry exercises to the same-named day in the same
    position, not the first one. The rule is `RoutineTemplate.match` (unit-tested in
    `RoutineTemplateTests`); it pairs each slot with the first leftover day of that name.
    Reproduce first with the case from the Backlog row (4-day Upper/Lower: Saturday's Lower
    exercises land on Tuesday's Lower), write it as a failing test, then fix. Keep the
    "…'s exercises will be removed" warning in the editor consistent — it uses the same rule.
-3. **Quick re-checks nobody has done yet:** Exercise Progress and the body map with the
+2. **Quick re-checks nobody has done yet:** Exercise Progress and the body map with the
    corrected 227 lb bodyweight (targets were ~3× too high before); the ⓘ sheet with no weight
    logged (should show multiples only and a "Log your weight" line) and with sex set to female
    in Profile (targets × 0.65).
@@ -353,7 +348,7 @@ actually improving or just accumulating complaints.
 | Dislikes | 13 |
 | Suggestions | 7 |
 | Triaged (in Backlog) | 35 |
-| Done | 32 |
+| Done | 33 |
 | No change needed | 1 |
 | Won't Fix | 0 |
 
@@ -395,7 +390,7 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P2 | Plan editing gaps: rep ranges (`targetRepsMax`), Move Up/Down within a day, name no longer repeated on the tracking screen, New Exercise defaults to the day's suggested group; plus a retry for a launch crash when the app and widget migrate the store at once | Next steps on the Training page, item 5 | Done — checked in the simulator 2026-09-22 (plan put back to 3 × 10 afterwards) |
 | P1 | Faster unplanned-workout logging — picker first, then the plan's per-set tracking screen, sets saved on check; 12 → 8 taps for 3 sets of a new exercise; old draft form deleted; Cancel added to the exercise picker and New Exercise form | Next steps on the Training page, item 4 + discovery doc success criterion 2 | Done — checked in the simulator 2026-09-22 (test sets unchecked afterwards) |
 | P3 | No way to delete an extra, unlogged row added with Add Set on the tracking screen — rows past the baseline (the plan's set count, or the default sets for an unplanned exercise) show a red minus badge on the set number while unlogged; tapping it removes the row and the rest renumber. Baseline rows can't be removed (`buildRows` would add them back on the next visit), and a logged row is removed by unchecking it, as before. Not a swipe: the screen deliberately isn't a `List` | Simulator pass (2026-09-22) | Done (50884c7) — checked in the simulator 2026-09-22 (unplanned Barbell Curl: 5 rows → minus on 4 and 5 only; removing 4 renumbered 5; a logged extra row loses the badge; test set unchecked afterwards) |
-| P3 | Medium widget lists macros Carbs / Fat / Protein; the app uses Protein / Carbs / Fat | Simulator pass (2026-09-22) | Triaged |
+| P3 | Medium widget lists macros Carbs / Fat / Protein; the app uses Protein / Carbs / Fat — the three columns reordered to Protein / Carbs / Fat (colors already matched the app's). The small widget is just the calorie ring, so it had nothing to reorder | Simulator pass (2026-09-22) | Done — checked on the simulator home screen 2026-09-23 (medium widget re-added; it had gone missing since 09-22) |
 | P3 | Workout History rows show only date + set count, not the plan day ("Pull") or exercises — each row now shows the plan day as its headline ("Lower"; "Push + Pull" on a mixed day), then "date · N sets", then the exercises in the order first logged. Unplanned sessions and ones logged before this keep the date as the headline. The day name is stored on each set (`WorkoutSetEntry.planDayName`, optional and defaulted, so the store migrated without a versioned schema) as a copy of the name, not a link to `PlanDay`, so history survives plan edits; the session's label is derived from its sets, so unchecking a plan set takes the label with it. A first version stored the name once on the session and kept "Lower" after its only Lower set was unchecked, which is why it moved to the set. `WorkoutSessionTests` | Simulator pass (2026-09-22) | Done — checked in the simulator 2026-09-22 (a Back Squat set from Lower labelled today's session "Lower"; unchecking it put the date back; test set unchecked afterwards) |
 | P2 | Progress card: ⓘ instead of the Level/Weekly toggle — the card was too tall. It's now just "Progress", an ⓘ and the two figures: the Weekly view is gone (`WeeklyMuscleVolume`, its tests and `VolumePalette` deleted), and so are the color chips and the description under the figures. The ⓘ opens **How Levels Work** (`MuscleLevelInfoView`): the two things a muscle needs to move up (strength vs. bodyweight from the last 90 days, and time trained), then each level in its color with what it means, the Squat and Bench targets in the user's unit from their logged bodyweight (rounded to 5 lb / 2.5 kg; multiples only if no weight is logged; female standards applied from Profile), and the time required. The numbers come from the same `StrengthClass` thresholds and a new `MuscleLevelEngine.levelMinimumMonths` (the tenure cap now reads from it), so the sheet can't drift from the engine. The card still shows a one-line prompt when there's no bodyweight or no workout, since the figures can't say that themselves | User request (direct, 2026-09-22, screenshot of the legend) | Done — checked in the simulator 2026-09-22 |
 | P2 | Training page laid out like Nutrition — Progress, Current Plan and Goals are gray headings above white rounded cards on the grouped gray background, with each section's button in its heading (the ⓘ, the week-plan calendar) the way Nutrition has the pie and ⓘ. The plan's "Workout · N days a week" line became "N days a week" inside the card. Shared `TrainingSection` view; built from stacks, not a `List`, to stay clear of the List button-detachment bug with all the card buttons. The shortcuts card (History / Progress / Unplanned) has no heading | User request (direct, 2026-09-22) | Done — checked in the simulator 2026-09-22 next to Nutrition; the calendar heading button opens the week |
