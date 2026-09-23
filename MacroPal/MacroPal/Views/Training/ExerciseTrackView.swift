@@ -10,9 +10,17 @@ import SwiftData
 /// row is a set: reps × weight, how heavy that is against your best estimated 1RM, and a check
 /// to log it. Rows start prefilled from your last set so a repeat set is a single tap. Used
 /// from a plan day (with its sets × reps target) and from an unplanned workout (no target).
+/// Row order, the % bar, unplanned defaults and the rest timer follow Profile → Workout.
 struct ExerciseTrackView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(RestTimerModel.self) private var restTimer
     @AppStorage(WeightUnit.storageKey) private var unit: WeightUnit = .lb
+    @AppStorage(WorkoutPreferences.weightFirstKey) private var weightFirst = WorkoutPreferences.weightFirstDefault
+    @AppStorage(WorkoutPreferences.showPRsKey) private var showPRs = WorkoutPreferences.showPRsDefault
+    @AppStorage(WorkoutPreferences.defaultSetsKey) private var defaultSets = WorkoutPreferences.defaultSetsDefault
+    @AppStorage(WorkoutPreferences.defaultRepsKey) private var defaultReps = WorkoutPreferences.defaultRepsDefault
+    @AppStorage(WorkoutPreferences.restSecondsKey) private var restSeconds = WorkoutPreferences.restSecondsDefault
+    @AppStorage(WorkoutPreferences.autoRestTimerKey) private var autoRestTimer = WorkoutPreferences.autoRestTimerDefault
     @Query(sort: \WorkoutSession.date, order: .reverse) private var sessions: [WorkoutSession]
 
     let exercise: Exercise?
@@ -20,9 +28,6 @@ struct ExerciseTrackView: View {
     /// "10" or "8–10"), or nil for an unplanned workout.
     let target: (sets: Int, reps: Int, repsLabel: String)?
     let date: Date
-
-    /// Rows to start with when there's no plan target.
-    private static let unplannedRows = 3
 
     init(planExercise: PlanExercise) {
         exercise = planExercise.exercise
@@ -80,6 +85,19 @@ struct ExerciseTrackView: View {
         .scrollDismissesKeyboard(.interactively)
         .navigationTitle(exercise?.name ?? "Exercise")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    restTimer.start(seconds: restSeconds)
+                } label: {
+                    Label("Start Rest", systemImage: "timer")
+                }
+                .disabled(restTimer.timer != nil)
+            }
+        }
+        .safeAreaInset(edge: .bottom) {
+            RestTimerBar()
+        }
         .onAppear(perform: buildRows)
     }
 
@@ -116,16 +134,17 @@ struct ExerciseTrackView: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 4) {
-                    TextField("0", text: row.repsText)
-                        .keyboardType(.numberPad)
-                        .frame(width: 34)
-                    Text("reps ×")
-                        .foregroundStyle(.secondary)
-                    TextField("0", text: row.weightText)
-                        .keyboardType(.decimalPad)
-                        .frame(width: 56)
-                    Text(unit.symbol)
-                        .foregroundStyle(.secondary)
+                    if weightFirst {
+                        weightField(row)
+                        Text("×")
+                            .foregroundStyle(.secondary)
+                        repsField(row)
+                    } else {
+                        repsField(row)
+                        Text("×")
+                            .foregroundStyle(.secondary)
+                        weightField(row)
+                    }
                 }
                 .focused($isEditing)
                 .multilineTextAlignment(.trailing)
@@ -155,11 +174,31 @@ struct ExerciseTrackView: View {
         .background(.background.secondary, in: RoundedRectangle(cornerRadius: 14))
     }
 
+    private func repsField(_ row: Binding<SetRow>) -> some View {
+        HStack(spacing: 4) {
+            TextField("0", text: row.repsText)
+                .keyboardType(.numberPad)
+                .frame(width: 34)
+            Text("reps")
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private func weightField(_ row: Binding<SetRow>) -> some View {
+        HStack(spacing: 4) {
+            TextField("0", text: row.weightText)
+                .keyboardType(.decimalPad)
+                .frame(width: 56)
+            Text(unit.symbol)
+                .foregroundStyle(.secondary)
+        }
+    }
+
     /// "30% of 130 lb" with a colored bar; hidden until there's history from an earlier day to
-    /// compare to.
+    /// compare to, or when Show PRs is off in Profile → Workout.
     @ViewBuilder
     private func intensityBar(for row: SetRow) -> some View {
-        if let referenceKg, let weight = Double(row.weightText), weight > 0 {
+        if showPRs, let referenceKg, let weight = Double(row.weightText), weight > 0 {
             let fraction = unit.toKg(weight) / referenceKg
             VStack(alignment: .leading, spacing: 3) {
                 Text("\(Int((fraction * 100).rounded()))% of \(unit.formattedLift(fromKg: referenceKg)) \(unit.symbol)")
@@ -196,6 +235,9 @@ struct ExerciseTrackView: View {
             )
             isEditing = false
             fillForward(from: row.wrappedValue)
+            if autoRestTimer {
+                restTimer.start(seconds: restSeconds)
+            }
         }
     }
 
@@ -224,7 +266,7 @@ struct ExerciseTrackView: View {
                 entry: entry
             )
         }
-        while rows.count < target?.sets ?? Self.unplannedRows {
+        while rows.count < target?.sets ?? defaultSets {
             rows.append(blankRow())
         }
     }
@@ -236,6 +278,6 @@ struct ExerciseTrackView: View {
         if let exercise, let last = WorkoutViewModel.lastSet(for: exercise, in: sessions) {
             return SetRow(weightText: unit.formattedLift(fromKg: last.weightKg), repsText: String(last.reps))
         }
-        return SetRow(weightText: "", repsText: target.map { String($0.reps) } ?? "")
+        return SetRow(weightText: "", repsText: String(target?.reps ?? defaultReps))
     }
 }

@@ -77,6 +77,9 @@ struct UnplannedWorkoutView: View {
             }
             .navigationTitle("Workout")
             .navigationBarTitleDisplayMode(.inline)
+            .safeAreaInset(edge: .bottom) {
+                RestTimerBar()
+            }
             .toolbar { doneButton }
             .navigationDestination(for: Exercise.self) { exercise in
                 ExerciseTrackView(exercise: exercise, date: date)

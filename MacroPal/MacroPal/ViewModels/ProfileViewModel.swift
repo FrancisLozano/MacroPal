@@ -24,11 +24,21 @@ final class ProfileViewModel {
         calendar.dateComponents([.year], from: birthDate, to: now).year ?? 0
     }
 
-    /// The Personal Info row's summary: "Male · 24 · 170 cm · Sedentary".
-    func personalSummary(sex: Sex, birthDate: Date, heightCm: Double, activityLevel: ActivityLevel, now: Date = .now) -> String {
-        let height = heightCm.formatted(.number.precision(.fractionLength(0...1)))
-        return [sex.displayName, "\(age(birthDate: birthDate, now: now))", "\(height) cm", activityLevel.displayName]
+    /// The Personal Info row's summary: "Male · 24 · 170 cm · Sedentary" (or "5′7″").
+    func personalSummary(
+        sex: Sex, birthDate: Date, heightCm: Double, activityLevel: ActivityLevel,
+        heightUnit: HeightUnit = .cm, now: Date = .now
+    ) -> String {
+        [sex.displayName, "\(age(birthDate: birthDate, now: now))", heightUnit.formatted(cm: heightCm), activityLevel.displayName]
             .joined(separator: " · ")
+    }
+
+    /// The Workout row's summary: "Reps first · 3 × 8–10 · Rest 2 min".
+    func workoutSummary(weightFirst: Bool, sets: Int, reps: Int, repsMax: Int, restSeconds: Int, autoRest: Bool) -> String {
+        let order = weightFirst ? "Weight first" : "Reps first"
+        let target = "\(sets) × \(WorkoutPreferences.repsLabel(reps: reps, repsMax: repsMax))"
+        let rest = "Rest \(WorkoutPreferences.restLabel(seconds: restSeconds))" + (autoRest ? ", auto" : "")
+        return [order, target, rest].joined(separator: " · ")
     }
 
     /// The Daily Targets row's summary: "2,000 kcal · 150P · 200C · 65F".

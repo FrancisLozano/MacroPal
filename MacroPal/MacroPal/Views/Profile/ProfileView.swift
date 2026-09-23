@@ -31,11 +31,20 @@ struct ProfileView: View {
 private struct ProfileOverview: View {
     @Bindable var profile: UserProfile
 
+    @AppStorage(WeightUnit.storageKey) private var weightUnit: WeightUnit = .lb
+    @AppStorage(HeightUnit.storageKey) private var heightUnit: HeightUnit = .cm
+    @AppStorage(WorkoutPreferences.weightFirstKey) private var weightFirst = WorkoutPreferences.weightFirstDefault
+    @AppStorage(WorkoutPreferences.defaultSetsKey) private var defaultSets = WorkoutPreferences.defaultSetsDefault
+    @AppStorage(WorkoutPreferences.defaultRepsKey) private var defaultReps = WorkoutPreferences.defaultRepsDefault
+    @AppStorage(WorkoutPreferences.defaultRepsMaxKey) private var defaultRepsMax = WorkoutPreferences.defaultRepsMaxDefault
+    @AppStorage(WorkoutPreferences.restSecondsKey) private var restSeconds = WorkoutPreferences.restSecondsDefault
+    @AppStorage(WorkoutPreferences.autoRestTimerKey) private var autoRestTimer = WorkoutPreferences.autoRestTimerDefault
+
     private let viewModel = ProfileViewModel()
 
     var body: some View {
         List {
-            Section {
+            Section("Personal") {
                 NavigationLink {
                     PersonalInfoView(profile: profile)
                 } label: {
@@ -46,10 +55,33 @@ private struct ProfileOverview: View {
                             sex: profile.sex,
                             birthDate: profile.birthDate,
                             heightCm: profile.heightCm,
-                            activityLevel: profile.activityLevel
+                            activityLevel: profile.activityLevel,
+                            heightUnit: heightUnit
                         )
                     )
                 }
+            }
+
+            Section("Workout") {
+                NavigationLink {
+                    WorkoutSettingsView()
+                } label: {
+                    summaryRow(
+                        "Workout Display & Defaults",
+                        systemImage: "dumbbell",
+                        detail: viewModel.workoutSummary(
+                            weightFirst: weightFirst,
+                            sets: defaultSets,
+                            reps: defaultReps,
+                            repsMax: defaultRepsMax,
+                            restSeconds: restSeconds,
+                            autoRest: autoRestTimer
+                        )
+                    )
+                }
+            }
+
+            Section("Goal") {
                 // One picker doesn't need a page of its own.
                 Picker(selection: $profile.goal) {
                     ForEach(Goal.allCases) { goal in
@@ -58,11 +90,14 @@ private struct ProfileOverview: View {
                 } label: {
                     Label("Goal", systemImage: "target")
                 }
+            }
+
+            Section("Daily Targets") {
                 NavigationLink {
                     DailyTargetsView(profile: profile)
                 } label: {
                     summaryRow(
-                        "Daily Targets",
+                        "Calories & Macros",
                         systemImage: "chart.pie",
                         detail: viewModel.targetsSummary(
                             calorieTarget: profile.calorieTarget,
@@ -72,8 +107,27 @@ private struct ProfileOverview: View {
                         )
                     )
                 }
+            }
+
+            Section {
+                Picker(selection: $weightUnit) {
+                    ForEach(WeightUnit.allCases) { unit in
+                        Text(unit.symbol).tag(unit)
+                    }
+                } label: {
+                    Label("Weight", systemImage: "scalemass")
+                }
+                Picker(selection: $heightUnit) {
+                    ForEach(HeightUnit.allCases) { unit in
+                        Text(unit.displayName).tag(unit)
+                    }
+                } label: {
+                    Label("Height", systemImage: "ruler")
+                }
+            } header: {
+                Text("Units & Measurements")
             } footer: {
-                Text("Goal weight, the step goal and lb/kg are on the Training tab's Goals card.")
+                Text("Weight covers body weight and lifts. Goal weight and the step goal are on the Training tab's Goals card.")
             }
         }
     }
@@ -92,20 +146,52 @@ private struct ProfileOverview: View {
     }
 }
 
-/// Height, birth date, sex and activity level.
+/// Height (in cm or ft/in, per Units & Measurements), birth date, sex and activity level.
 private struct PersonalInfoView: View {
     @Bindable var profile: UserProfile
+    @AppStorage(HeightUnit.storageKey) private var heightUnit: HeightUnit = .cm
+
+    /// Feet and inches edit the stored cm value through these, one part at a time.
+    private var feet: Binding<Int> {
+        Binding(
+            get: { HeightUnit.feetAndInches(fromCm: profile.heightCm).feet },
+            set: { profile.heightCm = HeightUnit.cm(feet: $0, inches: HeightUnit.feetAndInches(fromCm: profile.heightCm).inches) }
+        )
+    }
+
+    private var inches: Binding<Int> {
+        Binding(
+            get: { HeightUnit.feetAndInches(fromCm: profile.heightCm).inches },
+            set: { profile.heightCm = HeightUnit.cm(feet: HeightUnit.feetAndInches(fromCm: profile.heightCm).feet, inches: min(max($0, 0), 11)) }
+        )
+    }
 
     var body: some View {
         Form {
             HStack {
                 Text("Height")
                 Spacer()
-                TextField("Height", value: $profile.heightCm, format: .number)
-                    .keyboardType(.decimalPad)
-                    .multilineTextAlignment(.trailing)
-                Text("cm")
-                    .foregroundStyle(.secondary)
+                switch heightUnit {
+                case .cm:
+                    TextField("Height", value: $profile.heightCm, format: .number)
+                        .keyboardType(.decimalPad)
+                        .multilineTextAlignment(.trailing)
+                    Text("cm")
+                        .foregroundStyle(.secondary)
+                case .feetInches:
+                    TextField("ft", value: feet, format: .number)
+                        .keyboardType(.numberPad)
+                        .multilineTextAlignment(.trailing)
+                        .frame(width: 40)
+                    Text("ft")
+                        .foregroundStyle(.secondary)
+                    TextField("in", value: inches, format: .number)
+                        .keyboardType(.numberPad)
+                        .multilineTextAlignment(.trailing)
+                        .frame(width: 40)
+                    Text("in")
+                        .foregroundStyle(.secondary)
+                }
             }
             DatePicker("Birth Date", selection: $profile.birthDate, displayedComponents: .date)
             Picker("Sex", selection: $profile.sex) {

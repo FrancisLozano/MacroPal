@@ -5,7 +5,7 @@
 
 ## Progress summary (as of 2026-09-22)
 
-27 of 32 triaged backlog items are Done, 1 was verified as "No change needed", 4 are open
+28 of 33 triaged backlog items are Done, 1 was verified as "No change needed", 4 are open
 (4 of the open ones are small rough edges from the 2026-09-22 simulator pass).
 (The 09-15 summary said "9 of 16"; the table actually held 17 rows then — the counts below
 are recounted from the table.)
@@ -35,6 +35,8 @@ whiteboard. Commits, in order:
 - Then: tapping a macro on the Nutrition screen shows which foods it came from.
 - Then: the Insights tab's rules now show inline as callouts with an info sheet.
 - Then: Profile split into an overview with Personal Info and Daily Targets subpages.
+- Then, on the user's follow-up: Profile reorganised into Personal / Workout / Goal / Daily
+  Targets / Units & Measurements, with a Workout settings page and a rest timer.
 
 Remaining open items, by priority:
 - **P3** — Small rough edges from the 2026-09-22 pass: Edit Routine carries exercises to the
@@ -157,7 +159,8 @@ Roughly in the order I'd do them:
      migrate"). The app now waits half a second and retries once before giving up. The race
      couldn't be reproduced afterwards (the store was already migrated), so the retry is
      untested; watch for it on the next schema change.
-6. **Rest timer / target icons** from the tracking-screen reference — deliberately left out.
+6. ~~**Rest timer**~~ Done 2026-09-22 as part of Profile → Workout (see the Backlog row).
+   Target icons from the reference are still left out.
 
 ### Things to know about the muscle levels
 
@@ -262,8 +265,8 @@ actually improving or just accumulating complaints.
 | Likes | 1 |
 | Dislikes | 13 |
 | Suggestions | 7 |
-| Triaged (in Backlog) | 32 |
-| Done | 27 |
+| Triaged (in Backlog) | 33 |
+| Done | 28 |
 | No change needed | 1 |
 | Won't Fix | 0 |
 
@@ -286,6 +289,7 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P2 | Add oz as a serving-size unit alongside grams | Dislikes → Nutrition (2026-09-08, "serving size is only in grams") | Done (1a3b380) — status corrected 2026-09-15; cdb333f later added cups/tbsp/tsp and fraction input on top of it |
 | P2 | Daily logged-food list scales better as more foods are added — replaced the flat "Logged Today" list with a swipeable Breakfast/Lunch/Dinner carousel; each card is a fixed-size two-line summary (what's logged + calories) instead of growing with every entry | Dislikes → Nutrition (2026-09-08, "day's logged-food list...") | Done (c3a8e87) |
 | P2 | Clicking a macro shows which foods contributed to it — each Macros row on the Nutrition screen now opens a breakdown for the selected day: total vs. target, then every food with that macro, biggest first, with grams and % of the day's total (`MacroBreakdownView`; `NutritionViewModel.contributions` + `MacroContributionTests`). Rows stay tappable after the protein-only toggle changes the section's shape. Revised on user feedback the same day: no chevrons on the macro rows, and no per-food share bars — the percentage is enough; the total bar at the top stays | Suggestions → Nutrition (2026-09-08) | Done (dab0aea) — checked in the simulator 2026-09-22 (one-food day only; ranking is unit-tested) |
+| P2 | Profile reorganised into sections from the user's reference screenshot: **Personal** (Personal Info), **Workout** (a settings page: reps-first / weight-first set rows, Show PRs toggle for the "% of best" bar, default sets and reps — range allowed — for newly added exercises and unplanned rows, default rest, Automatic Rest Timer; each with an ⓘ), **Goal**, **Daily Targets**, **Units & Measurements** (lb/kg moved here off the Goals card to free space on Training; height in cm or ft/in, stored in cm). New **rest timer**: a bar above the tab bar with the countdown, −15s / +15s / Skip, a haptic when it ends; starts on checking a set when automatic, else from the timer button on the tracking screen; one shared `RestTimerModel`, so it keeps running on the day list and the next exercise. `WorkoutPreferences` (UserDefaults, like lb/kg), `HeightUnit`, `RestTimer` + `WorkoutSettingsTests`. Not done: Default Time (no timed exercises), a notification when rest ends with the app in the background, and the timer doesn't survive quitting the app | User request (direct, 2026-09-22, screenshot of another app's Workout settings) | Done — checked in the simulator 2026-09-22 (auto-start, carrying over to the day list, +15s, Skip; test set unchecked and preferences put back afterwards) |
 | P2 | Split Profile page into subpages to reduce visual overload — Profile is now a three-row overview: **Personal Info** (summary "Male · 25 · 170 cm · Sedentary" → page with height, birth date, sex, activity), **Goal** (inline picker — a page for one picker would just add a tap), **Daily Targets** (summary "2,000 kcal · 150P · 200C · 65F" → page with the four fields and the macro-consistency hint; the widget refresh moved there). A footer points to the Goals card for goal weight, steps and lb/kg. Height got a visible label. `ProfileViewModel` summaries + `ProfileSummaryTests` | Dislikes → General UI (2026-09-08, "Profile page needs subpages") | Done — checked in the simulator 2026-09-22 |
 | P1 | My Meals recipes: build a meal from existing foods (97d8f36), show/edit its ingredients while logging (872e9f8, 4ec4ce1), flexible serving units + fraction input (cdb333f), consistent rounded display everywhere (614f4fe), and edit a saved meal's ingredients after the fact via swipe-to-edit (92cdcef) | User request (direct, 2026-09-12 → 2026-09-15, not from the log below) | Done (92cdcef) |
 | P2 | New Food form asks for macros per the entered serving size (e.g. "36g, as printed on the label") instead of per 100g, converting to the stored per-100g value at save time | User request (direct, 2026-09-15) | Done (6b9da81) |

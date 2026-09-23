@@ -8,6 +8,7 @@ import SwiftData
 
 struct RootView: View {
     @Environment(\.modelContext) private var modelContext
+    @State private var restTimer = RestTimerModel()
 
     var body: some View {
         TabView {
@@ -30,6 +31,8 @@ struct RootView: View {
             }
             .tabItem { Label("Profile", systemImage: "person.circle") }
         }
+        // One rest timer for the whole app, so it survives moving between workout screens.
+        .environment(restTimer)
         .task {
             StarterExerciseCatalog.seedIfNeeded(in: modelContext)
         }

@@ -14,6 +14,9 @@ import SwiftData
 struct PlanDayDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \WorkoutSession.date, order: .reverse) private var sessions: [WorkoutSession]
+    @AppStorage(WorkoutPreferences.defaultSetsKey) private var defaultSets = WorkoutPreferences.defaultSetsDefault
+    @AppStorage(WorkoutPreferences.defaultRepsKey) private var defaultReps = WorkoutPreferences.defaultRepsDefault
+    @AppStorage(WorkoutPreferences.defaultRepsMaxKey) private var defaultRepsMax = WorkoutPreferences.defaultRepsMaxDefault
 
     let day: PlanDay
 
@@ -62,10 +65,17 @@ struct PlanDayDetailView: View {
             .padding()
         }
         .navigationTitle(day.name)
+        .safeAreaInset(edge: .bottom) {
+            RestTimerBar()
+        }
         .sheet(isPresented: $isPresentingExercisePicker) {
             NavigationStack {
                 ExercisePickerView(suggestedGroups: RoutineTemplate.muscleGroups(forDayNamed: day.name)) { exercise in
-                    let planExercise = PlanExercise(order: day.exercises.count, exercise: exercise)
+                    // New exercises start on the Profile → Workout default target.
+                    let planExercise = PlanExercise(
+                        order: day.exercises.count, exercise: exercise, targetSets: defaultSets, targetReps: defaultReps
+                    )
+                    planExercise.targetRepsMax = defaultRepsMax > defaultReps ? defaultRepsMax : nil
                     planExercise.day = day
                     modelContext.insert(planExercise)
                 }

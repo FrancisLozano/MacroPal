@@ -34,18 +34,9 @@ struct GoalsCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Goals")
-                    .font(.headline)
-                Spacer()
-                Picker("Weight unit", selection: $unit) {
-                    ForEach(WeightUnit.allCases) { unit in
-                        Text(unit.symbol).tag(unit)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .frame(width: 100)
-            }
+            // lb/kg lives in Profile → Units & Measurements.
+            Text("Goals")
+                .font(.headline)
 
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
