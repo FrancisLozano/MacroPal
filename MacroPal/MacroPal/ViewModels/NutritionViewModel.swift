@@ -14,8 +14,67 @@ struct MacroTotals {
     var fatG: Double = 0
 }
 
+/// One of the three macros, for screens that work on "a macro" generically (the breakdown of
+/// which foods contributed to it).
+enum Macro: String, CaseIterable, Identifiable, Hashable {
+    case protein, carbs, fat
+
+    var id: Self { self }
+
+    var displayName: String {
+        switch self {
+        case .protein: "Protein"
+        case .carbs: "Carbs"
+        case .fat: "Fat"
+        }
+    }
+
+    func grams(in entry: FoodEntry) -> Double {
+        switch self {
+        case .protein: entry.proteinG
+        case .carbs: entry.carbG
+        case .fat: entry.fatG
+        }
+    }
+
+    func grams(in totals: MacroTotals) -> Double {
+        switch self {
+        case .protein: totals.proteinG
+        case .carbs: totals.carbG
+        case .fat: totals.fatG
+        }
+    }
+
+    func targetGrams(for profile: UserProfile) -> Double {
+        switch self {
+        case .protein: Double(profile.proteinTargetG)
+        case .carbs: Double(profile.carbTargetG)
+        case .fat: Double(profile.fatTargetG)
+        }
+    }
+}
+
+/// One food's share of a macro for the day.
+struct MacroContribution {
+    let entry: FoodEntry
+    let grams: Double
+    /// 0…1 of the day's total for that macro.
+    let share: Double
+}
+
 @Observable
 final class NutritionViewModel {
+    /// The foods that contributed to `macro` across `entries`, biggest first. Entries with none
+    /// of it (e.g. fat in black coffee) are left out; ties keep the order they were logged.
+    func contributions(to macro: Macro, from entries: [FoodEntry]) -> [MacroContribution] {
+        let total = entries.reduce(0) { $0 + macro.grams(in: $1) }
+        guard total > 0 else { return [] }
+        return entries
+            .map { MacroContribution(entry: $0, grams: macro.grams(in: $0), share: macro.grams(in: $0) / total) }
+            .filter { $0.grams > 0 }
+            .sorted { $0.grams != $1.grams ? $0.grams > $1.grams : $0.entry.date < $1.entry.date }
+    }
+
     /// Logs a new `FoodEntry`, snapshotting macros from `foodItem` scaled to `servingSizeG`
     /// so later edits to the `FoodItem` don't retroactively change this entry.
     func logEntry(

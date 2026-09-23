@@ -281,11 +281,18 @@ struct DailySummaryView: View {
                 let totals = viewModel.dailyTotals(for: entriesForSelectedDate)
                 let remaining = viewModel.remaining(totals: totals, profile: profile)
 
+                // Each row opens which foods that macro came from.
                 Section {
-                    macroStat(name: "Protein", color: Self.proteinColor, eaten: totals.proteinG, target: Double(profile.proteinTargetG), remaining: remaining.proteinG, hideDot: !showFullMacros)
+                    macroLink(.protein, color: Self.proteinColor) {
+                        macroStat(name: "Protein", color: Self.proteinColor, eaten: totals.proteinG, target: Double(profile.proteinTargetG), remaining: remaining.proteinG, hideDot: !showFullMacros)
+                    }
                     if showFullMacros {
-                        macroStat(name: "Carbs", color: Self.carbColor, eaten: totals.carbG, target: Double(profile.carbTargetG), remaining: remaining.carbG)
-                        macroStat(name: "Fat", color: Self.fatColor, eaten: totals.fatG, target: Double(profile.fatTargetG), remaining: remaining.fatG)
+                        macroLink(.carbs, color: Self.carbColor) {
+                            macroStat(name: "Carbs", color: Self.carbColor, eaten: totals.carbG, target: Double(profile.carbTargetG), remaining: remaining.carbG)
+                        }
+                        macroLink(.fat, color: Self.fatColor) {
+                            macroStat(name: "Fat", color: Self.fatColor, eaten: totals.fatG, target: Double(profile.fatTargetG), remaining: remaining.fatG)
+                        }
                     }
                 } header: {
                     HStack {
@@ -571,6 +578,14 @@ struct DailySummaryView: View {
             cumulative = end
         }
         return ranges
+    }
+
+    private func macroLink(_ macro: Macro, color: Color, @ViewBuilder label: () -> some View) -> some View {
+        NavigationLink {
+            MacroBreakdownView(macro: macro, date: selectedDate, color: color)
+        } label: {
+            label()
+        }
     }
 
     private func macroStat(name: String, color: Color, eaten: Double, target: Double, remaining: Double, hideDot: Bool = false) -> some View {
