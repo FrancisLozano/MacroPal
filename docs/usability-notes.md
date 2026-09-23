@@ -5,7 +5,7 @@
 
 ## Progress summary (as of 2026-09-23)
 
-**The backlog is empty:** 34 of 35 triaged items are Done and 1 was verified as "No change
+**The backlog is empty:** 35 of 36 triaged items are Done and 1 was verified as "No change
 needed". Every commit is pushed to `origin/main` (`2d971c2`). The app is no longer being built
 from a list — the next input has to come from using it (see **Next task**). (The 09-15 summary
 said "9 of 16"; the table actually held 17 rows then — counts are recounted from the table.)
@@ -25,6 +25,7 @@ Nutrition. 2026-09-23 closed the last two P3s and the outstanding re-checks.
 | `cef4f39` | Re-checks recorded: levels, Exercise Progress and the ⓘ sheet with the corrected 227 lb bodyweight, with sex set to female, and with no weigh-in — all correct |
 | `9dd2034` | The launch-time store retry now logs (category `Store`), so a caught migration race is visible |
 | `2d971c2` | Shared Xcode schemes committed (they're the only scheme files); the old untracked `scratchpad/` mockup deleted |
+| `4b76216` | Log Weight / Log Steps keep typed input when you tap above the sheet; Log Weight gets Cancel and focuses its field on open |
 
 ### What changed on 2026-09-22
 
@@ -112,11 +113,8 @@ None in the Backlog. The untriaged follow-ups are listed under **Next task**, st
    At the end of the week, triage: promote what's worth doing into the Backlog with a
    priority, and update the Snapshot counts.
 
-2. **Quick fix, if you want one first: Log Weight / Log Steps lose typed input.** Tapping the
-   dimmed area above either sheet closes it and drops what was typed. Likely to annoy during
-   the week of use. Options: `.interactiveDismissDisabled()` while a value has been typed, or
-   keep the draft. Log Weight also doesn't focus its field on open the way Log Steps does —
-   fix both together.
+2. ~~Quick fix: Log Weight / Log Steps lose typed input~~ — done 2026-09-23 (`4b76216`), see
+   the Backlog row.
 
 3. **Follow-ups, not yet triaged** — promote to the Backlog if the week of use says so:
    - A notification when the rest timer ends with the app in the background (the timer is one
@@ -396,8 +394,8 @@ actually improving or just accumulating complaints.
 | Likes | 1 |
 | Dislikes | 13 |
 | Suggestions | 7 |
-| Triaged (in Backlog) | 35 |
-| Done | 34 |
+| Triaged (in Backlog) | 36 |
+| Done | 35 |
 | No change needed | 1 |
 | Won't Fix | 0 |
 
@@ -443,6 +441,7 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P3 | Workout History rows show only date + set count, not the plan day ("Pull") or exercises — each row now shows the plan day as its headline ("Lower"; "Push + Pull" on a mixed day), then "date · N sets", then the exercises in the order first logged. Unplanned sessions and ones logged before this keep the date as the headline. The day name is stored on each set (`WorkoutSetEntry.planDayName`, optional and defaulted, so the store migrated without a versioned schema) as a copy of the name, not a link to `PlanDay`, so history survives plan edits; the session's label is derived from its sets, so unchecking a plan set takes the label with it. A first version stored the name once on the session and kept "Lower" after its only Lower set was unchecked, which is why it moved to the set. `WorkoutSessionTests` | Simulator pass (2026-09-22) | Done — checked in the simulator 2026-09-22 (a Back Squat set from Lower labelled today's session "Lower"; unchecking it put the date back; test set unchecked afterwards) |
 | P2 | Progress card: ⓘ instead of the Level/Weekly toggle — the card was too tall. It's now just "Progress", an ⓘ and the two figures: the Weekly view is gone (`WeeklyMuscleVolume`, its tests and `VolumePalette` deleted), and so are the color chips and the description under the figures. The ⓘ opens **How Levels Work** (`MuscleLevelInfoView`): the two things a muscle needs to move up (strength vs. bodyweight from the last 90 days, and time trained), then each level in its color with what it means, the Squat and Bench targets in the user's unit from their logged bodyweight (rounded to 5 lb / 2.5 kg; multiples only if no weight is logged; female standards applied from Profile), and the time required. The numbers come from the same `StrengthClass` thresholds and a new `MuscleLevelEngine.levelMinimumMonths` (the tenure cap now reads from it), so the sheet can't drift from the engine. The card still shows a one-line prompt when there's no bodyweight or no workout, since the figures can't say that themselves | User request (direct, 2026-09-22, screenshot of the legend) | Done — checked in the simulator 2026-09-22 |
 | P2 | Training page laid out like Nutrition — Progress, Current Plan and Goals are gray headings above white rounded cards on the grouped gray background, with each section's button in its heading (the ⓘ, the week-plan calendar) the way Nutrition has the pie and ⓘ. The plan's "Workout · N days a week" line became "N days a week" inside the card. Shared `TrainingSection` view; built from stacks, not a `List`, to stay clear of the List button-detachment bug with all the card buttons. The shortcuts card (History / Progress / Unplanned) has no heading | User request (direct, 2026-09-22) | Done — checked in the simulator 2026-09-22 next to Nutrition; the calendar heading button opens the week |
+| P2 | Log Weight / Log Steps drop what was typed when you tap the dimmed area above the sheet — both now use `.interactiveDismissDisabled` once there's an edit (Log Steps compares against the day's prefilled total, so an untouched prefill still closes on a tap); Cancel still discards. Log Weight had no Cancel, so it needed one once the tap-away was blocked, and it now focuses its field on open like Log Steps | Noticed 2026-09-22, listed under Next task | Done (4b76216) — checked in the simulator 2026-09-23 (typed a value in each, tapped above: sheet stayed with the value; Cancel closed it and nothing was saved) |
 | P1 | Steps goal with a bar chart (whiteboard Goals card) — `StepEntry` (one total per day; logging a day again replaces it), `UserProfile.stepGoal` (default 10,000, migrates existing stores), Steps row on the Goals card, Steps screen with 7/30-day bars (green when the goal is met), dashed goal line, and average / goal-met counted over logged days; `StepsViewModelTests` | User request (direct, 2026-09-19, whiteboard sketch) | Done (a46cfe9) |
 
 Priority scale: **P1** (actively annoying, fix soon) / **P2** (worth doing, no rush) /
