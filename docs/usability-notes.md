@@ -3,18 +3,28 @@
 **Status:** Living document — ongoing, not tied to a phase
 **Started:** 2026-09-06
 
-## Progress summary (as of 2026-09-22, late evening)
+## Progress summary (as of 2026-09-23)
 
-34 of 35 triaged backlog items are Done and 1 was verified as "No change needed" — **the
-backlog is empty.** (2026-09-23: the widget macro order and Edit Routine day matching are done, and the
-bodyweight / ⓘ-sheet re-checks passed.) (The 09-15 summary said
-"9 of 16"; the table actually held 17 rows then — counts are recounted from the table.)
+**The backlog is empty:** 34 of 35 triaged items are Done and 1 was verified as "No change
+needed". Every commit is pushed to `origin/main` (`2d971c2`). The app is no longer being built
+from a list — the next input has to come from using it (see **Next task**). (The 09-15 summary
+said "9 of 16"; the table actually held 17 rows then — counts are recounted from the table.)
 
 The 2026-09-19 stretch merged Body and Workouts into **one Training tab**, following
 [discovery-workouts-body-redesign.md](discovery-workouts-body-redesign.md) (Option 2) and the
 user's whiteboard sketch — body map on top, Current Plan, Goals below. On 2026-09-22 all three
 of that doc's success criteria were met, and in the evening the tab was restyled to match
-Nutrition.
+Nutrition. 2026-09-23 closed the last two P3s and the outstanding re-checks.
+
+### What changed on 2026-09-23
+
+| Commit | What |
+|---|---|
+| `c908ea1` | Medium widget lists macros Protein / Carbs / Fat, like the app (the small widget is only the calorie ring) |
+| `4950b70` | Edit Routine keeps a day's exercises on its weekday — `RoutineTemplate.match` pairs the closest weekdays first; four new `RoutineTemplateTests` |
+| `cef4f39` | Re-checks recorded: levels, Exercise Progress and the ⓘ sheet with the corrected 227 lb bodyweight, with sex set to female, and with no weigh-in — all correct |
+| `9dd2034` | The launch-time store retry now logs (category `Store`), so a caught migration race is visible |
+| `2d971c2` | Shared Xcode schemes committed (they're the only scheme files); the old untracked `scratchpad/` mockup deleted |
 
 ### What changed on 2026-09-22
 
@@ -83,20 +93,47 @@ Details for each are in the Backlog rows and the "Next steps on the Training pag
 
 ### Remaining open items
 
-None in the Backlog. Known follow-ups that aren't Backlog rows yet: a notification when rest
-ends in the background; a per-lift goal you set yourself on Exercise Progress (needs a model
-field); HealthKit step import (needs a real device); Log Weight / Log Steps lose typed input if
-you tap the dimmed area; Default Time from the reference screenshot (no timed exercises exist).
+None in the Backlog. The untriaged follow-ups are listed under **Next task**, step 3.
 
 ## Next task
 
-**Start here next session:**
+**Start here next session.** In order:
 
-The backlog is empty and the re-checks are done (2026-09-23, below), so the most useful next
-step is **a week of real use**: log food and workouts for real and add new Likes / Dislikes /
-Suggestions below — the raw log hasn't had an entry since 2026-09-08, and everything since
-has been built from it. Things worth noticing during that week: whether the Training page now
-feels as calm as Nutrition, and whether the Weekly view is missed.
+1. **A week of real use (main task).** Log real food and workouts every day, and add what you
+   notice to **Likes / Dislikes / Suggestions** at the bottom of this doc, one bullet each in
+   the "How to log an entry" format. The raw log hasn't had an entry since 2026-09-08, and
+   everything since was built from it. Worth noticing in particular:
+   - Does the Training page feel as calm as Nutrition now?
+   - Is the Weekly body-map view missed? (It's in git history before `373f28e`.)
+   - Are the level targets fair? The thresholds are approximations — tune
+     `StrengthClass.maleThresholds` if a level feels too easy or too hard.
+   - Does the rest timer get in the way, or get missed when the app is in the background?
+
+   At the end of the week, triage: promote what's worth doing into the Backlog with a
+   priority, and update the Snapshot counts.
+
+2. **Quick fix, if you want one first: Log Weight / Log Steps lose typed input.** Tapping the
+   dimmed area above either sheet closes it and drops what was typed. Likely to annoy during
+   the week of use. Options: `.interactiveDismissDisabled()` while a value has been typed, or
+   keep the draft. Log Weight also doesn't focus its field on open the way Log Steps does —
+   fix both together.
+
+3. **Follow-ups, not yet triaged** — promote to the Backlog if the week of use says so:
+   - A notification when the rest timer ends with the app in the background (the timer is one
+     shared `RestTimerModel`; it also doesn't survive quitting the app).
+   - A per-lift goal you set yourself on Exercise Progress (needs a new model field — optional
+     or defaulted where it's declared, so no versioned schema is needed).
+   - HealthKit step import (needs a physical iPhone and permissions).
+   - Default Time from the Workout settings reference screenshot (only once timed exercises
+     exist).
+   - Bring back RPE / session notes for unplanned workouts, if they're missed.
+
+4. **Still unseen in the app** — check them when real use produces the data: the protein and
+   strength-stall callouts (4 logged days / 4 sessions of one lift), an Exercise Progress
+   chart with several sessions, ft/in height entry, a "Push + Pull" History label.
+
+5. **Portfolio extras (optional):** try the app on a physical iPhone (nothing has been checked
+   on one); move the Backlog to GitHub Issues if it grows again (SPEC.md §7 suggests it).
 
 **Watch for:** the launch-crash retry (`7cfc42b`) is still unconfirmed in a real race. It logs
 now (2026-09-23): an error "Opening the store failed, retrying: …" with the reason, then a
@@ -113,8 +150,6 @@ Both messages were checked by forcing the first attempt to fail with a temporary
 ## Details and reference
 
 ### Next steps on the Training page (all done 2026-09-22 — kept for the details)
-
-
 
 1. ~~**Steps goal + bar chart.**~~ Done 2026-09-22 with manual entry: a Steps row on the
    Goals card (today vs. goal, Log, chart) and a Steps screen with 7/30-day bars against the
