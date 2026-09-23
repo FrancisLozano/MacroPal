@@ -21,8 +21,9 @@ struct RootView: View {
             }
             .tabItem { Label("Training", systemImage: "dumbbell") }
 
-            // Insights tab removed for now — revisit later (per project backlog: replace
-            // with contextual info icons at point of relevance instead of its own tab).
+            // No Insights tab: each rule's finding shows inline where it's relevant
+            // (`InsightCallout`) — protein on Nutrition, weight on the Goals card, stalls on
+            // Exercise Progress.
 
             NavigationStack {
                 ProfileView()

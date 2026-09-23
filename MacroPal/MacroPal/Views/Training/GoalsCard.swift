@@ -11,6 +11,7 @@ import SwiftData
 struct GoalsCard: View {
     @Query private var profiles: [UserProfile]
     @Query private var stepEntries: [StepEntry]
+    @Query private var weightEntries: [WeightEntry]
     @AppStorage(WeightUnit.storageKey) private var unit: WeightUnit = .lb
 
     @State private var isPresentingGoalWeightSheet = false
@@ -21,6 +22,15 @@ struct GoalsCard: View {
     private let stepsViewModel = StepsViewModel()
 
     private var profile: UserProfile? { profiles.first }
+
+    /// A plateau while cutting, or the goal weight reached — shown under the weight row.
+    private var weightFindings: [InsightFinding] {
+        guard let profile else { return [] }
+        let snapshot = AnalysisSnapshot(
+            profile: profile, weightEntries: weightEntries, foodEntries: [], workoutSessions: [], weightUnit: unit
+        )
+        return GoalWeightReachedRule.evaluate(snapshot) + WeightPlateauRule.evaluate(snapshot)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -69,6 +79,10 @@ struct GoalsCard: View {
                 }
                 .buttonStyle(.bordered)
                 .accessibilityLabel("Weight progress")
+            }
+
+            ForEach(weightFindings) { finding in
+                InsightCallout(finding: finding)
             }
 
             Divider()

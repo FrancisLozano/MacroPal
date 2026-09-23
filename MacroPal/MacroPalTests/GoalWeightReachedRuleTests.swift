@@ -74,4 +74,23 @@ struct GoalWeightReachedRuleTests {
         )
         #expect(GoalWeightReachedRule.evaluate(snapshot).isEmpty)
     }
+
+    @Test func messageUsesTheChosenWeightUnit() {
+        let profile = UserProfile()
+        profile.goal = .bulk
+        profile.goalWeightKg = 70.0
+        let entries = (0..<7).map { WeightEntry(date: day($0), weightKg: 72.0) }
+        let snapshot = AnalysisSnapshot(
+            profile: profile,
+            weightEntries: entries,
+            foodEntries: [],
+            workoutSessions: [],
+            referenceDate: day(6),
+            calendar: calendar,
+            weightUnit: .lb
+        )
+        let finding = GoalWeightReachedRule.evaluate(snapshot).first
+        #expect(finding?.message.contains("154.3 lb") == true)
+        #expect(finding?.supportingMetric.contains("kg") == false)
+    }
 }

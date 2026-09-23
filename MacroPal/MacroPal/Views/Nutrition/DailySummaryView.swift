@@ -29,6 +29,13 @@ struct DailySummaryView: View {
         Calendar.current.isDateInToday(selectedDate)
     }
 
+    /// The protein rule judges the week ending today, so its callout only shows on today.
+    private var proteinFinding: InsightFinding? {
+        guard isToday, let profile else { return nil }
+        let snapshot = AnalysisSnapshot(profile: profile, weightEntries: [], foodEntries: allEntries, workoutSessions: [])
+        return ProteinIntakeRule.evaluate(snapshot).first
+    }
+
     private var entriesForSelectedDate: [FoodEntry] {
         allEntries.filter { Calendar.current.isDate($0.date, inSameDayAs: selectedDate) }
     }
@@ -293,6 +300,9 @@ struct DailySummaryView: View {
                         macroLink(.fat, color: Self.fatColor) {
                             macroStat(name: "Fat", color: Self.fatColor, eaten: totals.fatG, target: Double(profile.fatTargetG), remaining: remaining.fatG)
                         }
+                    }
+                    if let proteinFinding {
+                        InsightCallout(finding: proteinFinding)
                     }
                 } header: {
                     HStack {

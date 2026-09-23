@@ -54,6 +54,9 @@ struct ExerciseProgressView: View {
                             Section {
                                 summary(points: points, best: best)
                                 levelProgress(standard: standard, best: best, exercise: selectedExercise)
+                                if let stall = stallFinding(for: selectedExercise) {
+                                    InsightCallout(finding: stall)
+                                }
                             } footer: {
                                 if standard != nil {
                                     Text("Levels use the same bodyweight standards as the body map, which can show a muscle lower until you've trained it for a while.")
@@ -81,6 +84,15 @@ struct ExerciseProgressView: View {
                 selectedExercise = viewModel.mostRecentlyLoggedExercise(from: sessions) ?? loggedExercises.first
             }
         }
+    }
+
+    /// The strength-stall rule's finding for this lift, if its top set has stopped moving.
+    private func stallFinding(for exercise: Exercise) -> InsightFinding? {
+        guard let profile = profiles.first else { return nil }
+        let snapshot = AnalysisSnapshot(
+            profile: profile, weightEntries: [], foodEntries: [], workoutSessions: sessions, weightUnit: unit
+        )
+        return StrengthStallRule.evaluate(snapshot).first { $0.relatedExerciseName == exercise.name }
     }
 
     // MARK: - Summary

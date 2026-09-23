@@ -34,20 +34,20 @@ enum StrengthStallRule {
         return Result(currentWeightKg: window.last!.topSetWeightKg, reps: currentReps, sessionsChecked: window.count)
     }
 
-    static func evaluate(_ snapshot: AnalysisSnapshot) -> [Insight] {
+    static func evaluate(_ snapshot: AnalysisSnapshot) -> [InsightFinding] {
         let workoutVM = WorkoutProgressViewModel()
         let exercises = workoutVM.loggedExercises(from: snapshot.workoutSessions)
 
-        return exercises.compactMap { exercise -> Insight? in
+        return exercises.compactMap { exercise -> InsightFinding? in
             let points = workoutVM.progression(for: exercise, in: snapshot.workoutSessions)
             guard let result = evaluate(points: points) else { return nil }
 
-            return Insight(
-                dateGenerated: snapshot.referenceDate,
+            let unit = snapshot.weightUnit
+            return InsightFinding(
                 category: .training,
                 severity: .suggestion,
-                message: "\(exercise.name) has stalled at \(String(format: "%.1f", result.currentWeightKg)) kg × \(result.reps) for \(result.sessionsChecked) sessions. Consider a deload week or an accessory-volume change.",
-                supportingMetric: "no top-set increase in \(result.sessionsChecked) consecutive sessions",
+                message: "\(exercise.name) has stalled at \(unit.formattedLift(fromKg: result.currentWeightKg)) \(unit.symbol) × \(result.reps) for \(result.sessionsChecked) sessions. Consider a deload week or an accessory-volume change.",
+                supportingMetric: "No top-set increase in \(result.sessionsChecked) sessions in a row",
                 ruleIdentifier: .strengthStall,
                 relatedExerciseName: exercise.name
             )

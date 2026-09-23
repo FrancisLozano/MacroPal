@@ -30,7 +30,7 @@ enum ProteinIntakeRule {
         return Result(averageProteinG: averageProteinG, targetProteinG: targetProteinG, percentOfTarget: percent)
     }
 
-    static func evaluate(_ snapshot: AnalysisSnapshot) -> [Insight] {
+    static func evaluate(_ snapshot: AnalysisSnapshot) -> [InsightFinding] {
         let endDay = snapshot.calendar.startOfDay(for: snapshot.referenceDate)
         guard let startDay = snapshot.calendar.date(byAdding: .day, value: -(windowDays - 1), to: endDay) else { return [] }
 
@@ -46,8 +46,7 @@ enum ProteinIntakeRule {
         guard let result = evaluate(averageProteinG: averageProteinG, targetProteinG: snapshot.profile.proteinTargetG) else { return [] }
 
         let gapG = max(0, Double(result.targetProteinG) - result.averageProteinG)
-        let insight = Insight(
-            dateGenerated: snapshot.referenceDate,
+        let insight = InsightFinding(
             category: .nutrition,
             severity: .suggestion,
             message: "You've been under-eating protein — averaging \(Int(result.averageProteinG))g/day against a \(result.targetProteinG)g target. Try adding about \(Int(gapG))g more per day, e.g. an extra serving of chicken, Greek yogurt, or a protein shake.",

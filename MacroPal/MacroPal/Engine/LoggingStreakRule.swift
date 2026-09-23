@@ -41,7 +41,7 @@ enum LoggingStreakRule {
         return Result(daysSinceLastFoodLog: foodGap, daysSinceLastWeighIn: weightGap)
     }
 
-    static func evaluate(_ snapshot: AnalysisSnapshot) -> [Insight] {
+    static func evaluate(_ snapshot: AnalysisSnapshot) -> [InsightFinding] {
         // Only run once there's at least one entry of either kind — a brand-new install
         // with no logs at all isn't a "missed streak," it's just day one.
         guard !snapshot.foodEntries.isEmpty || !snapshot.weightEntries.isEmpty else { return [] }
@@ -65,8 +65,7 @@ enum LoggingStreakRule {
             parts.append("no weigh-in ever logged")
         }
 
-        let insight = Insight(
-            dateGenerated: snapshot.referenceDate,
+        let insight = InsightFinding(
             category: .body,
             severity: .info,
             message: "You've gone quiet — \(parts.joined(separator: ", ")). A quick log helps keep your trends accurate.",

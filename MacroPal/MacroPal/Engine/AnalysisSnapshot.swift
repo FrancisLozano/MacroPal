@@ -14,6 +14,8 @@ struct AnalysisSnapshot {
     let workoutSessions: [WorkoutSession]
     let referenceDate: Date
     let calendar: Calendar
+    /// How weights read in messages — the user's lb/kg setting.
+    let weightUnit: WeightUnit
 
     init(
         profile: UserProfile,
@@ -21,7 +23,8 @@ struct AnalysisSnapshot {
         foodEntries: [FoodEntry],
         workoutSessions: [WorkoutSession],
         referenceDate: Date = .now,
-        calendar: Calendar = .current
+        calendar: Calendar = .current,
+        weightUnit: WeightUnit = .kg
     ) {
         self.profile = profile
         self.weightEntries = weightEntries
@@ -29,5 +32,6 @@ struct AnalysisSnapshot {
         self.workoutSessions = workoutSessions
         self.referenceDate = referenceDate
         self.calendar = calendar
+        self.weightUnit = weightUnit
     }
 }

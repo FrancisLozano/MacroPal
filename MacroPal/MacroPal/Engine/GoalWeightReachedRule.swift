@@ -31,17 +31,17 @@ enum GoalWeightReachedRule {
         return Result(currentAverageKg: latestAverageKg, goalWeightKg: goalWeightKg)
     }
 
-    static func evaluate(_ snapshot: AnalysisSnapshot) -> [Insight] {
+    static func evaluate(_ snapshot: AnalysisSnapshot) -> [InsightFinding] {
         let points = WeightViewModel().trendPoints(for: snapshot.weightEntries, windowDays: 7, calendar: snapshot.calendar)
         guard let latest = points.last else { return [] }
         guard let result = evaluate(latestAverageKg: latest.rollingAverageKg, goalWeightKg: snapshot.profile.goalWeightKg, goal: snapshot.profile.goal) else { return [] }
 
-        let insight = Insight(
-            dateGenerated: snapshot.referenceDate,
+        let unit = snapshot.weightUnit
+        let insight = InsightFinding(
             category: .body,
             severity: .actionNeeded,
-            message: String(format: "You've reached your goal weight of %.1f kg. Set a new goal, switch to maintenance, or hold here for a recomposition phase.", result.goalWeightKg),
-            supportingMetric: String(format: "7-day avg weight: %.1f kg (goal: %.1f kg)", result.currentAverageKg, result.goalWeightKg),
+            message: "You've reached your goal weight of \(unit.formatted(fromKg: result.goalWeightKg)) \(unit.symbol). Set a new goal, switch to maintenance, or hold here for a recomposition phase.",
+            supportingMetric: "7-day average weight: \(unit.formatted(fromKg: result.currentAverageKg)) \(unit.symbol) (goal: \(unit.formatted(fromKg: result.goalWeightKg)) \(unit.symbol))",
             ruleIdentifier: .goalWeightReached
         )
         return [insight]

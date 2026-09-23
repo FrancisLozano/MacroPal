@@ -5,7 +5,7 @@
 
 ## Progress summary (as of 2026-09-22)
 
-25 of 32 triaged backlog items are Done, 1 was verified as "No change needed", 6 are open
+26 of 32 triaged backlog items are Done, 1 was verified as "No change needed", 5 are open
 (4 of the open ones are small rough edges from the 2026-09-22 simulator pass).
 (The 09-15 summary said "9 of 16"; the table actually held 17 rows then — the counts below
 are recounted from the table.)
@@ -33,9 +33,9 @@ whiteboard. Commits, in order:
 - Then: faster unplanned-workout logging, 12 taps → 8 (item 4).
 - Then: the plan editing gaps (item 5), plus a fix for a launch crash they exposed.
 - Then: tapping a macro on the Nutrition screen shows which foods it came from.
+- Then: the Insights tab's rules now show inline as callouts with an info sheet.
 
 Remaining open items, by priority:
-- **P2** — Replace Insights page with contextual info icons.
 - **P2** — Split Profile page into subpages.
 - **P3** — Small rough edges from the 2026-09-22 pass: Edit Routine carries exercises to the
   first same-named day; no way to delete an extra Add Set row; widget macro order differs
@@ -44,8 +44,8 @@ Remaining open items, by priority:
 ### Next steps on the Training page
 
 **Start here next session:** the Training list is done apart from item 6, which was left
-out on purpose. Next up are the open P2s in the Backlog: Insights as info icons, Profile
-subpages. (The macro breakdown was done on 2026-09-22.) Items 2–5 were done on 2026-09-22 — see below.
+out on purpose. Next up is the last open P2 in the Backlog: Profile subpages. (The macro
+breakdown and the Insights callouts were done on 2026-09-22.) Items 2–5 were done on 2026-09-22 — see below.
 **Before trusting any strength level in the simulator:** its latest weigh-in is stored as
 227 kg (500 lb), probably the mystery "227" entry below typed in the wrong unit, so every
 target reads about 3× too high. Fix or delete that entry first. Item 1 (steps goal) is built with
@@ -263,7 +263,7 @@ actually improving or just accumulating complaints.
 | Dislikes | 13 |
 | Suggestions | 7 |
 | Triaged (in Backlog) | 32 |
-| Done | 25 |
+| Done | 26 |
 | No change needed | 1 |
 | Won't Fix | 0 |
 
@@ -282,7 +282,7 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P2 | Food database integration (search/brands, not manual-only) — Open Food Facts search, barcode scanning, and relevance-ranked results | Dislikes → Nutrition (2026-09-08, "no brands...") + Suggestions → Nutrition (2026-09-08, "larger variety...") | Done (1a3b380) — status corrected 2026-09-15, this shipped before it was marked here |
 | P2 | Redesign food history (show calories vs. target, show macros per entry, scale better with more entries) — became the Daily Log: a one-day-at-a-time diary with a calories bar against the target ("X/2,000 kcal", "left"/"over"), a macros card, and a p/c/f line on every entry | Dislikes → Nutrition (2026-09-08, three food-history entries) | Done (ab68f73, 4e02e89) — status corrected 2026-09-22 after checking `FoodHistoryView` against the three dislikes |
 | P2 | Fold Body page into another page instead of standalone — Body and Workouts merged into one Training tab; weight is a Goals-card row with a log button and a chart link | Dislikes → Body (2026-09-08) | Done (4d4f8dc, 41b27b9) |
-| P2 | Replace Insights page with contextual info icons at point of relevance | Dislikes → Insights (2026-09-08) + Suggestions → Insights (2026-09-08) | Triaged |
+| P2 | Replace Insights page with contextual info icons at point of relevance — the rules now run live and each finding shows as an `InsightCallout` (headline + ⓘ) where it's relevant: protein running low in the Nutrition screen's Macros section (today only), goal weight reached / plateau under the Goals card's weight row, a strength stall in that lift's Exercise Progress summary. Tapping opens the recommendation and "Where this comes from": the numbers plus the rule in plain words. Messages now use the lb/kg setting. The Insights tab, "Analyze" button and apply/dismiss flow are gone; callouts disappear on their own when the condition stops holding. The logging-streak nudge isn't shown (redundant in an app you've just opened; better as a notification later). The `Insight` model stays in the schema, unused, so existing stores open without a migration | Dislikes → Insights (2026-09-08) + Suggestions → Insights (2026-09-08) | Done — goal-reached callout and its sheet checked in the simulator 2026-09-22 (goal set to Bulk to trigger it, then back to Maintain); the protein and stall callouts weren't seen live — the simulator lacks the 4 logged days / 4 sessions they need |
 | P2 | Add oz as a serving-size unit alongside grams | Dislikes → Nutrition (2026-09-08, "serving size is only in grams") | Done (1a3b380) — status corrected 2026-09-15; cdb333f later added cups/tbsp/tsp and fraction input on top of it |
 | P2 | Daily logged-food list scales better as more foods are added — replaced the flat "Logged Today" list with a swipeable Breakfast/Lunch/Dinner carousel; each card is a fixed-size two-line summary (what's logged + calories) instead of growing with every entry | Dislikes → Nutrition (2026-09-08, "day's logged-food list...") | Done (c3a8e87) |
 | P2 | Clicking a macro shows which foods contributed to it — each Macros row on the Nutrition screen now opens a breakdown for the selected day: total vs. target, then every food with that macro, biggest first, with grams and % of the day's total (`MacroBreakdownView`; `NutritionViewModel.contributions` + `MacroContributionTests`). Rows stay tappable after the protein-only toggle changes the section's shape. Revised on user feedback the same day: no chevrons on the macro rows, and no per-food share bars — the percentage is enough; the total bar at the top stays | Suggestions → Nutrition (2026-09-08) | Done (dab0aea) — checked in the simulator 2026-09-22 (one-food day only; ranking is unit-tested) |

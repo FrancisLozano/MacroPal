@@ -36,16 +36,17 @@ enum WeightPlateauRule {
         return Result(percentChangePerWeek: percentChange, latestAverageKg: latest.rollingAverageKg)
     }
 
-    static func evaluate(_ snapshot: AnalysisSnapshot) -> [Insight] {
+    static func evaluate(_ snapshot: AnalysisSnapshot) -> [InsightFinding] {
         let points = WeightViewModel().trendPoints(for: snapshot.weightEntries, windowDays: 14, calendar: snapshot.calendar)
         guard let result = evaluate(trendPoints: points, goal: snapshot.profile.goal, calendar: snapshot.calendar) else { return [] }
 
-        let insight = Insight(
-            dateGenerated: snapshot.referenceDate,
+        let unit = snapshot.weightUnit
+        let insight = InsightFinding(
             category: .body,
             severity: .suggestion,
             message: "Your weight has plateaued while cutting. Consider a calorie reduction of 100-200 kcal/day, or a diet break.",
-            supportingMetric: String(format: "avg weight change: %.2f%% over the last 7 days (%.1f kg avg)", result.percentChangePerWeek, result.latestAverageKg),
+            supportingMetric: String(format: "Average weight changed %.2f%% over the last 7 days", result.percentChangePerWeek)
+                + " (now \(unit.formatted(fromKg: result.latestAverageKg)) \(unit.symbol))",
             ruleIdentifier: .weightPlateauCut
         )
         return [insight]
