@@ -549,6 +549,23 @@ commit) / `No change needed` (verified the behavior already exists — say how y
 
 *(newest first)*
 
+- 2026-09-23 (Goals) — The Goals card has too much going on. Remove its History buttons and
+  make Log just a + icon on the right, for both weight and steps.
+- 2026-09-23 (Goals) — Tapping the goal weight opens the weight history page; tapping today's
+  steps opens the steps history. That replaces the History buttons.
+- 2026-09-23 (Training) — Tapping a plan day (e.g. Legs & Abs) lists its exercises; tapping an
+  exercise opens a screen with three tabs: **Workout**, **Overview**, **Progress**.
+- 2026-09-23 (Training) — Workout tab: the rest timer and the sets. Each set is one row —
+  "Set 1", an lbs box and a reps box, with "Last: …" under each showing the previous session's
+  value (reference: Caliber's set-entry screen). One **Complete Exercise** button at the
+  bottom instead of a check mark per set. An ⓘ explains where to change the number of sets,
+  so the Add Set button goes.
+- 2026-09-23 (Training) — Overview tab: a GIF of the exercise if possible, and a Muscles
+  Involved section — the body figure with the worked muscles highlighted, Primary and
+  Secondary muscle labels, and a Flip View to see the back (reference: Caliber's exercise
+  Overview).
+- 2026-09-23 (Training) — Progress tab: that exercise's training history. With this, Workout
+  History and Exercise Progress move off the main Training page into each exercise's tabs.
 - 2026-09-23 (Training) — The "Training" headline sits lower than "Nutrition" does on the
   Nutrition page; line them up at the same height.
 - 2026-09-23 (Training) — Scroll like the Nutrition page: once scrolled down, the "Training"
