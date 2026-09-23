@@ -6,7 +6,8 @@
 ## Progress summary (as of 2026-09-22, late evening)
 
 34 of 35 triaged backlog items are Done and 1 was verified as "No change needed" — **the
-backlog is empty.** (2026-09-23: the widget macro order and Edit Routine day matching are done.) (The 09-15 summary said
+backlog is empty.** (2026-09-23: the widget macro order and Edit Routine day matching are done, and the
+bodyweight / ⓘ-sheet re-checks passed.) (The 09-15 summary said
 "9 of 16"; the table actually held 17 rows then — counts are recounted from the table.)
 
 The 2026-09-19 stretch merged Body and Workouts into **one Training tab**, following
@@ -92,14 +93,10 @@ line in the launch-crash retry (see Watch for).
 
 **Start here next session:**
 
-1. **Quick re-checks nobody has done yet:** Exercise Progress and the body map with the
-   corrected 227 lb bodyweight (targets were ~3× too high before); the ⓘ sheet with no weight
-   logged (should show multiples only and a "Log your weight" line) and with sex set to female
-   in Profile (targets × 0.65).
-
-The backlog is empty, so after that the most useful next step is **a week of real use**: log
-food and workouts for real and add new Likes / Dislikes / Suggestions below — the raw log
-hasn't had an entry since 2026-09-08, and everything since has been built from it. Things
+The backlog is empty and the re-checks are done (2026-09-23, below), so the most useful next
+step is **a week of real use**: log food and workouts for real and add new Likes / Dislikes /
+Suggestions below — the raw log hasn't had an entry since 2026-09-08, and everything since
+has been built from it. Things
 worth noticing during that week: whether the Training page now feels as calm as Nutrition,
 and whether the Weekly view is missed.
 
@@ -265,10 +262,20 @@ loses its badge); Workout History labels (a Lower set labelled the day "Lower", 
 put the date back); both store migrations (app opened first time); the Progress ⓘ sheet with
 a 227 lb bodyweight; the Nutrition-style Training layout and the calendar heading button.
 
+**Verified (2026-09-23):** the medium widget's Protein / Carbs / Fat order; Edit Routine 5 → 4
+→ 5 days keeping Saturday's Lower exercises on Saturday. Re-checks with the corrected 227 lb
+bodyweight, all matching hand-worked numbers: body map (quads, glutes, back all Beginner);
+Exercise Progress — Back Squat 180 of 227 lb to Novice, Barbell Row 120.3 of 136.2 lb; the ⓘ
+sheet (Novice Squat 225 / Bench 135 lb, Intermediate 340 / 225). With sex set to female the
+sheet showed × 0.65 (Novice 150 / 90 lb, Intermediate 220 / 150 lb) and Barbell Row moved to
+Novice → Intermediate at 132.8 lb; the calorie and macro targets didn't change. With no
+weigh-in the card showed its "Log your weight" line and the sheet showed multiples only with a
+"Log your weight to see these in lb" footer. Sex was set back to male, and the weigh-in was
+restored by copying back a backup of the store (see Housekeeping).
+
 **Not seen live yet:** the protein and strength-stall callouts (need 4 logged days / 4
 sessions of one lift), an Exercise Progress chart with several sessions, the ft/in height
-entry, a "Push + Pull" History label (unit-tested only), and the ⓘ sheet with no bodyweight
-or with sex set to female.
+entry, and a "Push + Pull" History label (unit-tested only).
 
 **Not yet verified:** anything on a physical device.
 
@@ -298,6 +305,9 @@ or with sex set to female.
     the old value — wait a few seconds (up to ~15) before concluding a save failed.
   - Tap coordinates: `simctl io` screenshots are 1206×2622 px for a 402×874 pt screen (3×);
     shrunk to 800 px tall they're ~1.09× the tap coordinates.
+  - To test with data removed (e.g. no weigh-in) and get it back exactly: terminate the app,
+    copy `MacroPal.sqlite`, `-shm` and `-wal` somewhere, test, terminate again, copy them
+    back. Done that way on 2026-09-23 so the 227 lb entry kept its original timestamp.
   - To check that each commit in a split builds on its own, build it from a temporary
     `git worktree` — that's how the three evening commits were checked.
 - Adding a database model is now two steps — list it in `AppSchema.models`, and add its file
