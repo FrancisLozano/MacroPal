@@ -21,7 +21,7 @@ the person using it. I wanted practice doing the part of the job that matters mo
 the first version: using a real product daily, turning friction into a written record, deciding
 what's worth fixing, and shipping a fix that closes the loop.
 
-So alongside the app, I kept a running [usability log](docs/usability-notes.md). Every session,
+So alongside the app, I kept a running [usability log](docs/usability.md). Every session,
 I wrote down what was annoying, why, and what "better" would look like. That log is the actual
 deliverable this README is about; the app is where the recommendations get implemented.
 
@@ -32,7 +32,7 @@ food entries could only be created manually (no search, no brands), serving size
 grams-only, a wrong entry couldn't be deleted, and the daily log/history views didn't scale as
 entries accumulated. Individually these looked like small polish items; together they were the
 single biggest source of everyday friction in the app. See the
-[dislikes log](docs/usability-notes.md#dislikes) for the raw entries.
+[dislikes log](docs/usability.md#dislikes) for the raw entries.
 
 **Recommend.** Rather than patching each complaint as an isolated ticket, I traced them to one
 root cause (the food-entry pipeline had no connection to a real food database and no
@@ -48,7 +48,7 @@ from the usability backlog in one coherent change instead of four disconnected o
 
 **Result, tracked:** of 13 dislikes and 7 suggestions logged during dogfooding, 3 have shipped
 fixes and 12 are triaged into a prioritized backlog with an explicit P1/P2/P3 scale. See the
-[snapshot table](docs/usability-notes.md#snapshot). That table is a live number, not a one-time
+[snapshot table](docs/usability.md#snapshot). That table is a live number, not a one-time
 count; it's meant to move.
 
 **Next up:** the same diagnose → recommend → deliver pass, applied to Body tracking and Workout

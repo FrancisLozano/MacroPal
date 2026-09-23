@@ -1,14 +1,165 @@
 # Usability Notes & Feedback Log
 
 **Status:** Living document — ongoing, not tied to a phase
-**Started:** 2026-09-06
+**Started:** 2026-09-06 · **Last updated:** 2026-09-23
 
-## Progress summary (as of 2026-09-23)
+## Start here (as of 2026-09-23)
 
-**The backlog is empty:** 35 of 36 triaged items are Done and 1 was verified as "No change
-needed". Every commit is pushed to `origin/main` (`2d971c2`). The app is no longer being built
-from a list — the next input has to come from using it (see **Next task**). (The 09-15 summary
-said "9 of 16"; the table actually held 17 rows then — counts are recounted from the table.)
+**The backlog is empty.** 35 of 36 triaged items are Done and 1 was verified as "No change
+needed". Everything is pushed to `origin/main` (`ed8f353`). The app is no longer built from a
+list: the next changes should come from using it for real (see **Next task**).
+
+**What the app has now**, so you know what you're judging:
+
+- **Nutrition** — day picker, calorie ring segmented by macro (tap the pie to switch between
+  protein only and all macros), Macros card (tap a macro → which foods it came from), protein
+  callout, a Breakfast/Lunch/Dinner carousel with quick-add. Food search (Open Food Facts),
+  barcode scanning, My Meals built from foods, oz/cups/tbsp/tsp and fractions. Daily Log
+  history.
+- **Training** — body map colored by strength level (ⓘ → How Levels Work), Current Plan card
+  (today's day → per-set tracking with rest timer and "% of best"), week view and Edit Routine,
+  Goals card (weight + steps, each with Log and a chart), Workout History, Exercise Progress
+  (best 1RM, next-level target, chart), Log an Unplanned Workout.
+- **Profile** — Personal Info, Workout settings (set-row order, PRs, default sets/reps, rest
+  timer), Goal & Daily Targets, Units (lb/kg, cm or ft/in).
+- **Widget** — small (calorie ring) and medium (calories + Protein / Carbs / Fat).
+
+## Next task: a week of real use (2026-09-24 → 2026-09-30)
+
+The raw log hasn't had an entry since 2026-09-08, and everything since was built from those
+entries. This week is for collecting the next round.
+
+### Every day
+
+1. Log real food and any workout, weigh-ins and steps, the way you normally would.
+2. When something is annoying, slow, confusing, or you wish it were different, add one bullet
+   under **Likes / Dislikes / Suggestions** at the bottom — see **How to log an entry**. One
+   line is enough; write it while you still remember which screen and what you tapped.
+3. If you want something **adjusted** (a number, a default, a wording, a size), check the
+   table below first — many of these are a one-line change, and naming the row makes the fix
+   quick.
+
+### What to watch for
+
+- Does the Training page feel as calm as Nutrition now?
+- Do you miss the Weekly body-map view (sets per muscle this week)?
+- Are the level targets fair — does a level come too easily or feel out of reach?
+- Does the rest timer get in the way, or do you miss it when the app is in the background?
+- Is anything still slow to log — count the taps if it feels like too many.
+- Do the callouts show up when they should, and are they useful or noise?
+
+**Not seen in the app yet** — note it if you run into one: the protein and strength-stall
+callouts (need 4 logged days / 4 sessions of one lift), an Exercise Progress chart with several
+sessions, ft/in height entry, a "Push + Pull" History label.
+
+### Things you might want adjusted — and where they live
+
+Values as of 2026-09-23. "In app" means you can change it yourself; the rest are code.
+
+| Adjustment | Now | Where |
+|---|---|---|
+| Calorie / macro targets | 2,000 kcal · 150P / 200C / 65F | In app: Profile → Goal & Daily Targets |
+| Step goal | 10,000 | In app: tap the numbers on the Goals card's steps row |
+| Goal weight | 154.3 lb | In app: tap the goal weight on the Goals card |
+| lb/kg, cm or ft/in | lb, cm | In app: Profile → Units & Measurements |
+| Default sets / reps for new exercises | 3 × 10 | In app: Profile → Workout |
+| Rest time, auto-start rest timer | 120 s, off | In app: Profile → Workout |
+| Set rows reps-first or weight-first; "% of best" bar | reps-first, shown | In app: Profile → Workout |
+| Strength-level thresholds (too easy / too hard) | approximations | `StrengthClass.maleThresholds` in `ExerciseMuscleData.swift` |
+| Female standards | male × 0.65 | `MuscleLevelEngine.femaleFactor` |
+| Time required per level | 0 / 1 / 4 / 12 / 36 / 60 months | `MuscleLevelEngine.levelMinimumMonths` (the ⓘ sheet follows) |
+| Window for "best lift" | last 90 days | `MuscleLevelEngine.recentWindowDays` |
+| 1RM estimate | Epley: weight × (1 + reps / 30) | `OneRepMaxEstimator.epley` |
+| Protein callout | 7-day avg < 90% of target, ≥ 4 logged days | `ProteinIntakeRule` |
+| Strength-stall callout | no top-set increase in 4 sessions | `StrengthStallRule.consecutiveSessions` |
+| Weight-plateau callout | < 0.1% change/week, ≥ 13 days of data | `WeightPlateauRule` |
+| Steps average / goal-met | logged days only | `StepsHistoryView.summary` |
+| Weekly body-map view | removed | git history before `373f28e` |
+| RPE / session notes on unplanned workouts | removed | old `LogWorkoutSessionView`, git history before `1737ed2` |
+| Rest-timer choices | 30 s – 5 min | `WorkoutPreferences.restChoices` |
+
+Anything visual (sizes, spacing, colors, wording) — note the screen and what you'd change;
+a screenshot or sketch works best, as with the whiteboard for Training.
+
+### At the end of the week
+
+1. Read through the new Likes / Dislikes / Suggestions.
+2. Promote what's worth doing into the **Backlog** with a priority (P1 annoying / P2 worth
+   doing / P3 nice-to-have) and a link back to the bullet.
+3. Decide on the parked follow-ups below — promote, keep parked, or drop.
+4. Update the **Snapshot** counts and this section's "Start here" status.
+
+### Parked follow-ups (not yet triaged)
+
+- A notification when the rest timer ends with the app in the background (the timer is one
+  shared `RestTimerModel`; it also doesn't survive quitting the app).
+- A per-lift goal you set yourself on Exercise Progress (needs a new model field — optional
+  or defaulted where it's declared, so no versioned schema is needed).
+- HealthKit step import (needs a physical iPhone and permissions).
+- Default Time from the Workout settings reference screenshot (only once timed exercises
+  exist).
+- Bring back RPE / session notes for unplanned workouts, if they're missed.
+- Portfolio extras: try the app on a physical iPhone (nothing has been checked on one); move
+  the Backlog to GitHub Issues if it grows again (SPEC.md §7 suggests it).
+
+### Watch for: the store retry at launch
+
+The launch-crash retry (`7cfc42b`) is still unconfirmed in a real race. It logs an error
+"Opening the store failed, retrying: …" with the reason, then a notice "Opening the store
+succeeded on retry" — silence means the first attempt worked. On the next schema change, with
+the widget on the home screen, launch the new build and run:
+
+```
+xcrun simctl spawn booted log show --last 5m --predicate 'subsystem == "com.francislozano.MacroPal" AND category == "Store"' --info
+```
+
+Both messages were checked by forcing the first attempt to fail with a temporary throw
+(removed before committing); a normal launch logs nothing.
+
+## Decisions worth remembering
+
+- **Insights are live, not stored.** Rules return `InsightFinding` values that are recomputed
+  from the data and shown where they're relevant; they vanish when the condition stops. No
+  Analyze button, no apply/dismiss. The logging-streak rule is kept but not shown (it'd make a
+  better notification). The old `Insight` model stays in `AppSchema`, unused, so stores open
+  without a migration.
+- **Workout preferences live in UserDefaults** (`WorkoutPreferences`, `HeightUnit`), like
+  lb/kg — they're device settings, not data. Default sets/reps only apply to exercises added
+  from now on; exercises already in the plan keep their own targets.
+- **The rest timer is one shared `RestTimerModel`** in the environment (created in
+  `RootView`), so it keeps counting across the day list and the next exercise. It doesn't
+  survive quitting the app and doesn't notify in the background.
+- **Unplanned workouts dropped RPE and session notes** (only the old form could enter them;
+  old sessions still show theirs).
+- **Exercise targets and body-map levels use the same strength standards**, but Exercise
+  Progress skips the body map's tenure cap (it judges the lift, not the muscle).
+- **The plan day is stored per set, as a copied name** (`WorkoutSetEntry.planDayName`), not
+  on the session and not as a link to `PlanDay`. A session's label ("Pull", "Push + Pull") is
+  derived from the sets it still has, so unchecking a plan set takes the label with it, and
+  history survives plan edits. A session-level field was tried first and kept a stale label.
+  Sessions from before 2026-09-22 have no day and show the date.
+- **The levels explainer reads the engine's own numbers** — `StrengthClass` thresholds and
+  `MuscleLevelEngine.levelMinimumMonths` (the tenure cap now reads from that array) — so the
+  ⓘ sheet can't drift from how levels are computed. Change a threshold there and the sheet
+  follows.
+- **Edit Routine matches days by weekday, then name.** When the split changes, a day keeps
+  its exercises on the same weekday if the new split has a day of that name there, and
+  otherwise moves to the nearest same-named day (Sat–Sun counts as 1 apart). Closest pairs
+  are claimed first, so as many days carry over as the names allow. The warning and `apply`
+  share `RoutineTemplate.match`, so what the editor warns about is what gets deleted.
+- **Removable set rows:** only unlogged rows *past* the baseline (the plan's set count, or
+  the default sets for an unplanned exercise). Baseline rows would just come back the next
+  time the screen opens; logged rows are still removed by unchecking.
+- **Training is styled like Nutrition but isn't a `List`.** `TrainingSection` draws the gray
+  heading + white card from stacks, because the cards are full of buttons and a `List` is
+  where the button-detachment bug lives. Any new Training card should use `TrainingSection`
+  (title optional, accessory button optional).
+- **The Weekly body-map view is deleted, not hidden** (`WeeklyMuscleVolume`, its tests and
+  `VolumePalette`). It's in git history before `373f28e` if it's ever wanted back.
+
+## Details and reference
+
+### History
 
 The 2026-09-19 stretch merged Body and Workouts into **one Training tab**, following
 [discovery-workouts-body-redesign.md](discovery-workouts-body-redesign.md) (Option 2) and the
@@ -50,102 +201,6 @@ and the steps goal with a bar chart (`a46cfe9`). Then, in order:
 | `15466e8` | Training page laid out like Nutrition — gray headings (Progress, Current Plan, Goals) above white cards, section buttons in the headings |
 
 Details for each are in the Backlog rows and the "Next steps on the Training page" list below.
-
-### Decisions worth remembering
-
-- **Insights are live, not stored.** Rules return `InsightFinding` values that are recomputed
-  from the data and shown where they're relevant; they vanish when the condition stops. No
-  Analyze button, no apply/dismiss. The logging-streak rule is kept but not shown (it'd make a
-  better notification). The old `Insight` model stays in `AppSchema`, unused, so stores open
-  without a migration.
-- **Workout preferences live in UserDefaults** (`WorkoutPreferences`, `HeightUnit`), like
-  lb/kg — they're device settings, not data. Default sets/reps only apply to exercises added
-  from now on; exercises already in the plan keep their own targets.
-- **The rest timer is one shared `RestTimerModel`** in the environment (created in
-  `RootView`), so it keeps counting across the day list and the next exercise. It doesn't
-  survive quitting the app and doesn't notify in the background.
-- **Unplanned workouts dropped RPE and session notes** (only the old form could enter them;
-  old sessions still show theirs).
-- **Exercise targets and body-map levels use the same strength standards**, but Exercise
-  Progress skips the body map's tenure cap (it judges the lift, not the muscle).
-- **The plan day is stored per set, as a copied name** (`WorkoutSetEntry.planDayName`), not
-  on the session and not as a link to `PlanDay`. A session's label ("Pull", "Push + Pull") is
-  derived from the sets it still has, so unchecking a plan set takes the label with it, and
-  history survives plan edits. A session-level field was tried first and kept a stale label.
-  Sessions from before 2026-09-22 have no day and show the date.
-- **The levels explainer reads the engine's own numbers** — `StrengthClass` thresholds and
-  `MuscleLevelEngine.levelMinimumMonths` (the tenure cap now reads from that array) — so the
-  ⓘ sheet can't drift from how levels are computed. Change a threshold there and the sheet
-  follows.
-- **Edit Routine matches days by weekday, then name.** When the split changes, a day keeps
-  its exercises on the same weekday if the new split has a day of that name there, and
-  otherwise moves to the nearest same-named day (Sat–Sun counts as 1 apart). Closest pairs
-  are claimed first, so as many days carry over as the names allow. The warning and `apply`
-  share `RoutineTemplate.match`, so what the editor warns about is what gets deleted.
-- **Removable set rows:** only unlogged rows *past* the baseline (the plan's set count, or
-  the default sets for an unplanned exercise). Baseline rows would just come back the next
-  time the screen opens; logged rows are still removed by unchecking.
-- **Training is styled like Nutrition but isn't a `List`.** `TrainingSection` draws the gray
-  heading + white card from stacks, because the cards are full of buttons and a `List` is
-  where the button-detachment bug lives. Any new Training card should use `TrainingSection`
-  (title optional, accessory button optional).
-- **The Weekly body-map view is deleted, not hidden** (`WeeklyMuscleVolume`, its tests and
-  `VolumePalette`). It's in git history before `373f28e` if it's ever wanted back.
-
-### Remaining open items
-
-None in the Backlog. The untriaged follow-ups are listed under **Next task**, step 3.
-
-## Next task
-
-**Start here next session.** In order:
-
-1. **A week of real use (main task).** Log real food and workouts every day, and add what you
-   notice to **Likes / Dislikes / Suggestions** at the bottom of this doc, one bullet each in
-   the "How to log an entry" format. The raw log hasn't had an entry since 2026-09-08, and
-   everything since was built from it. Worth noticing in particular:
-   - Does the Training page feel as calm as Nutrition now?
-   - Is the Weekly body-map view missed? (It's in git history before `373f28e`.)
-   - Are the level targets fair? The thresholds are approximations — tune
-     `StrengthClass.maleThresholds` if a level feels too easy or too hard.
-   - Does the rest timer get in the way, or get missed when the app is in the background?
-
-   At the end of the week, triage: promote what's worth doing into the Backlog with a
-   priority, and update the Snapshot counts.
-
-2. ~~Quick fix: Log Weight / Log Steps lose typed input~~ — done 2026-09-23 (`4b76216`), see
-   the Backlog row.
-
-3. **Follow-ups, not yet triaged** — promote to the Backlog if the week of use says so:
-   - A notification when the rest timer ends with the app in the background (the timer is one
-     shared `RestTimerModel`; it also doesn't survive quitting the app).
-   - A per-lift goal you set yourself on Exercise Progress (needs a new model field — optional
-     or defaulted where it's declared, so no versioned schema is needed).
-   - HealthKit step import (needs a physical iPhone and permissions).
-   - Default Time from the Workout settings reference screenshot (only once timed exercises
-     exist).
-   - Bring back RPE / session notes for unplanned workouts, if they're missed.
-
-4. **Still unseen in the app** — check them when real use produces the data: the protein and
-   strength-stall callouts (4 logged days / 4 sessions of one lift), an Exercise Progress
-   chart with several sessions, ft/in height entry, a "Push + Pull" History label.
-
-5. **Portfolio extras (optional):** try the app on a physical iPhone (nothing has been checked
-   on one); move the Backlog to GitHub Issues if it grows again (SPEC.md §7 suggests it).
-
-**Watch for:** the launch-crash retry (`7cfc42b`) is still unconfirmed in a real race. It logs
-now (2026-09-23): an error "Opening the store failed, retrying: …" with the reason, then a
-notice "Opening the store succeeded on retry" — silence means the first attempt worked. On
-the next schema change, with the widget on the home screen, launch the new build and run:
-
-```
-xcrun simctl spawn booted log show --last 5m --predicate 'subsystem == "com.francislozano.MacroPal" AND category == "Store"' --info
-```
-
-Both messages were checked by forcing the first attempt to fail with a temporary throw
-(removed before committing); a normal launch logs nothing.
-
-## Details and reference
 
 ### Next steps on the Training page (all done 2026-09-22 — kept for the details)
 
@@ -377,7 +432,9 @@ Add a one-line bullet under the matching section below (**Likes** / **Dislikes**
   expected vs. what you got. For a suggestion, say what "better" looks like, not just "bad."
 ```
 
-- **Area** — `Nutrition` / `Body` / `Workouts` / `Insights` / `Widget` / `Barcode` / `General UI`.
+- **Area** — `Nutrition` / `Training` / `Goals` (weight, steps) / `Profile` / `Widget` /
+  `Barcode` / `General UI`. Entries before 2026-09-19 use the old tabs (`Body`, `Workouts`,
+  `Insights`), which are now part of Training and the callouts.
 - No per-entry status — everything here is implicitly `Open` until it's promoted. Once
   something is worth actually doing, move it into **Backlog** below (with a priority and a
   link back to the bullet it came from) rather than tracking status inline.

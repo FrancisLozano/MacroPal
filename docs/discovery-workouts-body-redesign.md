@@ -2,7 +2,7 @@
 
 **Status:** In progress — Option 2 signed off and largely built (2026-09-19); see "What shipped" below
 **Date:** 2026-09-14 (discovery), updated 2026-09-19
-**Source:** [usability-notes.md](usability-notes.md) backlog (Body + Workouts items)
+**Source:** [usability.md](usability.md) backlog (Body + Workouts items)
 
 ## Problem statement
 
@@ -84,7 +84,7 @@ Option 2: merge into a single Training-oriented surface where a weigh-in is a fa
   The plan day and tracking screens use `ScrollView` + cards for that reason; the picker's
   Suggested/All switch sits above its `List`.
 - Muscle levels are a judgement call — thresholds, tenure caps and per-exercise muscle
-  involvement are documented in [usability-notes.md](usability-notes.md) and live in
+  involvement are documented in [usability.md](usability.md) and live in
   `MuscleLevelEngine.swift` / `ExerciseMuscleData.swift` (covered by `MuscleLevelEngineTests`).
 - Exercise → muscle mapping is by exercise *name* (matches the starter catalog); a
   user-created exercise falls back to a coarse guess from its muscle group. No schema change
@@ -92,6 +92,6 @@ Option 2: merge into a single Training-oriented surface where a weigh-in is a fa
 
 ## Remaining work
 
-See "Next steps on the Training page" in [usability-notes.md](usability-notes.md) — steps goal
+See "Next steps on the Training page" in [usability.md](usability.md) — steps goal
 and chart, body map polish, exercise progress graphic, unplanned-workout logging speed, plan
 editing gaps.
