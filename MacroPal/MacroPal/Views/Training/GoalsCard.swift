@@ -113,11 +113,11 @@ struct GoalsCard: View {
     private func logButton(_ accessibilityLabel: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: "plus")
-                .fontWeight(.semibold)
-                .padding(4)
+                .font(.subheadline.weight(.semibold))
         }
         .buttonStyle(.bordered)
         .buttonBorderShape(.circle)
+        .controlSize(.small)
         .accessibilityLabel(accessibilityLabel)
     }
 
