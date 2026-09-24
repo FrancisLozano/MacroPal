@@ -100,37 +100,31 @@ struct CurrentPlanCard: View {
         separator
             .padding(.vertical, 14)
         if let today {
-            dayLink(today, title: "Today: \(today.name)", isBold: false)
+            dayLink(today, title: "Today: \(today.name)")
         } else {
             Text("Today: Rest day")
                 .font(.subheadline)
         }
     }
 
-    /// Every workout of the week under the summary, one line each ("Monday: Push", today in
-    /// bold); tapping one opens its exercises.
+    /// Every workout of the week under the summary, one line each ("Monday: Push"); tapping one
+    /// opens its exercises.
     private func week(plan: WorkoutPlan) -> some View {
-        let todayWeekday = Calendar.current.component(.weekday, from: .now)
-        return VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 0) {
             ForEach(plan.sortedDays) { day in
                 separator
                     .padding(.vertical, 14)
-                dayLink(
-                    day,
-                    title: "\(Calendar.current.weekdaySymbols[day.weekday - 1]): \(day.name)",
-                    isBold: day.weekday == todayWeekday
-                )
+                dayLink(day, title: "\(Calendar.current.weekdaySymbols[day.weekday - 1]): \(day.name)")
             }
         }
     }
 
-    private func dayLink(_ day: PlanDay, title: String, isBold: Bool) -> some View {
+    private func dayLink(_ day: PlanDay, title: String) -> some View {
         NavigationLink {
             PlanDayDetailView(day: day)
         } label: {
             Text(title)
                 .font(.subheadline)
-                .fontWeight(isBold ? .bold : .regular)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .contentShape(Rectangle())
         }
