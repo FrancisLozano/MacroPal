@@ -8,7 +8,8 @@ import SwiftData
 
 /// Search an existing `Exercise` catalog, or create a new one inline. Calls `onSelect`
 /// with the chosen/created exercise and dismisses itself. Pass `suggestedGroups` to open on
-/// just those muscle groups, with a switch to see everything.
+/// just those muscle groups, with a switch to see everything. Either way the list is under
+/// muscle-group headings — Chest, Triceps, Biceps, Back, Shoulders, Legs, Abs.
 struct ExercisePickerView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -36,6 +37,15 @@ struct ExercisePickerView: View {
         return fetched.filter { suggestedGroups.contains($0.muscleGroup) }
     }
 
+    /// `exercises` under their group's heading, in `MuscleGroup.choices` order, leaving out
+    /// empty groups. Keeps the order within each group.
+    static func sections(_ exercises: [Exercise]) -> [(group: MuscleGroup, exercises: [Exercise])] {
+        let byGroup = Dictionary(grouping: exercises, by: \.muscleGroup)
+        return (MuscleGroup.choices + [.arms]).compactMap { group in
+            byGroup[group].map { (group, $0) }
+        }
+    }
+
     var body: some View {
         // The suggested/all switch sits outside the `List` so it stays live as the list changes.
         VStack(spacing: 0) {
@@ -48,22 +58,32 @@ struct ExercisePickerView: View {
                 .padding(.horizontal)
                 .padding(.bottom, 8)
             }
+            let sections = Self.sections(results)
             List {
-                ForEach(results) { exercise in
-                    Button {
-                        onSelect(exercise)
-                        dismiss()
-                    } label: {
-                        VStack(alignment: .leading) {
-                            Text(exercise.name)
-                                .foregroundStyle(Color.primary)
-                            Text(exercise.muscleGroup.displayName)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                ForEach(sections, id: \.group) { section in
+                    Section(section.group.displayName) {
+                        ForEach(section.exercises) { exercise in
+                            Button {
+                                onSelect(exercise)
+                                dismiss()
+                            } label: {
+                                VStack(alignment: .leading) {
+                                    Text(exercise.name)
+                                        .foregroundStyle(Color.primary)
+                                    if !exercise.equipment.isEmpty {
+                                        Text(exercise.equipment)
+                                            .font(.caption)
+                                            .foregroundStyle(Color.secondary)
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
+            // A fresh List whenever the headings change (Suggested ↔ All, searching): rows are
+            // buttons, and a List whose sections change shape can leave them dead to taps.
+            .id(sections.map(\.group))
         }
         .searchable(text: $searchText, prompt: "Search exercises")
         .navigationTitle("Choose Exercise")
@@ -118,7 +138,7 @@ private struct NewExerciseView: View {
             }
             Section("Details") {
                 Picker("Muscle Group", selection: $muscleGroup) {
-                    ForEach(MuscleGroup.allCases) { group in
+                    ForEach(MuscleGroup.choices) { group in
                         Text(group.displayName).tag(group)
                     }
                 }

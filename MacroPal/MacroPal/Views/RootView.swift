@@ -40,6 +40,7 @@ struct RootView: View {
         // sheet), but the end of a rest should buzz once.
         .sensoryFeedback(.success, trigger: restTimer.finishedAt) { _, new in new != nil }
         .task {
+            StarterExerciseCatalog.regroup(in: modelContext)
             StarterExerciseCatalog.seedIfNeeded(in: modelContext)
         }
     }

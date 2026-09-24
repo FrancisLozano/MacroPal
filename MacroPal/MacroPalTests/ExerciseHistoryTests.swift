@@ -31,7 +31,7 @@ struct ExerciseHistoryTests {
 
     @Test func listsOnlyThisExercisesSetsNewestFirstWithVolume() {
         let squat = Exercise(name: "Back Squat", muscleGroup: .legs, equipment: "")
-        let curl = Exercise(name: "Barbell Curl", muscleGroup: .arms, equipment: "")
+        let curl = Exercise(name: "Barbell Curl", muscleGroup: .biceps, equipment: "")
         container.mainContext.insert(squat)
         container.mainContext.insert(curl)
         let older = session(daysAgo: 7, [(squat, 100, 5, "Lower"), (curl, 20, 10, "Lower"), (squat, 100, 3, "Lower")])
@@ -66,7 +66,7 @@ struct ExerciseHistoryTests {
     }
 
     @Test func volumeCountsBothDumbbellsAndBodyweightLikeTheBodyMap() {
-        let curl = Exercise(name: "Dumbbell Curl", muscleGroup: .arms, equipment: "")
+        let curl = Exercise(name: "Dumbbell Curl", muscleGroup: .biceps, equipment: "")
         let pullUp = Exercise(name: "Pull-Up", muscleGroup: .back, equipment: "")
         container.mainContext.insert(curl)
         container.mainContext.insert(pullUp)

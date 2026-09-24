@@ -16,7 +16,7 @@ struct ExerciseMusclesTests {
     }
 
     @Test func primaryIsOrderedByInvolvement() {
-        let hammerCurl = ExerciseMuscleData.profile(forName: "Hammer Curl", group: .arms)
+        let hammerCurl = ExerciseMuscleData.profile(forName: "Hammer Curl", group: .biceps)
         #expect(hammerCurl.primaryMuscles == [.forearms, .biceps])
         #expect(hammerCurl.secondaryMuscles.isEmpty)
     }
@@ -50,6 +50,7 @@ struct ExerciseMusclesTests {
     /// Everkinetic has no fair drawing for these, so they show none.
     static let startersWithoutDrawing: Set<String> = [
         "Face Pull", "Hip Thrust", "Plank", "Hanging Leg Raise", "Dumbbell Shoulder Press",
+        "Cable Lateral Raise", "Machine Shoulder Press", "Chest-Supported Dumbbell Row", "Machine Ab Crunch",
     ]
 
     @Test func everyOtherStarterExerciseHasADrawing() {

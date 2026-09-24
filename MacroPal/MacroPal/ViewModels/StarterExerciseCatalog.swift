@@ -8,7 +8,9 @@ import SwiftData
 
 /// A common-lifts starting point so a new user isn't staring at an empty exercise picker.
 enum StarterExerciseCatalog {
+    /// Set by the first version of the catalog, which seeded everything at once.
     private static let seededKey = "starterExercisesSeeded"
+    private static let seededNamesKey = "starterExercisesSeededNames"
 
     private static let entries: [(name: String, group: MuscleGroup, equipment: String)] = [
         // Chest
@@ -16,6 +18,7 @@ enum StarterExerciseCatalog {
         ("Incline Barbell Bench Press", .chest, "Barbell"),
         ("Dumbbell Bench Press", .chest, "Dumbbell"),
         ("Incline Dumbbell Press", .chest, "Dumbbell"),
+        ("Machine Chest Press", .chest, "Machine"),
         ("Cable Chest Fly", .chest, "Cable"),
         ("Push-Up", .chest, "Bodyweight"),
         ("Chest Dip", .chest, "Bodyweight"),
@@ -27,18 +30,27 @@ enum StarterExerciseCatalog {
         ("Seated Cable Row", .back, "Cable"),
         ("One-Arm Dumbbell Row", .back, "Dumbbell"),
         ("Face Pull", .back, "Cable"),
+        // Rear delts sit under Back so they're suggested on Pull days, next to Face Pull.
+        ("Rear Delt Fly", .back, "Dumbbell"),
+        ("Single-Arm Cable Rear Delt Fly", .back, "Cable"),
+        ("Chest-Supported Dumbbell Row", .back, "Dumbbell"),
+        ("Close-Grip Row", .back, "Cable"),
+        ("Floor Back Extension", .back, "Bodyweight"),
         // Shoulders
         ("Overhead Press", .shoulders, "Barbell"),
         ("Dumbbell Shoulder Press", .shoulders, "Dumbbell"),
         ("Lateral Raise", .shoulders, "Dumbbell"),
-        ("Rear Delt Fly", .shoulders, "Dumbbell"),
-        // Arms
-        ("Barbell Curl", .arms, "Barbell"),
-        ("Dumbbell Curl", .arms, "Dumbbell"),
-        ("Hammer Curl", .arms, "Dumbbell"),
-        ("Triceps Pushdown", .arms, "Cable"),
-        ("Skull Crusher", .arms, "Barbell"),
-        ("Overhead Triceps Extension", .arms, "Dumbbell"),
+        ("Cable Lateral Raise", .shoulders, "Cable"),
+        ("Machine Shoulder Press", .shoulders, "Machine"),
+        // Arms: Biceps, then Triceps
+        ("Barbell Curl", .biceps, "Barbell"),
+        ("Dumbbell Curl", .biceps, "Dumbbell"),
+        ("Hammer Curl", .biceps, "Dumbbell"),
+        ("Preacher Curl", .biceps, "EZ bar"),
+        ("Triceps Pushdown", .triceps, "Cable"),
+        ("Skull Crusher", .triceps, "Barbell"),
+        ("Overhead Triceps Extension", .triceps, "Dumbbell"),
+        ("Single-Arm Triceps Extension", .triceps, "Dumbbell"),
         // Legs
         ("Back Squat", .legs, "Barbell"),
         ("Front Squat", .legs, "Barbell"),
@@ -48,6 +60,8 @@ enum StarterExerciseCatalog {
         ("Bulgarian Split Squat", .legs, "Dumbbell"),
         ("Leg Extension", .legs, "Machine"),
         ("Leg Curl", .legs, "Machine"),
+        ("Seated Leg Curl", .legs, "Machine"),
+        ("Adductor Machine", .legs, "Machine"),
         ("Hip Thrust", .legs, "Barbell"),
         ("Standing Calf Raise", .legs, "Machine"),
         // Core
@@ -55,20 +69,66 @@ enum StarterExerciseCatalog {
         ("Hanging Leg Raise", .core, "Bodyweight"),
         ("Cable Crunch", .core, "Cable"),
         ("Ab Wheel Rollout", .core, "Ab wheel"),
+        ("Machine Ab Crunch", .core, "Machine"),
     ]
 
-    /// Inserts the catalog once per install, skipping any name the user already has. Not
-    /// re-run afterwards, so an exercise the user deletes stays deleted.
     /// Every starter exercise's name, for checks that each one has its data.
     static var names: [String] { entries.map(\.name) }
 
+    /// Starters added after the first catalog, so installs seeded before them still get them.
+    static let addedLater: Set<String> = [
+        "Machine Chest Press", "Single-Arm Triceps Extension", "Cable Lateral Raise",
+        "Machine Shoulder Press", "Chest-Supported Dumbbell Row", "Close-Grip Row",
+        "Single-Arm Cable Rear Delt Fly", "Preacher Curl", "Seated Leg Curl",
+        "Floor Back Extension", "Adductor Machine", "Machine Ab Crunch",
+    ]
+
+    /// Inserts each starter exercise once per install, skipping any name the user already has.
+    /// Which starters were seeded is remembered, so one the user deletes stays deleted, and a
+    /// starter added in an update still arrives.
     static func seedIfNeeded(in context: ModelContext, defaults: UserDefaults = .standard) {
-        guard !defaults.bool(forKey: seededKey) else { return }
-        let existing = ((try? context.fetch(FetchDescriptor<Exercise>())) ?? []).map { $0.name.lowercased() }
-        let taken = Set(existing)
-        for entry in entries where !taken.contains(entry.name.lowercased()) {
-            context.insert(Exercise(name: entry.name, muscleGroup: entry.group, equipment: entry.equipment))
+        var seeded = Set(defaults.stringArray(forKey: seededNamesKey) ?? [])
+        if seeded.isEmpty, defaults.bool(forKey: seededKey) {
+            // Seeded before the names were remembered: that was the whole first catalog.
+            seeded = Set(names).subtracting(addedLater)
         }
-        defaults.set(true, forKey: seededKey)
+        let existing = Set(((try? context.fetch(FetchDescriptor<Exercise>())) ?? []).map { $0.name.lowercased() })
+        for entry in entries where !seeded.contains(entry.name) {
+            if !existing.contains(entry.name.lowercased()) {
+                context.insert(Exercise(name: entry.name, muscleGroup: entry.group, equipment: entry.equipment))
+            }
+            seeded.insert(entry.name)
+        }
+        defaults.set(seeded.sorted(), forKey: seededNamesKey)
+    }
+
+    /// Starters that changed heading after they were seeded: lowercased name → the group they
+    /// left and the one they moved to. Only moved while still in the old group.
+    private static let moved: [String: (from: MuscleGroup, to: MuscleGroup)] = [
+        "rear delt fly": (.shoulders, .back),
+        "single-arm cable rear delt fly": (.shoulders, .back),
+    ]
+
+    /// Brings stored exercises up to the current groups: the old Arms group splits into Biceps
+    /// and Triceps, and `moved` starters change heading. Runs at every launch; once there's
+    /// nothing left to move it only reads.
+    static func regroup(in context: ModelContext) {
+        let exercises = (try? context.fetch(FetchDescriptor<Exercise>())) ?? []
+        for exercise in exercises {
+            if exercise.muscleGroup == .arms {
+                exercise.muscleGroup = armGroup(forName: exercise.name)
+            } else if let move = moved[exercise.name.lowercased()], exercise.muscleGroup == move.from {
+                exercise.muscleGroup = move.to
+            }
+        }
+    }
+
+    /// Triceps when the name says so or the triceps are the main mover, otherwise Biceps.
+    static func armGroup(forName name: String) -> MuscleGroup {
+        let lowered = name.lowercased()
+        let tricepsWords = ["tricep", "pushdown", "skull", "kickback", "extension", "dip"]
+        if tricepsWords.contains(where: lowered.contains) { return .triceps }
+        let primary = ExerciseMuscleData.profile(forName: name, group: .arms).primaryMuscles
+        return primary.first == .triceps ? .triceps : .biceps
     }
 }

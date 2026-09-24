@@ -47,7 +47,7 @@ struct MuscleLevelEngineTests {
     }
 
     @Test func dumbbellLiftsCountBothDumbbells() {
-        let volume = MuscleLevelEngine.volumeKg(sets: [set("Dumbbell Curl", .arms, daysAgo: 1, weightKg: 10)], bodyweightKg: 80)
+        let volume = MuscleLevelEngine.volumeKg(sets: [set("Dumbbell Curl", .biceps, daysAgo: 1, weightKg: 10)], bodyweightKg: 80)
         #expect(volume[.biceps] == 200)
     }
 

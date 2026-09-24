@@ -58,6 +58,8 @@ enum ExerciseMuscleData {
     private static let byName: [String: ExerciseProfile] = [
         "barbell bench press": profile([.chest: 1, .shoulders: 0.6, .triceps: 0.6]),
         "incline barbell bench press": profile([.chest: 1, .shoulders: 0.7, .triceps: 0.6]),
+        // Machines are scaled down like leg press: the stack reads heavier than a free weight.
+        "machine chest press": profile(scale: 0.7, [.chest: 1, .shoulders: 0.5, .triceps: 0.6]),
         "dumbbell bench press": profile(scale: 2, [.chest: 1, .shoulders: 0.6, .triceps: 0.6]),
         "incline dumbbell press": profile(scale: 2, [.chest: 1, .shoulders: 0.7, .triceps: 0.6]),
         "cable chest fly": profile([.chest: 1, .shoulders: 0.3]),
@@ -70,19 +72,27 @@ enum ExerciseMuscleData {
         "barbell row": profile([.lats: 1, .traps: 0.7, .biceps: 0.5, .lowerBack: 0.4]),
         "seated cable row": profile([.lats: 1, .traps: 0.7, .biceps: 0.5]),
         "one-arm dumbbell row": profile([.lats: 1, .traps: 0.6, .biceps: 0.5]),
+        "chest-supported dumbbell row": profile(scale: 2, [.lats: 1, .traps: 0.7, .biceps: 0.5, .shoulders: 0.3]),
+        "close-grip row": profile([.lats: 1, .traps: 0.6, .biceps: 0.5]),
+        "floor back extension": bodyweight(0.3, [.lowerBack: 1, .glutes: 0.5, .hamstrings: 0.3]),
         "face pull": profile([.shoulders: 1, .traps: 0.6]),
 
         "overhead press": profile([.shoulders: 1, .triceps: 0.6, .traps: 0.3]),
         "dumbbell shoulder press": profile(scale: 2, [.shoulders: 1, .triceps: 0.6]),
         "lateral raise": profile(scale: 2, [.shoulders: 1]),
-        "rear delt fly": profile(scale: 2, [.shoulders: 1, .traps: 0.4]),
+        "cable lateral raise": profile([.shoulders: 1]),
+        "machine shoulder press": profile(scale: 0.7, [.shoulders: 1, .triceps: 0.6]),
+        "single-arm cable rear delt fly": profile([.shoulders: 1, .traps: 0.6]),
+        "rear delt fly": profile(scale: 2, [.shoulders: 1, .traps: 0.6]),
 
         "barbell curl": profile([.biceps: 1, .forearms: 0.5]),
+        "preacher curl": profile([.biceps: 1, .forearms: 0.3]),
         "dumbbell curl": profile(scale: 2, [.biceps: 1, .forearms: 0.4]),
         "hammer curl": profile(scale: 2, [.biceps: 0.8, .forearms: 1]),
         "triceps pushdown": profile([.triceps: 1]),
         "skull crusher": profile([.triceps: 1]),
         "overhead triceps extension": profile([.triceps: 1]),
+        "single-arm triceps extension": profile([.triceps: 1]),
 
         "back squat": profile([.quads: 1, .glutes: 0.8, .hamstrings: 0.4, .lowerBack: 0.3, .abs: 0.3]),
         "front squat": profile([.quads: 1, .glutes: 0.6, .abs: 0.4]),
@@ -92,12 +102,16 @@ enum ExerciseMuscleData {
         "bulgarian split squat": profile(scale: 2, [.quads: 1, .glutes: 0.8]),
         "leg extension": profile([.quads: 1]),
         "leg curl": profile([.hamstrings: 1]),
+        "seated leg curl": profile([.hamstrings: 1]),
+        // The body map has no adductors (inner thigh), so this credits no muscle.
+        "adductor machine": profile([:]),
         "hip thrust": profile([.glutes: 1, .hamstrings: 0.5]),
         "standing calf raise": profile(scale: 0.5, [.calves: 1]),
 
         "plank": bodyweight(0.1, [.abs: 1, .obliques: 0.6]),
         "hanging leg raise": bodyweight(0.3, [.abs: 1, .obliques: 0.5, .forearms: 0.3]),
         "cable crunch": profile([.abs: 1, .obliques: 0.4]),
+        "machine ab crunch": profile(scale: 0.7, [.abs: 1, .obliques: 0.3]),
         "ab wheel rollout": bodyweight(0.5, [.abs: 1, .obliques: 0.5]),
     ]
 
@@ -108,6 +122,8 @@ enum ExerciseMuscleData {
         case .back: profile([.lats: 1, .traps: 0.6, .biceps: 0.4])
         case .legs: profile([.quads: 1, .glutes: 0.6, .hamstrings: 0.6])
         case .shoulders: profile([.shoulders: 1])
+        case .biceps: profile([.biceps: 1, .forearms: 0.4])
+        case .triceps: profile([.triceps: 1])
         case .arms: profile([.biceps: 0.8, .triceps: 0.8])
         case .core: profile([.abs: 1, .obliques: 0.5])
         case .fullBody: profile([.quads: 0.5, .glutes: 0.5, .chest: 0.5, .lats: 0.5, .shoulders: 0.5])

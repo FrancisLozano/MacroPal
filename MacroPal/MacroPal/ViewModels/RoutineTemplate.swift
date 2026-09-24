@@ -95,11 +95,11 @@ enum RoutineTemplate {
     /// this file doesn't know.
     static func muscleGroups(forDayNamed name: String) -> [MuscleGroup] {
         switch name {
-        case push.name: [.chest, .shoulders, .arms]
-        case pull.name: [.back, .arms]
+        case push.name: [.chest, .shoulders, .triceps]
+        case pull.name: [.back, .biceps]
         case legs.name: [.legs]
         case legsAndAbs.name: [.legs, .core]
-        case upper.name: [.chest, .back, .shoulders, .arms]
+        case upper.name: [.chest, .back, .shoulders, .triceps, .biceps]
         case lower.name: [.legs, .core]
         case fullBody.name: [.fullBody, .legs, .chest, .back, .shoulders]
         default: []

@@ -53,6 +53,16 @@ enum ExerciseGuides {
             ("Lowering the bar to the neck or mid-chest.", "Aim for the upper chest, just under the collarbone."),
             ("Losing the shoulder-blade squeeze as you tire.", "Reset between reps: shoulder blades back and down."),
         ]),
+        "machine chest press": guide([
+            "Set the seat so the handles line up with the middle of your chest.",
+            "Sit back with your shoulder blades against the pad and your feet flat.",
+            "Press the handles forward until your arms are straight, without locking out hard.",
+            "Let them come back slowly until you feel a stretch across the chest.",
+        ], [
+            ("Seat too high or too low, so the shoulders take over.", "Line the handles up with mid-chest before the first rep."),
+            ("Shoulders rolling forward off the pad as you press.", "Keep your back and shoulder blades on the pad the whole set."),
+            ("Letting the stack slam between reps.", "Stop just before the plates touch, then press again."),
+        ]),
         "dumbbell bench press": guide([
             "Sit with the dumbbells on your thighs, then lie back and bring them up over your chest.",
             "Start with your arms straight and palms facing forward or slightly in.",
@@ -423,6 +433,116 @@ enum ExerciseGuides {
             ("Lower back sagging.", "Only roll out as far as you can keep your back flat."),
             ("Hips staying high and moving first.", "Let your hips and shoulders move forward together."),
             ("Rolling too far too soon.", "Start with short rollouts, or roll toward a wall."),
+        ]),
+        "single-arm triceps extension": guide([
+            "Sit tall on a bench and hold one dumbbell straight overhead.",
+            "Keep your upper arm next to your head, elbow pointing up.",
+            "Lower the dumbbell behind your head by bending only the elbow.",
+            "Straighten the arm back up and squeeze the triceps at the top.",
+        ], [
+            ("Elbow flaring out to the side.", "Keep it pointing at the ceiling; go lighter if it drifts."),
+            ("Arching the lower back to push the weight up.", "Brace your abs and keep your ribs down."),
+            ("Stopping short of a full stretch.", "Lower until the dumbbell is behind your neck, then press."),
+        ]),
+        "cable lateral raise": guide([
+            "Set a handle on the lowest pulley and stand side-on to the stack.",
+            "Hold the handle in the far hand, in front of your thigh, with a slight bend in the elbow.",
+            "Raise the arm out to the side until it's level with your shoulder.",
+            "Lower it slowly, keeping tension on the cable at the bottom.",
+        ], [
+            ("Shrugging the shoulder up as the arm rises.", "Keep the shoulder down, away from your ear."),
+            ("Leaning away and swinging.", "Stand tall and use a weight you can raise under control."),
+            ("Raising the arm above shoulder height.", "Stop at shoulder level; the traps take over above it."),
+        ]),
+        "machine shoulder press": guide([
+            "Set the seat so the handles start at about shoulder height.",
+            "Sit with your back against the pad and grip the handles.",
+            "Press up until your arms are straight, without locking out hard.",
+            "Lower until your hands are back at shoulder height.",
+        ], [
+            ("Seat too low, so the press starts below your shoulders.", "Raise the seat until the handles line up with your shoulders."),
+            ("Arching off the back pad.", "Keep your lower back on the pad and brace your abs."),
+            ("Letting the stack drop between reps.", "Lower under control and stop before the plates touch."),
+        ]),
+        "chest-supported dumbbell row": guide([
+            "Set an incline bench to about 30–45° and lie face down with your chest on the pad.",
+            "Let the dumbbells hang straight down, palms facing in.",
+            "Row them up toward your hips, squeezing your shoulder blades together.",
+            "Lower them slowly until your arms are straight again.",
+        ], [
+            ("Lifting the chest off the pad to heave the weight.", "Keep your chest on the pad the whole set."),
+            ("Pulling with the arms and shrugging.", "Start each rep by drawing the shoulder blades back."),
+            ("Cutting the stretch short at the bottom.", "Let the arms hang all the way down between reps."),
+        ]),
+        "close-grip row": guide([
+            "Attach a close-grip (V) handle to the low pulley and sit with your feet on the platform.",
+            "Sit tall with a slight bend in your knees and your arms straight in front of you.",
+            "Pull the handle to your lower ribs, elbows close to your sides.",
+            "Let it go forward slowly until your arms are straight, without rounding your back.",
+        ], [
+            ("Rocking the torso back and forth to move the weight.", "Keep your torso still; only the arms and shoulder blades move."),
+            ("Rounding the lower back as the handle goes forward.", "Keep your chest up and reach only as far as your back stays flat."),
+            ("Elbows flaring out.", "Keep them close to your sides so the lats do the work."),
+        ]),
+        "single-arm cable rear delt fly": guide([
+            "Set a handle on a pulley at about shoulder height and stand facing the stack.",
+            "Hold the handle in the opposite hand with a slight bend in the elbow.",
+            "Pull the arm out and back across your body until it's in line with your shoulder.",
+            "Return slowly until the arm is in front of you again.",
+        ], [
+            ("Turning the torso to swing the weight.", "Keep your chest facing the stack and your hips still."),
+            ("Bending the elbow into a row.", "Keep the same slight bend all the way through."),
+            ("Going too heavy for the rear delt.", "Use a light weight and pause at the back of each rep."),
+        ]),
+        "preacher curl": guide([
+            "Sit at the preacher bench with the backs of your arms flat on the pad.",
+            "Hold the bar with an underhand grip, shoulder-width apart.",
+            "Curl the bar up until your forearms are nearly vertical.",
+            "Lower it slowly until your arms are almost straight.",
+        ], [
+            ("Lifting the elbows off the pad.", "Keep the backs of your arms on the pad the whole time."),
+            ("Dropping the weight at the bottom.", "Lower under control; the bottom is where the strain is highest."),
+            ("Stopping halfway down.", "Go until your arms are nearly straight for the full range."),
+        ]),
+        "seated leg curl": guide([
+            "Set the back pad so your knees line up with the machine's pivot.",
+            "Put the lower pad just above your heels and lock the thigh pad down.",
+            "Curl your heels down and back as far as they'll go.",
+            "Let the pad come back up slowly until your legs are nearly straight.",
+        ], [
+            ("Knees out of line with the pivot.", "Adjust the back pad before your first set."),
+            ("Lifting your hips off the seat.", "Keep the thigh pad snug and your back against the pad."),
+            ("Letting the weight snap back up.", "Control the return; it's half the work."),
+        ]),
+        "floor back extension": guide([
+            "Lie face down on the floor with your arms by your sides or out in front of you.",
+            "Keep your legs straight and your neck in line with your spine.",
+            "Lift your chest (and your legs, for the full version) a few inches off the floor.",
+            "Hold for a moment, then lower slowly.",
+        ], [
+            ("Throwing the head back to get higher.", "Look at the floor just in front of you."),
+            ("Jerking up with momentum.", "Rise slowly and pause at the top."),
+            ("Lifting higher than the lower back is comfortable with.", "A few inches is enough; stop before any pinch."),
+        ]),
+        "adductor machine": guide([
+            "Sit with your back against the pad and set the leg pads as wide as is comfortable.",
+            "Put the insides of your knees against the pads.",
+            "Squeeze your legs together until the pads meet.",
+            "Let them open slowly back to the start.",
+        ], [
+            ("Starting wider than your hips allow.", "Pick a start width you can control and widen it over time."),
+            ("Letting the pads fly back open.", "Open them slowly and stop before the stack touches."),
+            ("Leaning forward to help.", "Keep your back on the pad and your chest up."),
+        ]),
+        "machine ab crunch": guide([
+            "Set the seat so the chest pad or handles sit at the top of your chest.",
+            "Hook your feet under the rollers if the machine has them, and grip the handles.",
+            "Curl your chest toward your hips, rounding your upper back.",
+            "Return slowly until your abs are stretched, without letting the stack rest.",
+        ], [
+            ("Pulling with the arms instead of crunching.", "Keep your arms still and think about ribs to hips."),
+            ("Bending at the hips instead of the spine.", "Round your upper back; the hips stay put."),
+            ("Too much weight and a short range.", "Use a load you can take through the full crunch."),
         ]),
     ]
 }

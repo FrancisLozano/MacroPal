@@ -23,6 +23,16 @@ rest of the day's work:
 - The user's answers to every open question are recorded under **Decisions**. None are
   pending.
 
+- **Choose Exercise under headings** (after that, from use on the iPhone): Suggested / All
+  stay, and the list is grouped Chest, Triceps, Biceps, Back, Shoulders, Legs, Abs. Arms is
+  split into Biceps and Triceps, and Core reads "Abs". Then 12 starters you use were added:
+  Machine Chest Press, Single-Arm Triceps Extension, Cable Lateral Raise, Machine Shoulder
+  Press, Chest-Supported Dumbbell Row, Close-Grip Row, Single-Arm Cable Rear Delt Fly, Preacher
+  Curl, Seated Leg Curl, Floor Back Extension, Adductor Machine, Machine Ab Crunch — each with
+  a muscle profile and How to Do It / Common Mistakes. No drawing for Cable Lateral Raise,
+  Machine Shoulder Press, Chest-Supported Dumbbell Row or Machine Ab Crunch (no match in
+  Everkinetic). **Adductor Machine credits no muscle**: the body map has no adductors.
+  See the decisions below.
 - **Exercise drawings** (after that): a start → end line drawing above "3 sets × 10 reps"
   on the Workout tab, and Profile → Acknowledgements. See the GIFs decision below.
 - **Rest over notification** (after that, same night): a banner when the app is in the
@@ -42,13 +52,13 @@ rest of the day's work:
   field that fills both in), Goals card (weight + steps,
   each with a + to log; tap the value for its history and chart), Log an Unplanned Workout.
   No all-workouts history (removed on request); past sets live in each exercise's Progress.
-- **Exercise screen** — *Workout*: a start → end drawing of the exercise (33 starters), a row per set (reps and lb boxes, "Last:" from the
+- **Exercise screen** — *Workout*: a start → end drawing of the exercise (41 starters), a row per set (reps and lb boxes, "Last:" from the
   previous session), boxes start empty with the suggestion in gray, sets save when you leave
   the row, clearing both boxes unlogs a set, Complete Exercise logs untouched rows at their
   suggestion and goes back, ⓘ says where to change the set count, rest timer (its end: a banner
   in the background, a "Rest over" card from the bottom in the app). *Overview*:
   figure with Primary / Secondary beside it, Flip View, How to Do It, Common Mistakes with
-  fixes (text for all 38 starter exercises in `ExerciseGuide.swift`; none for exercises you
+  fixes (text for all 50 starter exercises in `ExerciseGuide.swift`; none for exercises you
   create). *Progress*: total volume, this week vs last, volume-per-session bars, History
   (swipe a day to delete it).
 - **Profile** — Personal Info, Workout settings (set-row order, default sets/reps, rest
@@ -137,6 +147,7 @@ Values as of 2026-09-23. "In app" means you can change it yourself; the rest are
 | Set rows reps-first or weight-first | reps-first | In app: Profile → Workout |
 | Volume per level (too easy / too hard) | 90 / 600 / 2,500 / 7,500 / 15,000 bodyweights | `MuscleLevelEngine.levelMinimumBodyweights` (the ⓘ sheet follows) |
 | Bodyweight share per rep of a bodyweight move | push-up 0.65, dip 0.9, pull-up 1.0, hanging leg raise 0.3, ab wheel 0.5, plank 0.1 per logged rep (as seconds) | `bodyweight(…)` entries in `ExerciseMuscleData.swift` |
+| Machine Chest Press / Shoulder Press / Ab Crunch counted at | 0.7 × the stack (like leg press 0.6; leg curl machines count 1×) | `"machine chest press"` in `ExerciseMuscleData.swift` |
 | Female volume | divided by 0.65 | `MuscleLevelEngine.femaleFactor` |
 | Time required per level | 0 / 2 weeks / 3 / 12 / 36 / 60 months | `MuscleLevelEngine.levelMinimumMonths` (the ⓘ sheet follows) |
 | Protein callout | 7-day avg < 90% of target, ≥ 4 logged days | `ProteinIntakeRule` |
@@ -207,6 +218,24 @@ Both messages were checked by forcing the first attempt to fail with a temporary
   "is this about a routine" are decided in code, not by the model (it made both up). Without
   Apple Intelligence the field is hidden and the form (weekdays + split menu) is all there is.
   The Claude API was ruled out because it needs a backend to keep the key out of the app.
+- **Muscle groups: Biceps and Triceps instead of Arms** (2026-09-23 night, user request).
+  `MuscleGroup` gained `.biceps` / `.triceps`; `.arms` stays only so stored exercises decode,
+  and `StarterExerciseCatalog.regroup` moves them at launch (by name — "tricep",
+  "pushdown", "skull", "kickback", "extension", "dip" → Triceps — else by main mover, else
+  Biceps). `MuscleGroup.choices` is the order of the picker's headings and the New Exercise
+  menu. Rear Delt Fly and Single-Arm Cable Rear Delt Fly moved from Shoulders to **Back**
+  (user, same night), next to Face Pull, so all three rear-delt moves are suggested on Pull
+  days; they still credit shoulders first, and traps went 0.4 → 0.6 to match Face Pull.
+  `regroup` moves a stored starter listed in its `moved` table only while it's still in its
+  old group. "Core" displays as "Abs" (the stored value is still `core`). Suggestions follow: Push
+  suggests Triceps, Pull suggests Biceps, Upper suggests both. The picker's `List` gets a new
+  `.id` whenever its headings change, since its rows are buttons (the List button bug);
+  checked in the simulator by switching Suggested ↔ All and then picking a row.
+- **Starters added in an update still arrive** (2026-09-23). The catalog now remembers which
+  names it seeded (`starterExercisesSeededNames`), so a new starter (Machine Chest Press)
+  reaches existing installs while one you deleted stays deleted. New starters go in both
+  `entries` and `addedLater` (a test checks every `addedLater` name is a starter). Installs seeded by the first
+  version count as having had everything except `StarterExerciseCatalog.addedLater`.
 - **A split is chosen, not only derived from the day count** (2026-09-23). Recommended keeps
   the old table (4 days → Upper/Lower, 5 → PPL + Upper/Lower…); a named split repeats in order
   (PPL on 4 days → Push, Pull, Legs, Push). The split isn't stored: the editor reads it back
@@ -215,7 +244,7 @@ Both messages were checked by forcing the first attempt to fail with a temporary
   night, on request). The free GIF and photo databases have unclear licenses (free-exercise-db
   is Unlicense, but its images came from elsewhere with no stated rights). Everkinetic's line
   drawings are CC BY-SA 4.0: a start and an end position per exercise, shown side by side above
-  "3 sets × 10 reps" (`ExerciseIllustration`). 33 of the 38 starter exercises have one; Face
+  "3 sets × 10 reps" (`ExerciseIllustration`). 41 of the 50 starter exercises have one (the 12 added later — see below — brought 8); Face
   Pull, Hip Thrust, Plank, Hanging Leg Raise and Dumbbell Shoulder Press don't, because the
   closest drawing showed a different movement. Assets are `Assets.xcassets/Exercises/exercise-<name>-start/end`,
   looked up from the exercise's name, so a custom exercise with a starter's name gets its drawing too.

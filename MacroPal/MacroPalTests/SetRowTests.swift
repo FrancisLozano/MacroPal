@@ -121,7 +121,7 @@ struct LastSessionSetsTests {
 
     @Test func comesFromTheLatestEarlierSessionWithTheExercise() {
         let squat = Exercise(name: "Back Squat", muscleGroup: .legs, equipment: "")
-        let curl = Exercise(name: "Barbell Curl", muscleGroup: .arms, equipment: "")
+        let curl = Exercise(name: "Barbell Curl", muscleGroup: .biceps, equipment: "")
         container.mainContext.insert(squat)
         container.mainContext.insert(curl)
         let today = session(daysAgo: 0, [(squat, 110)])
