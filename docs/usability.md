@@ -88,7 +88,7 @@ Values as of 2026-09-23. "In app" means you can change it yourself; the rest are
 | lb/kg, cm or ft/in | lb, cm | In app: Profile → Units & Measurements |
 | Default sets / reps for new exercises | 3 × 10 | In app: Profile → Workout |
 | Rest time, auto-start rest timer | 120 s, off | In app: Profile → Workout |
-| Set rows reps-first or weight-first | reps-first | In app: Profile → Workout (its Show PRs toggle no longer does anything) |
+| Set rows reps-first or weight-first | reps-first | In app: Profile → Workout |
 | Volume per level (too easy / too hard) | 90 / 600 / 2,500 / 7,500 / 15,000 bodyweights | `MuscleLevelEngine.levelMinimumBodyweights` (the ⓘ sheet follows) |
 | Bodyweight share per rep of a bodyweight move | push-up 0.65, dip 0.9, pull-up 1.0, hanging leg raise 0.3, ab wheel 0.5, plank 0.1 per logged rep (as seconds) | `bodyweight(…)` entries in `ExerciseMuscleData.swift` |
 | Female volume | divided by 0.65 | `MuscleLevelEngine.femaleFactor` |
@@ -149,8 +149,9 @@ Both messages were checked by forcing the first attempt to fail with a temporary
   years or more"); Novice's minimum dropped from 1 month to 2 weeks so ~3 weeks can reach it.
   Since the total only grows, a muscle **never drops a level** after a break (accepted).
   Bodyweight moves count a share of bodyweight per rep plus any added weight. The body map
-  scales loads (both dumbbells, machines down); the Progress tab's volume is the weight as
-  logged, so a dumbbell exercise shows half there. All 1RM code is deleted (`LiftStandard`,
+  and the Progress tab count volume the same way (both dumbbells, machines scaled down, a
+  share of bodyweight for bodyweight moves; user, 2026-09-23) — the History rows still list
+  each set as logged. Profile → Workout's Show PRs toggle was deleted with the 1RM code. All 1RM code is deleted (`LiftStandard`,
   `OneRepMaxEstimator`, `StrengthStallRule`, the 1RM chart).
 - **Edit Routine by message uses Apple's on-device Foundation Models** (iOS 26: no API key,
   no server, free). "4 days a week, upper/lower" becomes a typed `@Generable` result that goes

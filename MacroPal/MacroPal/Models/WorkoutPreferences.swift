@@ -12,10 +12,6 @@ enum WorkoutPreferences {
     static let weightFirstKey = "workoutWeightFirst"
     static let weightFirstDefault = false
 
-    /// The "% of best 1RM" bar under each set on the tracking screen.
-    static let showPRsKey = "workoutShowPRs"
-    static let showPRsDefault = true
-
     /// Targets for an exercise newly added to a plan day, and rows for an unplanned exercise.
     static let defaultSetsKey = "workoutDefaultSets"
     static let defaultSetsDefault = 3

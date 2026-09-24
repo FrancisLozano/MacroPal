@@ -19,13 +19,11 @@ struct ExerciseHistoryDay: Identifiable {
     /// The plan day the sets were logged from ("Legs & Abs"), nil when unplanned.
     let planDayName: String?
     let sets: [WorkoutSetEntry]
+    /// Load × reps summed over the sets, counted as the body map counts it: both dumbbells,
+    /// machines scaled, a share of bodyweight for bodyweight moves.
+    let volumeKg: Double
 
     var id: Date { date }
-
-    /// Weight × reps summed over the sets.
-    var volumeKg: Double {
-        sets.reduce(0) { $0 + $1.weightKg * Double($1.reps) }
-    }
 }
 
 /// Read-side summaries of logged history for an exercise's Progress tab. Kept separate from
@@ -33,14 +31,24 @@ struct ExerciseHistoryDay: Identifiable {
 @Observable
 final class WorkoutProgressViewModel {
     /// Every session with `exercise`, newest first, with that exercise's sets in the order
-    /// they were logged.
-    func history(for exercise: Exercise, in sessions: [WorkoutSession]) -> [ExerciseHistoryDay] {
-        sessions.compactMap { session -> ExerciseHistoryDay? in
+    /// they were logged. `bodyweightKg` is the load of a bodyweight move (0 without it).
+    func history(for exercise: Exercise, in sessions: [WorkoutSession], bodyweightKg: Double?) -> [ExerciseHistoryDay] {
+        let profile = ExerciseMuscleData.profile(forName: exercise.name, group: exercise.muscleGroup)
+        return sessions.compactMap { session -> ExerciseHistoryDay? in
             let sets = session.setEntries
                 .filter { $0.exercise?.persistentModelID == exercise.persistentModelID }
                 .sorted { $0.setNumber < $1.setNumber }
             guard !sets.isEmpty else { return nil }
-            return ExerciseHistoryDay(date: session.date, planDayName: sets.compactMap(\.planDayName).first, sets: sets)
+            let volume = sets.reduce(0) { total, entry in
+                let set = LoggedSet(
+                    date: session.date, exerciseName: exercise.name, muscleGroup: exercise.muscleGroup,
+                    weightKg: entry.weightKg, reps: entry.reps
+                )
+                return total + MuscleLevelEngine.load(of: set, profile: profile, bodyweightKg: bodyweightKg) * Double(max(0, entry.reps))
+            }
+            return ExerciseHistoryDay(
+                date: session.date, planDayName: sets.compactMap(\.planDayName).first, sets: sets, volumeKg: volume
+            )
         }
         .sorted { $0.date > $1.date }
     }

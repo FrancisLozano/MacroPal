@@ -9,7 +9,6 @@ import SwiftUI
 /// with, and the rest timer. All device preferences (see `WorkoutPreferences`).
 struct WorkoutSettingsView: View {
     @AppStorage(WorkoutPreferences.weightFirstKey) private var weightFirst = WorkoutPreferences.weightFirstDefault
-    @AppStorage(WorkoutPreferences.showPRsKey) private var showPRs = WorkoutPreferences.showPRsDefault
     @AppStorage(WorkoutPreferences.defaultSetsKey) private var defaultSets = WorkoutPreferences.defaultSetsDefault
     @AppStorage(WorkoutPreferences.defaultRepsKey) private var defaultReps = WorkoutPreferences.defaultRepsDefault
     @AppStorage(WorkoutPreferences.defaultRepsMaxKey) private var defaultRepsMax = WorkoutPreferences.defaultRepsMaxDefault
@@ -29,12 +28,6 @@ struct WorkoutSettingsView: View {
             Section("Display") {
                 orderRow("Show Reps First", isSelected: !weightFirst) { weightFirst = false }
                 orderRow("Show Weight First", isSelected: weightFirst) { weightFirst = true }
-                Toggle(isOn: $showPRs) {
-                    InfoLabel(
-                        "Show PRs During Workout",
-                        info: "Shows each set's weight as a % of your best estimated one-rep max from earlier days, with a bar that turns from green to red as it gets heavier."
-                    )
-                }
             }
 
             Section {

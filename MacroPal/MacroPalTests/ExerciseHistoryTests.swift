@@ -38,7 +38,7 @@ struct ExerciseHistoryTests {
         let curlsOnly = session(daysAgo: 3, [(curl, 20, 10, nil)])
         let newer = session(daysAgo: 0, [(squat, 110, 5, nil)])
 
-        let history = viewModel.history(for: squat, in: [older, curlsOnly, newer])
+        let history = viewModel.history(for: squat, in: [older, curlsOnly, newer], bodyweightKg: 80)
 
         #expect(history.map(\.date) == [newer.date, older.date])
         #expect(history[0].planDayName == nil)
@@ -55,8 +55,7 @@ struct ExerciseHistoryTests {
             calendar.date(from: DateComponents(year: 2026, month: 9, day: day, hour: 12))!
         }
         func day(_ dayOfMonth: Int, volumeKg: Double) -> ExerciseHistoryDay {
-            let set = WorkoutSetEntry(setNumber: 1, weightKg: volumeKg, reps: 1)
-            return ExerciseHistoryDay(date: date(dayOfMonth), planDayName: nil, sets: [set])
+            ExerciseHistoryDay(date: date(dayOfMonth), planDayName: nil, sets: [], volumeKg: volumeKg)
         }
         // Wednesday Sep 23; this week is Mon 21 – Sun 27, last week Mon 14 – Sun 20.
         let history = [day(23, volumeKg: 300), day(21, volumeKg: 200), day(20, volumeKg: 400), day(14, volumeKg: 100), day(13, volumeKg: 1000)]
@@ -64,5 +63,16 @@ struct ExerciseHistoryTests {
         let summary = viewModel.volumeSummary(history, now: date(23), calendar: calendar)
 
         #expect(summary == VolumeSummary(totalKg: 2000, thisWeekKg: 500, lastWeekKg: 500))
+    }
+
+    @Test func volumeCountsBothDumbbellsAndBodyweightLikeTheBodyMap() {
+        let curl = Exercise(name: "Dumbbell Curl", muscleGroup: .arms, equipment: "")
+        let pullUp = Exercise(name: "Pull-Up", muscleGroup: .back, equipment: "")
+        container.mainContext.insert(curl)
+        container.mainContext.insert(pullUp)
+        let today = session(daysAgo: 0, [(curl, 10, 10, nil), (pullUp, 0, 5, nil), (pullUp, 10, 5, nil)])
+
+        #expect(viewModel.history(for: curl, in: [today], bodyweightKg: 80).first?.volumeKg == 200)
+        #expect(viewModel.history(for: pullUp, in: [today], bodyweightKg: 80).first?.volumeKg == 850)
     }
 }

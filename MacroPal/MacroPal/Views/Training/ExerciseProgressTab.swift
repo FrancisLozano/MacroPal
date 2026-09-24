@@ -13,6 +13,7 @@ import SwiftData
 struct ExerciseProgressTab: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \WorkoutSession.date, order: .reverse) private var sessions: [WorkoutSession]
+    @Query(sort: \WeightEntry.date, order: .reverse) private var weightEntries: [WeightEntry]
     @AppStorage(WeightUnit.storageKey) private var unit: WeightUnit = .lb
 
     let exercise: Exercise
@@ -20,7 +21,7 @@ struct ExerciseProgressTab: View {
     private let viewModel = WorkoutProgressViewModel()
 
     var body: some View {
-        let history = viewModel.history(for: exercise, in: sessions)
+        let history = viewModel.history(for: exercise, in: sessions, bodyweightKg: weightEntries.first?.weightKg)
         if history.isEmpty {
             ContentUnavailableView(
                 "No Sets Yet",
@@ -32,7 +33,7 @@ struct ExerciseProgressTab: View {
                 Section {
                     summary(viewModel.volumeSummary(history))
                 } footer: {
-                    Text("Volume is weight × reps, added up over every set.")
+                    Text("Volume is weight × reps, added up over every set — both dumbbells, and part of your bodyweight for moves like pull-ups, as on the body map.")
                 }
                 Section {
                     ExerciseVolumeChart(days: history)
@@ -101,7 +102,7 @@ struct ExerciseProgressTab: View {
         return percent >= 0 ? "+\(percent)%" : "−\(-percent)%"
     }
 
-    /// "Sep 20 · Legs & Abs", each set as "135 × 10", and the day's volume.
+    /// "Sep 20 · Legs & Abs", each set as "135 × 10" (as logged), and the day's volume.
     private func historyRow(_ day: ExerciseHistoryDay) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .firstTextBaseline) {
@@ -127,7 +128,7 @@ struct ExerciseProgressTab: View {
 
 #Preview {
     let container = try! ModelContainer(
-        for: WorkoutSession.self, WorkoutSetEntry.self, Exercise.self,
+        for: WorkoutSession.self, WorkoutSetEntry.self, Exercise.self, WeightEntry.self,
         configurations: ModelConfiguration(isStoredInMemoryOnly: true)
     )
     let squat = Exercise(name: "Back Squat", muscleGroup: .legs, equipment: "Barbell")

@@ -125,7 +125,6 @@ Mistakes cards (`ExerciseGuides`, starter exercises only).
 ## Open questions (small, can be answered while building)
 
 1. ~~Where does the all-exercise Workout History live?~~ Dropped (user, 2026-09-23).
-2. **Show PRs** in Profile → Workout: move it to control the "% of best" line on the Progress
-   tab, or delete it?
+2. ~~Show PRs in Profile → Workout?~~ Deleted (user, 2026-09-23) — nothing uses 1RM any more.
 3. Unplanned workout: after Complete Exercise, go back to the exercise picker (to add the
    next one) or to the Training page?
