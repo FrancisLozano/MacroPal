@@ -23,6 +23,8 @@ rest of the day's work:
 - The user's answers to every open question are recorded under **Decisions**. None are
   pending.
 
+- **Exercise drawings** (after that): a start → end line drawing above "3 sets × 10 reps"
+  on the Workout tab, and Profile → Acknowledgements. See the GIFs decision below.
 - **Rest over notification** (after that, same night): a banner when the app is in the
   background, a card sliding up from the bottom when it's open. See the decision below.
 
@@ -40,7 +42,7 @@ rest of the day's work:
   field that fills both in), Goals card (weight + steps,
   each with a + to log; tap the value for its history and chart), Log an Unplanned Workout.
   No all-workouts history (removed on request); past sets live in each exercise's Progress.
-- **Exercise screen** — *Workout*: a row per set (reps and lb boxes, "Last:" from the
+- **Exercise screen** — *Workout*: a start → end drawing of the exercise (33 starters), a row per set (reps and lb boxes, "Last:" from the
   previous session), boxes start empty with the suggestion in gray, sets save when you leave
   the row, clearing both boxes unlogs a set, Complete Exercise logs untouched rows at their
   suggestion and goes back, ⓘ says where to change the set count, rest timer (its end: a banner
@@ -209,8 +211,19 @@ Both messages were checked by forcing the first attempt to fail with a temporary
   the old table (4 days → Upper/Lower, 5 → PPL + Upper/Lower…); a named split repeats in order
   (PPL on 4 days → Push, Pull, Legs, Push). The split isn't stored: the editor reads it back
   from the plan's day names (`inferredSplit`), with Recommended winning a tie.
-- **No exercise GIFs for now.** The Overview tab has just Muscles Involved. The free GIF
-  databases have unclear licenses.
+- **No exercise GIFs, but still drawings on the Workout tab** (drawings added 2026-09-23
+  night, on request). The free GIF and photo databases have unclear licenses (free-exercise-db
+  is Unlicense, but its images came from elsewhere with no stated rights). Everkinetic's line
+  drawings are CC BY-SA 4.0: a start and an end position per exercise, shown side by side above
+  "3 sets × 10 reps" (`ExerciseIllustration`). 33 of the 38 starter exercises have one; Face
+  Pull, Hip Thrust, Plank, Hanging Leg Raise and Dumbbell Shoulder Press don't, because the
+  closest drawing showed a different movement. Assets are `Assets.xcassets/Exercises/exercise-<name>-start/end`,
+  looked up from the exercise's name, so a custom exercise with a starter's name gets its drawing too.
+  They were converted to transparent template images, so the lines take the text color (checked
+  in light and dark). The license needs a credit: Profile → About → Acknowledgements (Open Food
+  Facts is credited there too). To add one: find it in github.com/everkinetic/data
+  (`exercises.json` → `id_num`, `dist/png/<id>-relaxation|tension.png`), convert it the same
+  way (invert, mask to alpha, 600 px), and move the name in `ExerciseMusclesTests`.
 - **Progress is measured in volume, not 1RM** (user, 2026-09-23). The Progress tab shows
   total volume, this week vs last (calendar weeks), a volume-per-session bar chart and the
   history; the 1RM summary, Beginner → Novice bar and stall callout were removed from it.

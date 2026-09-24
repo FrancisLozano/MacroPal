@@ -79,6 +79,9 @@ struct ExerciseTrackView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 12) {
+                if let exercise, let illustration = ExerciseIllustration(exerciseName: exercise.name) {
+                    illustration
+                }
                 header
                 VStack(spacing: 0) {
                     ForEach(Array(rows.indices), id: \.self) { index in

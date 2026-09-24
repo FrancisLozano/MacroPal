@@ -44,4 +44,23 @@ struct ExerciseMusclesTests {
     @Test func aCustomExerciseHasNoGuide() {
         #expect(ExerciseGuides.guide(forName: "Burpee") == nil)
     }
+
+    // MARK: Drawings
+
+    /// Everkinetic has no fair drawing for these, so they show none.
+    static let startersWithoutDrawing: Set<String> = [
+        "Face Pull", "Hip Thrust", "Plank", "Hanging Leg Raise", "Dumbbell Shoulder Press",
+    ]
+
+    @Test func everyOtherStarterExerciseHasADrawing() {
+        for name in StarterExerciseCatalog.names {
+            let hasDrawing = ExerciseIllustration(exerciseName: name) != nil
+            #expect(hasDrawing != Self.startersWithoutDrawing.contains(name), "\(name): drawing is \(hasDrawing ? "there" : "missing")")
+        }
+    }
+
+    @Test func drawingNamesComeFromTheExerciseName() {
+        #expect(ExerciseIllustration.slug(for: "One-Arm Dumbbell Row") == "one-arm-dumbbell-row")
+        #expect(ExerciseIllustration(exerciseName: "Burpee") == nil)
+    }
 }

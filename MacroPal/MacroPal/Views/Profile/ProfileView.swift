@@ -122,6 +122,14 @@ private struct ProfileOverview: View {
                     Label("Height", systemImage: "ruler")
                 }
             }
+
+            Section("About") {
+                NavigationLink {
+                    AcknowledgementsView()
+                } label: {
+                    Label("Acknowledgements", systemImage: "heart.text.square")
+                }
+            }
         }
     }
 
