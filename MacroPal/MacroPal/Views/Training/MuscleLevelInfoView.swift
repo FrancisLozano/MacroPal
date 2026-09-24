@@ -7,9 +7,9 @@ import SwiftUI
 import SwiftData
 
 /// The body map's ⓘ sheet: what each level color means and what it takes to reach it — the
-/// strength needed (Back Squat and Bench Press as examples, in your units once there's a
-/// bodyweight) and how long the muscle has to have been trained. Reads the same numbers the
-/// levels are computed from (`StrengthClass`, `MuscleLevelEngine.levelMinimumMonths`).
+/// volume a muscle needs (in bodyweights, and in your units once there's a bodyweight) and how
+/// long it has to have been trained. Reads the same numbers the levels are computed from
+/// (`MuscleLevelEngine.levelMinimumBodyweights` and `levelMinimumMonths`).
 struct MuscleLevelInfoView: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage(WeightUnit.storageKey) private var unit: WeightUnit = .lb
@@ -18,11 +18,11 @@ struct MuscleLevelInfoView: View {
 
     private static let summaries = [
         "Every muscle you train starts here.",
-        "Past the first weeks: you know the movements and your lifts are climbing fast.",
-        "Months of steady training. Progress now comes week to week, not every session.",
-        "About a year of consistent training and clearly strong for your size.",
-        "Years of dedicated training, at the level of competitive lifters.",
-        "Among the strongest lifters for their bodyweight.",
+        "A few weeks of regular work: the muscle is getting used to training.",
+        "Months of steady training behind it.",
+        "About a year of consistent training.",
+        "Years of dedicated training.",
+        "Five years or more of hard, consistent work.",
     ]
 
     private var bodyweightKg: Double? { weightEntries.first?.weightKg }
@@ -37,12 +37,12 @@ struct MuscleLevelInfoView: View {
                 Section {
                     Text("Each muscle's color is its level. To move up, a muscle needs both:")
                     Label {
-                        Text("**Strength.** Your best estimated one-rep max from the last 90 days, on a lift that works the muscle, compared with your bodyweight.")
+                        Text("**Volume.** Everything it has moved — weight × reps over every set, ever — compared with your bodyweight. 3 sets of 10 at 100 lb is 3,000 lb. Muscles that only assist get part of the credit.")
                     } icon: {
                         Image(systemName: "scalemass")
                     }
                     Label {
-                        Text("**Time.** How long you've been training it, so one heavy day can't skip years of progress.")
+                        Text("**Time.** How long you've been training it, so a burst of volume can't skip years of progress.")
                     } icon: {
                         Image(systemName: "calendar")
                     }
@@ -79,7 +79,7 @@ struct MuscleLevelInfoView: View {
                 Text(Self.summaries[index])
                     .font(.subheadline)
                 if index > 0 {
-                    requirement(strength(index), systemImage: "scalemass")
+                    requirement(volume(index), systemImage: "scalemass")
                     requirement(time(index), systemImage: "calendar")
                 }
             }
@@ -93,23 +93,22 @@ struct MuscleLevelInfoView: View {
             .foregroundStyle(.secondary)
     }
 
-    /// "Squat 340 lb (1.5× bodyweight)" over "Bench 225 lb (1.0× bodyweight)", or just the
-    /// multiples before any weight is logged.
-    private func strength(_ index: Int) -> String {
-        let lifts = [
-            ("Squat", StrengthClass.lowerCompound.maleThresholds[index] * sexFactor),
-            ("Bench", StrengthClass.press.maleThresholds[index] * sexFactor),
-        ]
-        return lifts.map { name, ratio in
-            guard let bodyweightKg else { return "\(name) \(multiple(ratio)) bodyweight" }
-            return "\(name) \(load(ratio, bodyweightKg)) (\(multiple(ratio)) bodyweight)"
-        }
-        .joined(separator: "\n")
+    /// "13,900 lb moved (90× your bodyweight)", or just the multiple before any weight is
+    /// logged.
+    private func volume(_ index: Int) -> String {
+        let bodyweights = MuscleLevelEngine.levelMinimumBodyweights[index] * sexFactor
+        let multiple = "\(bodyweights.formatted(.number.precision(.fractionLength(0))))× your bodyweight"
+        guard let bodyweightKg else { return "\(multiple) moved" }
+        // Rounded to 100 lb / 50 kg: these are milestones, not targets to hit exactly.
+        let step = unit == .lb ? 100.0 : 50.0
+        let amount = (unit.fromKg(bodyweights * bodyweightKg) / step).rounded() * step
+        return "\(amount.formatted(.number.precision(.fractionLength(0)))) \(unit.symbol) moved (\(multiple))"
     }
 
     private func time(_ index: Int) -> String {
         let months = MuscleLevelEngine.levelMinimumMonths[index]
         switch months {
+        case ..<1: return "Trained for \(Int((months * 30.44 / 7).rounded())) weeks or more"
         case 1: return "Trained for 1 month or more"
         case ..<12: return "Trained for \(Int(months)) months or more"
         case 12: return "Trained for a year or more"
@@ -117,19 +116,8 @@ struct MuscleLevelInfoView: View {
         }
     }
 
-    private func multiple(_ ratio: Double) -> String {
-        ratio.formatted(.number.precision(.fractionLength(1...2))) + "×"
-    }
-
-    /// Rounded to 5 lb / 2.5 kg, like a loadable bar.
-    private func load(_ ratio: Double, _ bodyweightKg: Double) -> String {
-        let step = unit == .lb ? 5.0 : 2.5
-        let value = (unit.fromKg(ratio * bodyweightKg) / step).rounded() * step
-        return "\(value.formatted(.number.precision(.fractionLength(0...1)))) \(unit.symbol)"
-    }
-
     private var footer: String {
-        var text = "Squat and bench are examples; every lift has its own standard, and Exercise Progress shows yours. Bodyweight moves like pull-ups count as training but can't raise a level."
+        var text = "Dumbbell lifts count both dumbbells; bodyweight moves like pull-ups count part of your bodyweight. A muscle keeps its level through a break."
         if bodyweightKg == nil {
             text = "Log your weight to see these in \(unit.symbol). " + text
         }

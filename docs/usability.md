@@ -25,7 +25,7 @@ See **Next tasks** for the order.
   Log an Unplanned Workout. A day → an exercise opens the **exercise screen**: *Workout*
   (a row per set with "Last:", sets save as you type, Complete Exercise, rest timer),
   *Overview* (Muscles Involved: body figure, Primary / Secondary, Flip View; How to Do It;
-  Common Mistakes with fixes) and *Progress* (best 1RM, next-level target, chart, and that exercise's history with volume).
+  Common Mistakes with fixes) and *Progress* (total volume, this week vs last, volume per session, that exercise's history).
 - **Profile** — Personal Info, Workout settings (set-row order, PRs, default sets/reps, rest
   timer), Goal & Daily Targets, Units (lb/kg, cm or ft/in).
 - **Widget** — small (calorie ring) and medium (calories + Protein / Carbs / Fat).
@@ -40,12 +40,8 @@ See **Next tasks** for the order.
    can be answered while building.
 3. ~~**Build it in steps:** Workout tab → Progress tab → Overview tab.~~ All three built
    2026-09-23; Workout History and Exercise Progress are off the Training page.
-4. **Volume-based muscle colors** — replaces the 1RM rule in `MuscleLevelEngine`, so the ⓘ
-   How Levels Work sheet and `MuscleLevelEngineTests` change with it. Tune the proposed
-   thresholds (Decisions) against real logged weeks first. Also clear out the 1RM code nothing
-   shows any more: `LiftStandard` (+ tests), `ExerciseProgressPoint` / `progression`, and
-   `StrengthStallRule` (its callout was on the Progress tab) — or rework the stall rule on
-   volume. Then the Progress tab can show this exercise's share toward the muscle's next level.
+4. ~~**Volume-based muscle colors.**~~ Built 2026-09-23 with the proposed thresholds; the
+   1RM code is gone. Tune the thresholds once real weeks are logged (see the table below).
 5. **Edit Routine by message** — Foundation Models (`@Generable` plan: day count + split
    names), form fallback when Apple Intelligence isn't available. Worth a short plan first,
    like step 2.
@@ -77,9 +73,8 @@ built from those entries. This week is for collecting the next round.
 - Is anything still slow to log — count the taps if it feels like too many.
 - Do the callouts show up when they should, and are they useful or noise?
 
-**Not seen in the app yet** — note it if you run into one: the protein and strength-stall
-callouts (need 4 logged days / 4 sessions of one lift), an Exercise Progress chart with several
-sessions, ft/in height entry, a "Push + Pull" History label.
+**Not seen in the app yet** — note it if you run into one: the protein callout (needs 4 logged
+days), a muscle reaching Novice on the body map, a Progress chart with several sessions, ft/in height entry, a "Push + Pull" History label.
 
 ### Things you might want adjusted — and where they live
 
@@ -93,14 +88,12 @@ Values as of 2026-09-23. "In app" means you can change it yourself; the rest are
 | lb/kg, cm or ft/in | lb, cm | In app: Profile → Units & Measurements |
 | Default sets / reps for new exercises | 3 × 10 | In app: Profile → Workout |
 | Rest time, auto-start rest timer | 120 s, off | In app: Profile → Workout |
-| Set rows reps-first or weight-first; "% of best" bar | reps-first, shown | In app: Profile → Workout |
-| Strength-level thresholds (too easy / too hard) | approximations | `StrengthClass.maleThresholds` in `ExerciseMuscleData.swift` |
-| Female standards | male × 0.65 | `MuscleLevelEngine.femaleFactor` |
-| Time required per level | 0 / 1 / 4 / 12 / 36 / 60 months | `MuscleLevelEngine.levelMinimumMonths` (the ⓘ sheet follows) |
-| Window for "best lift" | last 90 days | `MuscleLevelEngine.recentWindowDays` |
-| 1RM estimate | Epley: weight × (1 + reps / 30) | `OneRepMaxEstimator.epley` |
+| Set rows reps-first or weight-first | reps-first | In app: Profile → Workout (its Show PRs toggle no longer does anything) |
+| Volume per level (too easy / too hard) | 90 / 600 / 2,500 / 7,500 / 15,000 bodyweights | `MuscleLevelEngine.levelMinimumBodyweights` (the ⓘ sheet follows) |
+| Bodyweight share per rep of a bodyweight move | push-up 0.65, dip 0.9, pull-up 1.0, hanging leg raise 0.3, ab wheel 0.5, plank 0.1 per logged rep (as seconds) | `bodyweight(…)` entries in `ExerciseMuscleData.swift` |
+| Female volume | divided by 0.65 | `MuscleLevelEngine.femaleFactor` |
+| Time required per level | 0 / 2 weeks / 3 / 12 / 36 / 60 months | `MuscleLevelEngine.levelMinimumMonths` (the ⓘ sheet follows) |
 | Protein callout | 7-day avg < 90% of target, ≥ 4 logged days | `ProteinIntakeRule` |
-| Strength-stall callout | no top-set increase in 4 sessions | `StrengthStallRule.consecutiveSessions` |
 | Weight-plateau callout | < 0.1% change/week, ≥ 13 days of data | `WeightPlateauRule` |
 | Steps average / goal-met | logged days only | `StepsHistoryView.summary` |
 | Weekly body-map view | removed | git history before `373f28e` |
@@ -147,16 +140,18 @@ Both messages were checked by forcing the first attempt to fail with a temporary
 
 ## Decisions worth remembering
 
-- **Muscle colors will come from lifetime volume, not 1RM** (decided 2026-09-23, not built
-  yet). Every set's sets × reps × weight is credited to the muscles it works and added up over
-  all time. That total ÷ bodyweight sets the level, so the colors track sustained work: about
-  3 weeks of training should reach Novice, and about a year should reach Advanced. 1RM is gone
-  from the app's screens too — the Progress tab shows volume (user, 2026-09-23). *Proposed starting
-  thresholds* (bodyweights moved per muscle, to tune after real use): Novice 90, Intermediate
-  600, Advanced 2,500, Elite 7,500, World Class 15,000. This assumes about 2 sessions a week
-  of 3 × 10 at half bodyweight at the start, rising to about 50 bodyweights a week. Since the
-  total only grows, a muscle **never drops a level** after a break; that's accepted for now.
-  Bodyweight moves (pull-ups, dips) need a stand-in load, probably a share of bodyweight.
+- **Muscle colors come from lifetime volume, not 1RM** (decided and built 2026-09-23). Every
+  set's weight × reps is credited to the muscles it works, by involvement, and added up over
+  all time. That total ÷ bodyweight ("bodyweights moved") sets the level: Novice 90,
+  Intermediate 600, Advanced 2,500, Elite 7,500, World Class 15,000 — a first guess assuming
+  about 30 bodyweights a week per muscle early on, rising to about 50. The tenure cap stays,
+  so World Class needs 5 years of training however much you lift (user: "world class takes 5
+  years or more"); Novice's minimum dropped from 1 month to 2 weeks so ~3 weeks can reach it.
+  Since the total only grows, a muscle **never drops a level** after a break (accepted).
+  Bodyweight moves count a share of bodyweight per rep plus any added weight. The body map
+  scales loads (both dumbbells, machines down); the Progress tab's volume is the weight as
+  logged, so a dumbbell exercise shows half there. All 1RM code is deleted (`LiftStandard`,
+  `OneRepMaxEstimator`, `StrengthStallRule`, the 1RM chart).
 - **Edit Routine by message uses Apple's on-device Foundation Models** (iOS 26: no API key,
   no server, free). "4 days a week, upper/lower" becomes a typed `@Generable` result that goes
   through the same `RoutineTemplate` apply path as today. Devices without Apple Intelligence
@@ -188,15 +183,13 @@ Both messages were checked by forcing the first attempt to fail with a temporary
   survive quitting the app and doesn't notify in the background.
 - **Unplanned workouts dropped RPE and session notes** (only the old form could enter them;
   old sessions still show theirs).
-- **Exercise targets and body-map levels use the same strength standards**, but Exercise
-  Progress skips the body map's tenure cap (it judges the lift, not the muscle).
 - **The plan day is stored per set, as a copied name** (`WorkoutSetEntry.planDayName`), not
   on the session and not as a link to `PlanDay`. A session's label ("Pull", "Push + Pull") is
   derived from the sets it still has, so unchecking a plan set takes the label with it, and
   history survives plan edits. A session-level field was tried first and kept a stale label.
   Sessions from before 2026-09-22 have no day and show the date.
-- **The levels explainer reads the engine's own numbers** — `StrengthClass` thresholds and
-  `MuscleLevelEngine.levelMinimumMonths` (the tenure cap now reads from that array) — so the
+- **The levels explainer reads the engine's own numbers** — `MuscleLevelEngine`'s
+  `levelMinimumBodyweights` and `levelMinimumMonths` — so the
   ⓘ sheet can't drift from how levels are computed. Change a threshold there and the sheet
   follows.
 - **Edit Routine matches days by weekday, then name.** When the split changes, a day keeps
@@ -386,16 +379,15 @@ Details for each are in the Backlog rows and the "Next steps on the Training pag
 The body map's levels are a judgement call, so they're documented rather than buried in code
 (`MuscleLevelEngine.swift`, `ExerciseMuscleData.swift`):
 
-- Level = best **estimated 1RM in the last 90 days ÷ bodyweight**, compared against
-  per-exercise-class thresholds (male; ratios divided by 0.65 for female). The thresholds are
-  **approximations in the spirit of published bodyweight-multiple standards, not copied from
-  one source** — expect to tune `StrengthClass.maleThresholds` after real use.
-- A **tenure cap** stops a single heavy day from skipping the years: about a year of training a
-  muscle allows Advanced (blue); Elite and World Class take several years. This is what makes
-  "after a year it's blue" true.
-- Bodyweight movements (pull-up, push-up, dips, plank, ab wheel) can't be judged from a
-  logged load, so they only give the Beginner floor. Dumbbell lifts are doubled (two
-  dumbbells); leg press and calf raise are scaled down. One-arm row is probably underrated.
+- Level = the muscle's **lifetime volume ÷ bodyweight** (volume divided by 0.65 for women)
+  against `MuscleLevelEngine.levelMinimumBodyweights` — a first guess, not from a source;
+  expect to tune it after real use. Assisting muscles get credit in proportion to their
+  involvement, but only muscles worked at 0.5 or more count as "trained" (colored at all).
+- A **tenure cap** stops a burst of volume from skipping the years: 2 weeks for Novice, 3
+  months Intermediate, a year Advanced, 3 years Elite, 5 years World Class.
+- Dumbbell lifts count both dumbbells; leg press and calf raise are scaled down. Bodyweight
+  moves use a share of bodyweight per rep (plank assumes reps are logged as seconds).
+- Volume never goes down, so levels never drop after a break.
 - With no weight logged, every trained muscle just shows Beginner.
 
 ### Verified vs. not yet verified in the simulator
@@ -580,7 +572,7 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P2 | Progress tab: that exercise's history; then Workout History and Exercise Progress move off the Training page | Suggestions → Training (2026-09-23, Progress tab) | Done — built 2026-09-23: `ExerciseScreen` with a Workout / Progress control; the Progress tab is Exercise Progress for that one exercise plus a History list (each day's sets as "30 × 12", the plan day, the day's volume; swipe to delete that day's sets of the exercise). Workout History and its detail screen are deleted (user: no all-workouts history), and Exercise Progress's exercise picker with them; the Training page keeps only Log an Unplanned Workout. Checked in the simulator (Cable Crunch: 1RM 42 lb, Beginner → Novice, History "Wed, Sep 23 · Legs & Abs · 960 lb"; switching tabs keeps the logged sets). Swipe-to-delete not tried live — the only sets were the user's |
 | P2 | Progress tab measured in volume instead of 1RM — headline total volume, this week vs last week (± %), volume per session as tappable bars (`ExerciseVolumeChart`, replacing the 1RM line chart), history unchanged; 1RM summary, level bar and stall callout removed from the tab. `WorkoutProgressViewModel.volumeSummary` + a test | User request (direct, 2026-09-23, "I do not want to really see 1rm, I am more interested in total volume") | Done — checked in the simulator 2026-09-23 (Cable Crunch: 960 lb total, this week 960 / last week 0, one bar; tapping it shows "Sep 23 · 960 lb · 3 sets") |
 | P2 | Overview tab: a GIF of the exercise and Muscles Involved — body figure, Primary / Secondary labels, Flip View | Suggestions → Training (2026-09-23, Overview tab; reference: Caliber's Overview) | Done — built 2026-09-23 (`ExerciseOverviewTab`): Muscles Involved card: the figure on the left (primary solid, secondary light, the thumbnail's colors) with Primary / Secondary listed beside it on the right, most-involved first, and Flip View under the figure (lists moved beside the figure on user request, same evening). Then, also on request, **How to Do It** (numbered steps) and **Common Mistakes** (each mistake with its fix) cards under it, from `ExerciseGuides` — written for all 38 starter exercises (general coaching cues, not from one source; a test checks every starter exercise has one). Exercises the user created show a one-line note instead. Opens on the side with more of the primary muscles. Primary is involvement ≥ 0.8 (`ExerciseProfile.primaryMuscles`, now shared with the thumbnail; `ExerciseMusclesTests`); a full-body guess with nothing that high uses its top muscles. No GIF (decided). Checked in the simulator (Cable Crunch: Abs primary, Obliques secondary; flip to the back shows nothing highlighted). A back-first exercise opening on the back not seen live |
-| P2 | Muscle colors by volume moved (sets × reps × weight, e.g. 2 × 8 × 35 lb = 560 lb), keeping 1RM as a data point | Suggestions → Training (2026-09-23, muscle colors) | Triaged — lifetime volume ÷ bodyweight, no 1RM in the level (decided 2026-09-23, see Decisions); 1RM stays as a data point in Exercise Progress |
+| P2 | Muscle colors by volume moved (sets × reps × weight, e.g. 2 × 8 × 35 lb = 560 lb), keeping 1RM as a data point | Suggestions → Training (2026-09-23, muscle colors) | Done — built 2026-09-23 with the proposed thresholds (see Decisions and Things to know about the muscle levels): `MuscleLevelEngine` rewritten on lifetime volume, ⓘ How Levels Work shows each level's volume in the user's unit and its time, `MuscleLevelEngineTests` rewritten (3 weeks → Novice, a year → Advanced, World Class needs 5 years, levels survive a break). 1RM code deleted. Checked in the simulator: the sheet reads 20,400 lb → Novice … 3,405,000 lb and 5 years → World Class at a 227 lb bodyweight; the simulator's muscles all show Beginner (little logged volume) |
 | P3 | Edit Routine by describing it in a message ("4 days a week, upper/lower") | Suggestions → Training (2026-09-23, ⋯ menu, Edit half) | Triaged — on-device Foundation Models with a form fallback (decided 2026-09-23) |
 | P1 | Steps goal with a bar chart (whiteboard Goals card) — `StepEntry` (one total per day; logging a day again replaces it), `UserProfile.stepGoal` (default 10,000, migrates existing stores), Steps row on the Goals card, Steps screen with 7/30-day bars (green when the goal is met), dashed goal line, and average / goal-met counted over logged days; `StepsViewModelTests` | User request (direct, 2026-09-19, whiteboard sketch) | Done (a46cfe9) |
 

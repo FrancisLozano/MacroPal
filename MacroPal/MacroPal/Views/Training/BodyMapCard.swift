@@ -6,8 +6,8 @@
 import SwiftUI
 import SwiftData
 
-/// Front and back figures colored by how far each muscle has come, from your logged lifts
-/// (see `MuscleLevelEngine`). The ⓘ explains the level colors and what it takes to move up.
+/// Front and back figures colored by how far each muscle has come — the volume it has moved
+/// over time against your bodyweight (see `MuscleLevelEngine`). The ⓘ explains the level colors and what it takes to move up.
 struct BodyMapCard: View {
     @Query private var sessions: [WorkoutSession]
     @Query(sort: \WeightEntry.date, order: .reverse) private var weightEntries: [WeightEntry]
@@ -72,7 +72,7 @@ struct BodyMapCard: View {
     /// Only shown when something's missing that the figures can't make obvious on their own.
     private func prompt(hasColors: Bool) -> String? {
         if bodyweightKg == nil {
-            "Log your weight to see strength levels — muscles you train show as Beginner until then."
+            "Log your weight to see levels — muscles you train show as Beginner until then."
         } else if !hasColors {
             "Log a workout and the muscles you train will light up."
         } else {

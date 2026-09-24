@@ -41,19 +41,6 @@ final class WorkoutViewModel {
         return setEntry
     }
 
-    /// The best estimated one-rep max (kg) across the logged sets of `exercise` from sessions
-    /// before `cutoff`, used as the reference a planned set's weight is shown as a percentage of.
-    /// The tracking screen passes the start of today, so today's sets are never measured against
-    /// themselves (a first-ever set would otherwise read as ~80% of its own 1RM).
-    static func bestEstimated1RMKg(for exercise: Exercise, in sessions: [WorkoutSession], before cutoff: Date = .distantFuture) -> Double? {
-        sessions
-            .filter { $0.date < cutoff }
-            .flatMap(\.setEntries)
-            .filter { $0.exercise == exercise && $0.reps > 0 }
-            .map { OneRepMaxEstimator.epley(weightKg: $0.weightKg, reps: $0.reps) }
-            .max()
-    }
-
     /// The sets of `exercise` from the most recent session before `cutoff` that has any, in the
     /// order they were logged — the exercise screen's "Last:" values. `sessions` must be
     /// newest-first.
