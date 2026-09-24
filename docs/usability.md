@@ -1,13 +1,14 @@
 # Usability Notes & Feedback Log
 
 **Status:** Living document — ongoing, not tied to a phase
-**Started:** 2026-09-06 · **Last updated:** 2026-09-23 (late evening)
+**Started:** 2026-09-06 · **Last updated:** 2026-09-23 (night)
 
-## Start here (as of 2026-09-23, late evening)
+## Start here (as of 2026-09-23, night)
 
-**Where things stand.** All 13 Training / Goals suggestions from 2026-09-23 are built except
-one: describing a routine in a message (Next tasks, step 1). Everything is committed and pushed
-to `origin/main` (`e4ac35e`), and the working tree is clean. The rest of the day's work:
+**Where things stand.** All 13 Training / Goals suggestions from 2026-09-23 are built. The
+last one, **Edit Routine by message**, was built at night: a split picker plus a "Describe it"
+field that fills in the form with Apple's on-device model. Plan, what changed and how messages
+read: [routine-by-message-plan.md](routine-by-message-plan.md). The rest of the day's work:
 
 - **Exercise screen** (a plan day → an exercise, or an unplanned workout): a
   **Workout / Overview / Progress** switch. Plan and what changed while building:
@@ -27,7 +28,9 @@ to `origin/main` (`e4ac35e`), and the working tree is clean. The rest of the day
   history.
 - **Training** — body map colored by volume level (ⓘ → How Levels Work: each level in lb/kg
   for your bodyweight plus the time it needs), Current Plan card ("Gym Workout"; tap to
-  expand the week in place; ⋯ → drag to reorder or Edit Routine), Goals card (weight + steps,
+  expand the week in place; ⋯ → drag to reorder or Edit Routine — weekdays, a split menu
+  (Recommended / Upper/Lower / PPL / Full Body) and, with Apple Intelligence, a "Describe it"
+  field that fills both in), Goals card (weight + steps,
   each with a + to log; tap the value for its history and chart), Log an Unplanned Workout.
   No all-workouts history (removed on request); past sets live in each exercise's Progress.
 - **Exercise screen** — *Workout*: a row per set (reps and lb boxes, "Last:" from the
@@ -51,26 +54,18 @@ to `origin/main` (`e4ac35e`), and the working tree is clean. The rest of the day
   Don't delete them while testing.
 - Its muscles all show Beginner: there isn't enough volume logged to reach Novice.
 
-## Next tasks (as of 2026-09-23, late evening)
+## Next tasks (as of 2026-09-23, night)
 
-1. **Edit Routine by message** — the only suggestion from 2026-09-23 still open (Backlog P3).
-   Decided: Apple's on-device Foundation Models (iOS 26.5 target: no API key, no server). The
-   model returns a `@Generable` result (days per week, split names, maybe weekdays), and it
-   goes through the existing `RoutineTemplate` apply path (`RoutineTemplate.match` / `split(for:)`,
-   `RoutineTemplateTests`) so exercises carry over as they do today. Devices without Apple
-   Intelligence get a short form (days a week + split picker). **Write a short plan first**,
-   as [exercise-screen-plan.md](exercise-screen-plan.md) was done, and show it to the user
-   before building. Open points for that plan: what the model may return (only splits
-   `RoutineTemplate` knows, or free-form day names?), how to show the result before it's
-   applied, and how to test it (the model can't run in unit tests, so test the mapping from
-   the `@Generable` value).
-2. **Tune the volume thresholds** once real weeks are logged: `MuscleLevelEngine.levelMinimumBodyweights`
+1. **Tune the volume thresholds** once real weeks are logged: `MuscleLevelEngine.levelMinimumBodyweights`
    (90 / 600 / 2,500 / 7,500 / 15,000 bodyweights), the tenure months, and the bodyweight shares
    in `ExerciseMuscleData.swift`. The ⓘ sheet follows the constants.
-3. **Keep logging** Likes / Dislikes / Suggestions during the week of use below, then triage
-   them at the end of the week.
+2. **Keep logging** Likes / Dislikes / Suggestions during the week of use below, then triage
+   them at the end of the week — including how Edit Routine by message does with your own
+   wording.
 
 **Small leftovers, fine to do anytime:**
+- "PPL twice a week" reads as 2 days, Recommended (the on-device model's miss; the form shows
+  it before Save). Try a guide example or a code rule for "twice" if it comes up in real use.
 - `WorkoutSession.planDayName` / `exerciseNames` are now only used by `WorkoutSessionTests`,
   since Workout History was the only screen that used them. Delete them with their tests, or
   keep them if a history screen comes back.
@@ -102,6 +97,7 @@ built from those entries. This week is for collecting the next round.
 - Does the rest timer get in the way, or do you miss it when the app is in the background?
 - Is anything still slow to log — count the taps if it feels like too many.
 - Do the callouts show up when they should, and are they useful or noise?
+- Edit Routine by message: does it read what you type? Note any message it gets wrong.
 
 **Not seen in the app yet** — note it if you run into one: the protein callout (needs 4 logged
 days), a muscle reaching Novice on the body map, a Progress chart with several sessions, ft/in height entry, a "Push + Pull" History label.
@@ -129,6 +125,8 @@ Values as of 2026-09-23. "In app" means you can change it yourself; the rest are
 | Weekly body-map view | removed | git history before `373f28e` |
 | RPE / session notes on unplanned workouts | removed | old `LogWorkoutSessionView`, git history before `1737ed2` |
 | Rest-timer choices | 30 s – 5 min | `WorkoutPreferences.restChoices` |
+| Splits, and which days a count spreads to | Recommended, Upper/Lower, PPL, Full Body; 3 days → Mon/Wed/Fri | `RoutineTemplate.Split`, `slots(for:daysPerWeek:)`, `defaultWeekdays(count:)` |
+| How a message is read | on-device model + weekday/keyword words in code | `RoutineAssistant.instructions`, the `@Guide`s and word lists in `RoutineRequest` |
 
 Anything visual (sizes, spacing, colors, wording) — note the screen and what you'd change;
 a screenshot or sketch works best, as with the whiteboard for Training.
@@ -184,10 +182,16 @@ Both messages were checked by forcing the first attempt to fail with a temporary
   each set as logged. Profile → Workout's Show PRs toggle was deleted with the 1RM code. All 1RM code is deleted (`LiftStandard`,
   `OneRepMaxEstimator`, `StrengthStallRule`, the 1RM chart).
 - **Edit Routine by message uses Apple's on-device Foundation Models** (iOS 26: no API key,
-  no server, free). "4 days a week, upper/lower" becomes a typed `@Generable` result that goes
-  through the same `RoutineTemplate` apply path as today. Devices without Apple Intelligence
-  get a short form (days a week + split picker). The Claude API was ruled out because it needs
-  a backend to keep the key out of the app.
+  no server, free; built 2026-09-23). "4 days a week, upper/lower" becomes a typed
+  `@Generable` result (days per week, split) that **only fills in the form** — the user checks
+  it and taps Save, which goes through the same `RoutineTemplate.apply` path. Weekdays and
+  "is this about a routine" are decided in code, not by the model (it made both up). Without
+  Apple Intelligence the field is hidden and the form (weekdays + split menu) is all there is.
+  The Claude API was ruled out because it needs a backend to keep the key out of the app.
+- **A split is chosen, not only derived from the day count** (2026-09-23). Recommended keeps
+  the old table (4 days → Upper/Lower, 5 → PPL + Upper/Lower…); a named split repeats in order
+  (PPL on 4 days → Push, Pull, Legs, Push). The split isn't stored: the editor reads it back
+  from the plan's day names (`inferredSplit`), with Recommended winning a tie.
 - **No exercise GIFs for now.** The Overview tab has just Muscles Involved. The free GIF
   databases have unclear licenses.
 - **Progress is measured in volume, not 1RM** (user, 2026-09-23). The Progress tab shows
@@ -552,7 +556,7 @@ actually improving or just accumulating complaints.
 | Dislikes | 13 |
 | Suggestions | 20 |
 | Triaged (in Backlog) | 48 |
-| Done | 45 |
+| Done | 46 |
 | No change needed | 1 |
 | Won't Fix | 0 |
 
@@ -609,7 +613,7 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P2 | Progress tab measured in volume instead of 1RM — headline total volume, this week vs last week (± %), volume per session as tappable bars (`ExerciseVolumeChart`, replacing the 1RM line chart), history unchanged; 1RM summary, level bar and stall callout removed from the tab. `WorkoutProgressViewModel.volumeSummary` + a test | User request (direct, 2026-09-23, "I do not want to really see 1rm, I am more interested in total volume") | Done — checked in the simulator 2026-09-23 (Cable Crunch: 960 lb total, this week 960 / last week 0, one bar; tapping it shows "Sep 23 · 960 lb · 3 sets") |
 | P2 | Overview tab: a GIF of the exercise and Muscles Involved — body figure, Primary / Secondary labels, Flip View | Suggestions → Training (2026-09-23, Overview tab; reference: Caliber's Overview) | Done — built 2026-09-23 (`ExerciseOverviewTab`): Muscles Involved card: the figure on the left (primary solid, secondary light, the thumbnail's colors) with Primary / Secondary listed beside it on the right, most-involved first, and Flip View under the figure (lists moved beside the figure on user request, same evening). Then, also on request, **How to Do It** (numbered steps) and **Common Mistakes** (each mistake with its fix) cards under it, from `ExerciseGuides` — written for all 38 starter exercises (general coaching cues, not from one source; a test checks every starter exercise has one). Exercises the user created show a one-line note instead. Opens on the side with more of the primary muscles. Primary is involvement ≥ 0.8 (`ExerciseProfile.primaryMuscles`, now shared with the thumbnail; `ExerciseMusclesTests`); a full-body guess with nothing that high uses its top muscles. No GIF (decided). Checked in the simulator (Cable Crunch: Abs primary, Obliques secondary; flip to the back shows nothing highlighted). A back-first exercise opening on the back not seen live |
 | P2 | Muscle colors by volume moved (sets × reps × weight, e.g. 2 × 8 × 35 lb = 560 lb), keeping 1RM as a data point | Suggestions → Training (2026-09-23, muscle colors) | Done — built 2026-09-23 with the proposed thresholds (see Decisions and Things to know about the muscle levels): `MuscleLevelEngine` rewritten on lifetime volume, ⓘ How Levels Work shows each level's volume in the user's unit and its time, `MuscleLevelEngineTests` rewritten (3 weeks → Novice, a year → Advanced, World Class needs 5 years, levels survive a break). 1RM code deleted. Checked in the simulator: the sheet reads 20,400 lb → Novice … 3,405,000 lb and 5 years → World Class at a 227 lb bodyweight; the simulator's muscles all show Beginner (little logged volume) |
-| P3 | Edit Routine by describing it in a message ("4 days a week, upper/lower") | Suggestions → Training (2026-09-23, ⋯ menu, Edit half) | Triaged — on-device Foundation Models with a form fallback (decided 2026-09-23) |
+| P3 | Edit Routine by describing it in a message ("4 days a week, upper/lower") | Suggestions → Training (2026-09-23, ⋯ menu, Edit half) | Done — built 2026-09-23 ([routine-by-message-plan.md](routine-by-message-plan.md)): a split menu (Recommended / Upper/Lower / PPL / Full Body, new Full Body day) and a "Describe it" field that fills in the weekdays and split via on-device Foundation Models; nothing saves until Save. `RoutineTemplateTests`, `RoutineRequestTests`. Checked in the simulator ("4 days a week, upper/lower" → Mon/Tue/Thu/Fri Upper/Lower; "Mon Wed Fri full body"; picking PPL; all cancelled, plan unchanged). Known miss: "PPL twice a week" |
 | P1 | Steps goal with a bar chart (whiteboard Goals card) — `StepEntry` (one total per day; logging a day again replaces it), `UserProfile.stepGoal` (default 10,000, migrates existing stores), Steps row on the Goals card, Steps screen with 7/30-day bars (green when the goal is met), dashed goal line, and average / goal-met counted over logged days; `StepsViewModelTests` | User request (direct, 2026-09-19, whiteboard sketch) | Done (a46cfe9) |
 
 Priority scale: **P1** (actively annoying, fix soon) / **P2** (worth doing, no rush) /

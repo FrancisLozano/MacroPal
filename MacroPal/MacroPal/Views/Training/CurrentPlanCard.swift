@@ -78,7 +78,8 @@ struct CurrentPlanCard: View {
             NavigationStack {
                 RoutineEditorView(plan: plan)
             }
-            .presentationDetents([.medium, .large])
+            // Taller than .medium so a 6-day week fits under the message field.
+            .presentationDetents([.fraction(0.62), .large])
         }
     }
 

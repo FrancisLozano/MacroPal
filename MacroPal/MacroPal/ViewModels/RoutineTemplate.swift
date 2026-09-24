@@ -4,11 +4,30 @@
 //
 
 import Foundation
+import FoundationModels
 import SwiftData
 
 /// Turns a set of training weekdays into a sensible split, and rebuilds a plan from one.
 enum RoutineTemplate {
     static let daysPerWeekRange = 2...6
+
+    /// Which kind of days fill the week. `recommended` picks one from the day count.
+    /// `@Generable` so a described routine (`RoutineRequest`) can name one.
+    @Generable
+    enum Split: String, CaseIterable, Identifiable {
+        case recommended, upperLower, pushPullLegs, fullBody
+
+        var id: Self { self }
+
+        var displayName: String {
+            switch self {
+            case .recommended: "Recommended"
+            case .upperLower: "Upper/Lower"
+            case .pushPullLegs: "PPL"
+            case .fullBody: "Full Body"
+            }
+        }
+    }
 
     struct Slot {
         let name: String
@@ -21,15 +40,46 @@ enum RoutineTemplate {
     private static let legsAndAbs = Slot(name: "Legs & Abs", focus: "Quads, hamstrings, glutes, core")
     private static let upper = Slot(name: "Upper", focus: "Chest, back, shoulders, arms")
     private static let lower = Slot(name: "Lower", focus: "Legs, glutes, core")
+    private static let fullBody = Slot(name: "Full Body", focus: "Legs, chest, back, shoulders")
 
-    static func slots(forDaysPerWeek count: Int) -> [Slot] {
+    /// Spread-out training days for `count` days a week (`Calendar` weekday numbers), for when
+    /// nothing says which days: 2 → Mon/Thu, 3 → Mon/Wed/Fri, 4 → Mon/Tue/Thu/Fri, 5 → Mon–Fri,
+    /// 6 → Mon–Sat.
+    static func defaultWeekdays(count: Int) -> Set<Int> {
         switch count {
-        case ...2: [upper, lower]
-        case 3: [push, pull, legs]
-        case 4: [upper, lower, upper, lower]
-        case 5: [push, pull, legsAndAbs, upper, lower]
-        default: [push, pull, legs, push, pull, legs]
+        case ...2: [2, 5]
+        case 3: [2, 4, 6]
+        case 4: [2, 3, 5, 6]
+        case 5: Set(2...6)
+        default: Set(2...7)
         }
+    }
+
+    /// A named split repeats its days in order when the count doesn't divide evenly: PPL on
+    /// 4 days is Push, Pull, Legs, Push.
+    static func slots(for split: Split = .recommended, daysPerWeek count: Int) -> [Slot] {
+        let cycle: [Slot]
+        switch split {
+        case .recommended:
+            switch count {
+            case ...2: return [upper, lower]
+            case 3: return [push, pull, legs]
+            case 4: return [upper, lower, upper, lower]
+            case 5: return [push, pull, legsAndAbs, upper, lower]
+            default: return [push, pull, legs, push, pull, legs]
+            }
+        case .upperLower: cycle = [upper, lower]
+        case .pushPullLegs: cycle = [push, pull, legs]
+        case .fullBody: cycle = [fullBody]
+        }
+        return (0..<max(count, 0)).map { cycle[$0 % cycle.count] }
+    }
+
+    /// The split whose days are `names` (in week order), so the editor opens on the split the
+    /// plan already has. `recommended` wins a tie, and is the answer for anything else.
+    static func inferredSplit(fromDayNames names: [String]) -> Split {
+        guard !names.isEmpty else { return .recommended }
+        return Split.allCases.first { slots(for: $0, daysPerWeek: names.count).map(\.name) == names } ?? .recommended
     }
 
     /// Muscle groups a day of this name trains, for suggesting exercises. Empty for a name
@@ -42,14 +92,15 @@ enum RoutineTemplate {
         case legsAndAbs.name: [.legs, .core]
         case upper.name: [.chest, .back, .shoulders, .arms]
         case lower.name: [.legs, .core]
+        case fullBody.name: [.fullBody, .legs, .chest, .back, .shoulders]
         default: []
         }
     }
 
     /// The split for `weekdays` (`Calendar` weekday numbers): one slot per day, in week order.
-    static func split(for weekdays: Set<Int>) -> [(weekday: Int, slot: Slot)] {
+    static func split(for weekdays: Set<Int>, split: Split = .recommended) -> [(weekday: Int, slot: Slot)] {
         let sorted = weekdays.sorted()
-        return zip(sorted, slots(forDaysPerWeek: sorted.count)).map { (weekday: $0, slot: $1) }
+        return zip(sorted, slots(for: split, daysPerWeek: sorted.count)).map { (weekday: $0, slot: $1) }
     }
 
     /// Pairs each slot with an existing day of the same name, so the day's exercises carry over.
@@ -89,17 +140,22 @@ enum RoutineTemplate {
         return min(gap, 7 - gap)
     }
 
-    /// Replaces `plan`'s days with a split for `weekdays` (`Calendar` weekday numbers), keeping
+    /// Replaces `plan`'s days with `split` on `weekdays` (`Calendar` weekday numbers), keeping
     /// the exercises of any day whose name carries over. Creates the plan if there isn't one.
     @discardableResult
-    static func apply(weekdays: Set<Int>, to plan: WorkoutPlan?, in context: ModelContext) -> WorkoutPlan {
+    static func apply(
+        weekdays: Set<Int>,
+        split: Split = .recommended,
+        to plan: WorkoutPlan?,
+        in context: ModelContext
+    ) -> WorkoutPlan {
         let plan = plan ?? {
             let new = WorkoutPlan()
             context.insert(new)
             return new
         }()
 
-        let newSplit = split(for: weekdays)
+        let newSplit = Self.split(for: weekdays, split: split)
         let (claimed, leftover) = match(split: newSplit, to: plan.sortedDays, name: \.name, weekday: \.weekday)
         plan.days = []
 

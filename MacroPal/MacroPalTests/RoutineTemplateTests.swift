@@ -85,4 +85,50 @@ struct RoutineTemplateTests {
         #expect(result.claimed == [nil, nil, nil])
         #expect(result.leftover.isEmpty)
     }
+
+    // MARK: - Splits
+
+    private func names(_ split: RoutineTemplate.Split, _ count: Int) -> [String] {
+        RoutineTemplate.slots(for: split, daysPerWeek: count).map(\.name)
+    }
+
+    @Test func recommendedFollowsTheDayCount() {
+        #expect(names(.recommended, 4) == ["Upper", "Lower", "Upper", "Lower"])
+        #expect(names(.recommended, 5) == ["Push", "Pull", "Legs & Abs", "Upper", "Lower"])
+    }
+
+    @Test func aNamedSplitRepeatsInOrder() {
+        #expect(names(.pushPullLegs, 4) == ["Push", "Pull", "Legs", "Push"])
+        #expect(names(.upperLower, 3) == ["Upper", "Lower", "Upper"])
+        #expect(names(.fullBody, 2) == ["Full Body", "Full Body"])
+    }
+
+    @Test func theSplitIsReadBackFromDayNames() {
+        #expect(RoutineTemplate.inferredSplit(fromDayNames: ["Push", "Pull", "Legs", "Push"]) == .pushPullLegs)
+        #expect(RoutineTemplate.inferredSplit(fromDayNames: ["Full Body", "Full Body", "Full Body"]) == .fullBody)
+        // Upper/Lower on 4 days is also what Recommended picks, and Recommended wins the tie.
+        #expect(RoutineTemplate.inferredSplit(fromDayNames: fourDay.map(\.name)) == .recommended)
+        #expect(RoutineTemplate.inferredSplit(fromDayNames: ["Upper", "Push"]) == .recommended)
+        #expect(RoutineTemplate.inferredSplit(fromDayNames: []) == .recommended)
+    }
+
+    @Test func switchingSplitKeepsDaysWhoseNameCarriesOver() {
+        // Upper/Lower → PPL on the same 4 days: no day shares a name, so nothing carries over.
+        let toPPL = RoutineTemplate.match(
+            split: RoutineTemplate.split(for: [mon, tue, thu, sat], split: .pushPullLegs),
+            to: fourDay, name: \.name, weekday: \.weekday)
+        #expect(toPPL.claimed == [nil, nil, nil, nil])
+        #expect(toPPL.leftover == fourDay)
+
+        // Upper/Lower on 3 days keeps Monday's Upper, Tuesday's Lower and Thursday's Upper.
+        let toThree = RoutineTemplate.match(
+            split: RoutineTemplate.split(for: [mon, tue, thu], split: .upperLower),
+            to: fourDay, name: \.name, weekday: \.weekday)
+        #expect(toThree.claimed == Array(fourDay.prefix(3)))
+        #expect(toThree.leftover == [Day(name: "Lower", weekday: sat)])
+    }
+
+    @Test func fullBodyDaysSuggestExercises() {
+        #expect(RoutineTemplate.muscleGroups(forDayNamed: "Full Body").first == .fullBody)
+    }
 }
