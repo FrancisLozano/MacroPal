@@ -10,33 +10,94 @@ import FoundationModels
 /// it. It only fills in the Edit Routine form — `resolve` turns it into the form's weekdays
 /// and split, and nothing is saved until the user taps Save.
 ///
-/// Weekdays aren't asked of the model: it made them up for messages that named none, so
-/// they're read from the text instead (`weekdays(in:)`).
+/// What the text says plainly wins over the model, which got these wrong: weekdays (it made
+/// them up), a split's short names ("U/L"), and "twice a week" (it read "PPL twice a week" as
+/// 2 days). See `MessageCues`.
 @Generable
 struct RoutineRequest {
     @Guide(description: "The number of days per week written in the message (a digit, a number word, or 'twice' for a split, so PPL twice a week is 6). nil if no number is written.", .range(2...6))
     var daysPerWeek: Int?
 
-    @Guide(description: "The split written in the message. recommended if the message doesn't write upper/lower, push/pull/legs, PPL or full body.")
+    @Guide(description: "The split written in the message: upperLower, pushPullLegs (PPL), pushPullLegsUpperLower (PPL and upper/lower together) or fullBody. recommended if the message doesn't write one.")
     var split: RoutineTemplate.Split
 
-    /// The form's weekdays and split for this request. Weekdays named in the message win when
-    /// there are 2–6 of them. Otherwise the day count is the one read (else the current
-    /// count), on the current days if there are that many, or else spread out by
-    /// `RoutineTemplate.defaultWeekdays`.
-    func resolve(namedWeekdays: Set<Int>, currentWeekdays: Set<Int>) -> (weekdays: Set<Int>, split: RoutineTemplate.Split) {
+    /// The form's weekdays and split for `message`. `currentWeekdays` is what the form shows now.
+    ///
+    /// - Split: one named in the text, else the model's.
+    /// - Days: 2–6 weekdays named in the text win. Otherwise "twice" doubles a named split
+    ///   (PPL → 6) when the model read no count or read the "twice" as 2. Otherwise the model's
+    ///   count if the text has a number, else 5 for PPL + Upper/Lower, else the current count.
+    /// - Weekdays for a count: the current days if there are that many, else spread out by
+    ///   `RoutineTemplate.defaultWeekdays`.
+    func resolve(message: String, currentWeekdays: Set<Int>) -> (weekdays: Set<Int>, split: RoutineTemplate.Split) {
+        let cues = MessageCues(message)
+        let split = cues.split ?? split
         let range = RoutineTemplate.daysPerWeekRange
-        if range.contains(namedWeekdays.count) {
-            return (namedWeekdays, split)
+        if range.contains(cues.weekdays.count) {
+            return (cues.weekdays, split)
         }
-        let count = min(max(daysPerWeek ?? currentWeekdays.count, range.lowerBound), range.upperBound)
+
+        // Without a number in the text, the model's count is made up.
+        let modelDays = cues.hasNumber ? daysPerWeek : nil
+        let cycle = RoutineTemplate.cycle(for: split)
+        var count = modelDays ?? currentWeekdays.count
+        if cues.saysTwice, modelDays == nil || modelDays == 2,
+           let cycle, range.contains(cycle.count * 2) {
+            count = cycle.count * 2
+        } else if modelDays == nil, split == .pushPullLegsUpperLower, let cycle {
+            count = cycle.count
+        }
+        count = min(max(count, range.lowerBound), range.upperBound)
         let weekdays = currentWeekdays.count == count ? currentWeekdays : RoutineTemplate.defaultWeekdays(count: count)
         return (weekdays, split)
     }
+
+    /// Whether `message` has anything the form can use — a number, a weekday or a split — so
+    /// an unrelated message gets a hint instead of whatever the model makes of it (it read
+    /// "make me a sandwich" as 2 days a week).
+    static func looksLikeARoutine(_ message: String) -> Bool {
+        MessageCues(message).looksLikeARoutine
+    }
 }
 
-extension RoutineRequest {
-    /// Words that name a weekday, and its `Calendar` weekday number.
+/// What a message says in plain words, read without the model.
+struct MessageCues {
+    /// `Calendar` weekday numbers named ("Mon", "wednesday", "Fridays").
+    let weekdays: Set<Int>
+    /// A split named by its usual words or short names ("PPL", "U/L", "push pull legs",
+    /// "full body"); PPL and Upper/Lower together make the 5-day hybrid.
+    let split: RoutineTemplate.Split?
+    /// "twice", "2x" or "two/2 times".
+    let saysTwice: Bool
+    /// A digit or a number word ("4", "4x", "three", "twice").
+    let hasNumber: Bool
+    let looksLikeARoutine: Bool
+
+    init(_ message: String) {
+        let words = message.lowercased().split { !$0.isLetter && !$0.isNumber }.map(String.init)
+        let pairs = Set(zip(words, words.dropFirst()).map { $0 + " " + $1 })
+        let triples = Set(zip(words, zip(words.dropFirst(), words.dropFirst(2))).map { "\($0) \($1.0) \($1.1)" })
+        let has = { (word: String) in words.contains(word) }
+
+        weekdays = Set(words.compactMap { Self.weekdayWords[$0] })
+
+        // "u/l" and "p/p/l" split into single letters, so they're matched as a run of words.
+        let ppl = has("ppl") || triples.contains("p p l") || (has("push") && has("pull"))
+        let upperLower = has("ul") || pairs.contains("u l") || (has("upper") && has("lower"))
+        let fullBody = has("fullbody") || pairs.contains("full body")
+        split = switch (ppl, upperLower) {
+        case (true, true): .pushPullLegsUpperLower
+        case (true, false): .pushPullLegs
+        case (false, true): .upperLower
+        case (false, false): fullBody ? .fullBody : nil
+        }
+
+        saysTwice = has("twice") || has("2x") || pairs.contains("two times") || pairs.contains("2 times")
+
+        hasNumber = words.contains { $0.contains(where: \.isNumber) || Self.numberWords.contains($0) }
+        looksLikeARoutine = hasNumber || split != nil || !weekdays.isEmpty || words.contains { Self.splitWords.contains($0) }
+    }
+
     private static let weekdayWords: [String: Int] = [
         "sun": 1, "sunday": 1, "sundays": 1,
         "mon": 2, "monday": 2, "mondays": 2,
@@ -49,24 +110,6 @@ extension RoutineRequest {
 
     private static let numberWords: Set<String> = ["two", "three", "four", "five", "six", "twice", "thrice"]
 
-    private static let splitWords: Set<String> = ["upper", "lower", "push", "pull", "leg", "legs", "ppl", "full"]
-
-    private static func words(in message: String) -> [String] {
-        message.lowercased().split { !$0.isLetter && !$0.isNumber }.map(String.init)
-    }
-
-    /// `Calendar` weekday numbers named in `message` ("Mon", "wednesday", "Fridays").
-    static func weekdays(in message: String) -> Set<Int> {
-        Set(words(in: message).compactMap { weekdayWords[$0] })
-    }
-
-    /// Whether `message` has anything the form can use — a number, a weekday or a split — so
-    /// an unrelated message gets a hint instead of whatever the model makes of it (it read
-    /// "make me a sandwich" as 2 days a week).
-    static func looksLikeARoutine(_ message: String) -> Bool {
-        words(in: message).contains { word in
-            word.contains(where: \.isNumber) || numberWords.contains(word)
-                || weekdayWords[word] != nil || splitWords.contains(word)
-        }
-    }
+    /// Words that hint at a split on their own ("upper body days"), beyond the full names above.
+    private static let splitWords: Set<String> = ["upper", "lower", "push", "pull", "leg", "legs", "full"]
 }

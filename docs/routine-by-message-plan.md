@@ -25,6 +25,13 @@ Recommended as the default)
 - **The sheet opens taller** (62% of the screen instead of half) and its form scrolls, so a
   6-day week fits under the message field (user, 2026-09-23); the field sits 8 pt below the
   navigation bar.
+- **Split names and "twice" are read from the text too** (user request, same night). "PPL",
+  "p/p/l", "push pull legs", "U/L", "UL", "upper/lower", "full body" name a split; PPL and
+  U/L together name the new **PPL + U/L** split (Push, Pull, Legs & Abs, Upper, Lower — the
+  same days as Recommended on 5, so switching keeps exercises; 5 days unless a number is
+  given). "Twice" / "2x" / "two times" doubles a named split (PPL → 6, U/L → 4, full body → 2)
+  when that fits in 6 days. The model's count is ignored when the message has no number,
+  since it's made up then. All in `MessageCues`.
 - Failures are logged (`RoutineAssistant` category) with the error, since the UI only shows a
   hint.
 
@@ -39,7 +46,8 @@ also checked in the app):
 | switch to push pull legs | — | PPL | current days, PPL |
 | I want to train 5 times a week | 5 | Recommended | |
 | upper body one day, lower body the next, 4x a week | 4 | Upper/Lower | |
-| **PPL twice a week** | **2** ✗ | **Recommended** ✗ | wrong — should be 6, PPL. Fix it in the form |
+| PPL twice a week | 2 → 6 in code | Recommended → PPL in code | Mon–Sat, PPL (checked in the app) |
+| ppl and U/L | | PPL + U/L in code | current 5 days, PPL + U/L (checked in the app) |
 | make me a sandwich | not sent to the model | | the hint |
 
 ## What it changes

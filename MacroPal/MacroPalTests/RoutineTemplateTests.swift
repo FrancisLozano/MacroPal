@@ -101,6 +101,12 @@ struct RoutineTemplateTests {
         #expect(names(.pushPullLegs, 4) == ["Push", "Pull", "Legs", "Push"])
         #expect(names(.upperLower, 3) == ["Upper", "Lower", "Upper"])
         #expect(names(.fullBody, 2) == ["Full Body", "Full Body"])
+        #expect(names(.pushPullLegsUpperLower, 6) == ["Push", "Pull", "Legs & Abs", "Upper", "Lower", "Push"])
+    }
+
+    @Test func thePPLUpperLowerHybridMatchesRecommendedFiveDays() {
+        // Same day names, so switching between them keeps every day's exercises.
+        #expect(names(.pushPullLegsUpperLower, 5) == names(.recommended, 5))
     }
 
     @Test func theSplitIsReadBackFromDayNames() {

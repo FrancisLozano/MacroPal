@@ -5,10 +5,14 @@
 
 ## Start here (as of 2026-09-23, night)
 
-**Where things stand.** All 13 Training / Goals suggestions from 2026-09-23 are built. The
-last one, **Edit Routine by message**, was built at night: a split picker plus a "Describe it"
-field that fills in the form with Apple's on-device model. Plan, what changed and how messages
-read: [routine-by-message-plan.md](routine-by-message-plan.md). The rest of the day's work:
+**Where things stand.** All 13 Training / Goals suggestions from 2026-09-23 are built,
+committed and pushed to `origin/main`; the working tree is clean. **Nothing is being built
+right now** — the next step is the week of real use (Next tasks). The last piece, **Edit
+Routine by message**, was built at night: a split menu plus a "Describe it" field that fills
+in the form with Apple's on-device model; on request, "PPL twice a week" (→ 6 days PPL) and
+"ppl and U/L" (→ the new PPL + U/L split) were then made to work. Plan, what changed and a
+table of how messages read: [routine-by-message-plan.md](routine-by-message-plan.md). The
+rest of the day's work:
 
 - **Exercise screen** (a plan day → an exercise, or an unplanned workout): a
   **Workout / Overview / Progress** switch. Plan and what changed while building:
@@ -29,7 +33,7 @@ read: [routine-by-message-plan.md](routine-by-message-plan.md). The rest of the 
 - **Training** — body map colored by volume level (ⓘ → How Levels Work: each level in lb/kg
   for your bodyweight plus the time it needs), Current Plan card ("Gym Workout"; tap to
   expand the week in place; ⋯ → drag to reorder or Edit Routine — weekdays, a split menu
-  (Recommended / Upper/Lower / PPL / Full Body) and, with Apple Intelligence, a "Describe it"
+  (Recommended / Upper/Lower / PPL / PPL + U/L / Full Body) and, with Apple Intelligence, a "Describe it"
   field that fills both in), Goals card (weight + steps,
   each with a + to log; tap the value for its history and chart), Log an Unplanned Workout.
   No all-workouts history (removed on request); past sets live in each exercise's Progress.
@@ -53,6 +57,17 @@ read: [routine-by-message-plan.md](routine-by-message-plan.md). The rest of the 
 - Today's Cable Crunch sets in the simulator (3 × 30 lb: 8, 12, 12) are the user's own.
   Don't delete them while testing.
 - Its muscles all show Beginner: there isn't enough volume logged to reach Novice.
+- The simulator has Apple Intelligence (through the Mac), so the "Describe it" field shows
+  and works there. When testing Edit Routine, **Cancel** — Save rewrites the user's 5-day
+  plan (Mon/Tue/Wed/Fri/Sat, Push/Pull/Legs & Abs/Upper/Lower).
+- **Trying prompt wording:** a small `swiftc` script on the Mac with `import FoundationModels`
+  runs the same on-device model as the simulator, and is much faster than typing into the
+  app. The model is weak (~3B): it refused a first set of instructions as "sensitive", made
+  up weekdays and day counts, and couldn't spot off-topic messages. So anything the text says
+  plainly is read in code (`MessageCues`), with the model as the fallback — keep new rules
+  there, with a test, rather than only tweaking the prompt.
+- Model failures are logged: `xcrun simctl spawn booted log show --last 5m --predicate
+  'subsystem == "com.francislozano.MacroPal" AND category == "RoutineAssistant"' --info`.
 
 ## Next tasks (as of 2026-09-23, night)
 
@@ -61,11 +76,9 @@ read: [routine-by-message-plan.md](routine-by-message-plan.md). The rest of the 
    in `ExerciseMuscleData.swift`. The ⓘ sheet follows the constants.
 2. **Keep logging** Likes / Dislikes / Suggestions during the week of use below, then triage
    them at the end of the week — including how Edit Routine by message does with your own
-   wording.
+   wording (note the exact message and what it filled in).
 
 **Small leftovers, fine to do anytime:**
-- "PPL twice a week" reads as 2 days, Recommended (the on-device model's miss; the form shows
-  it before Save). Try a guide example or a code rule for "twice" if it comes up in real use.
 - `WorkoutSession.planDayName` / `exerciseNames` are now only used by `WorkoutSessionTests`,
   since Workout History was the only screen that used them. Delete them with their tests, or
   keep them if a history screen comes back.
@@ -125,8 +138,8 @@ Values as of 2026-09-23. "In app" means you can change it yourself; the rest are
 | Weekly body-map view | removed | git history before `373f28e` |
 | RPE / session notes on unplanned workouts | removed | old `LogWorkoutSessionView`, git history before `1737ed2` |
 | Rest-timer choices | 30 s – 5 min | `WorkoutPreferences.restChoices` |
-| Splits, and which days a count spreads to | Recommended, Upper/Lower, PPL, Full Body; 3 days → Mon/Wed/Fri | `RoutineTemplate.Split`, `slots(for:daysPerWeek:)`, `defaultWeekdays(count:)` |
-| How a message is read | on-device model + weekday/keyword words in code | `RoutineAssistant.instructions`, the `@Guide`s and word lists in `RoutineRequest` |
+| Splits, and which days a count spreads to | Recommended, Upper/Lower, PPL, PPL + U/L, Full Body; 3 days → Mon/Wed/Fri | `RoutineTemplate.Split`, `slots(for:daysPerWeek:)`, `defaultWeekdays(count:)` |
+| How a message is read | on-device model; weekdays, split names ("PPL", "U/L") and "twice" in code | `RoutineAssistant.instructions`, the `@Guide`s in `RoutineRequest`, word lists in `MessageCues` |
 
 Anything visual (sizes, spacing, colors, wording) — note the screen and what you'd change;
 a screenshot or sketch works best, as with the whiteboard for Training.
@@ -613,7 +626,7 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P2 | Progress tab measured in volume instead of 1RM — headline total volume, this week vs last week (± %), volume per session as tappable bars (`ExerciseVolumeChart`, replacing the 1RM line chart), history unchanged; 1RM summary, level bar and stall callout removed from the tab. `WorkoutProgressViewModel.volumeSummary` + a test | User request (direct, 2026-09-23, "I do not want to really see 1rm, I am more interested in total volume") | Done — checked in the simulator 2026-09-23 (Cable Crunch: 960 lb total, this week 960 / last week 0, one bar; tapping it shows "Sep 23 · 960 lb · 3 sets") |
 | P2 | Overview tab: a GIF of the exercise and Muscles Involved — body figure, Primary / Secondary labels, Flip View | Suggestions → Training (2026-09-23, Overview tab; reference: Caliber's Overview) | Done — built 2026-09-23 (`ExerciseOverviewTab`): Muscles Involved card: the figure on the left (primary solid, secondary light, the thumbnail's colors) with Primary / Secondary listed beside it on the right, most-involved first, and Flip View under the figure (lists moved beside the figure on user request, same evening). Then, also on request, **How to Do It** (numbered steps) and **Common Mistakes** (each mistake with its fix) cards under it, from `ExerciseGuides` — written for all 38 starter exercises (general coaching cues, not from one source; a test checks every starter exercise has one). Exercises the user created show a one-line note instead. Opens on the side with more of the primary muscles. Primary is involvement ≥ 0.8 (`ExerciseProfile.primaryMuscles`, now shared with the thumbnail; `ExerciseMusclesTests`); a full-body guess with nothing that high uses its top muscles. No GIF (decided). Checked in the simulator (Cable Crunch: Abs primary, Obliques secondary; flip to the back shows nothing highlighted). A back-first exercise opening on the back not seen live |
 | P2 | Muscle colors by volume moved (sets × reps × weight, e.g. 2 × 8 × 35 lb = 560 lb), keeping 1RM as a data point | Suggestions → Training (2026-09-23, muscle colors) | Done — built 2026-09-23 with the proposed thresholds (see Decisions and Things to know about the muscle levels): `MuscleLevelEngine` rewritten on lifetime volume, ⓘ How Levels Work shows each level's volume in the user's unit and its time, `MuscleLevelEngineTests` rewritten (3 weeks → Novice, a year → Advanced, World Class needs 5 years, levels survive a break). 1RM code deleted. Checked in the simulator: the sheet reads 20,400 lb → Novice … 3,405,000 lb and 5 years → World Class at a 227 lb bodyweight; the simulator's muscles all show Beginner (little logged volume) |
-| P3 | Edit Routine by describing it in a message ("4 days a week, upper/lower") | Suggestions → Training (2026-09-23, ⋯ menu, Edit half) | Done — built 2026-09-23 ([routine-by-message-plan.md](routine-by-message-plan.md)): a split menu (Recommended / Upper/Lower / PPL / Full Body, new Full Body day) and a "Describe it" field that fills in the weekdays and split via on-device Foundation Models; nothing saves until Save. `RoutineTemplateTests`, `RoutineRequestTests`. Checked in the simulator ("4 days a week, upper/lower" → Mon/Tue/Thu/Fri Upper/Lower; "Mon Wed Fri full body"; picking PPL; all cancelled, plan unchanged). Known miss: "PPL twice a week" |
+| P3 | Edit Routine by describing it in a message ("4 days a week, upper/lower") | Suggestions → Training (2026-09-23, ⋯ menu, Edit half) | Done — built 2026-09-23 ([routine-by-message-plan.md](routine-by-message-plan.md)): a split menu (Recommended / Upper/Lower / PPL / Full Body, new Full Body day) and a "Describe it" field that fills in the weekdays and split via on-device Foundation Models; nothing saves until Save. `RoutineTemplateTests`, `RoutineRequestTests`. Checked in the simulator ("4 days a week, upper/lower" → Mon/Tue/Thu/Fri Upper/Lower; "Mon Wed Fri full body"; picking PPL; all cancelled, plan unchanged). Follow-up on request: "PPL twice a week" → 6 days PPL and "ppl and U/L" → the new PPL + U/L split, both read in code (`MessageCues`) and checked in the simulator |
 | P1 | Steps goal with a bar chart (whiteboard Goals card) — `StepEntry` (one total per day; logging a day again replaces it), `UserProfile.stepGoal` (default 10,000, migrates existing stores), Steps row on the Goals card, Steps screen with 7/30-day bars (green when the goal is met), dashed goal line, and average / goal-met counted over logged days; `StepsViewModelTests` | User request (direct, 2026-09-19, whiteboard sketch) | Done (a46cfe9) |
 
 Priority scale: **P1** (actively annoying, fix soon) / **P2** (worth doing, no rush) /

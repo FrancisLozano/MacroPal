@@ -15,7 +15,7 @@ enum RoutineTemplate {
     /// `@Generable` so a described routine (`RoutineRequest`) can name one.
     @Generable
     enum Split: String, CaseIterable, Identifiable {
-        case recommended, upperLower, pushPullLegs, fullBody
+        case recommended, upperLower, pushPullLegs, pushPullLegsUpperLower, fullBody
 
         var id: Self { self }
 
@@ -24,6 +24,7 @@ enum RoutineTemplate {
             case .recommended: "Recommended"
             case .upperLower: "Upper/Lower"
             case .pushPullLegs: "PPL"
+            case .pushPullLegsUpperLower: "PPL + U/L"
             case .fullBody: "Full Body"
             }
         }
@@ -55,12 +56,23 @@ enum RoutineTemplate {
         }
     }
 
+    /// One round of a named split's days; nil for `recommended`, which depends on the count.
+    /// PPL + Upper/Lower uses Legs & Abs, as Recommended's 5-day split does, so switching
+    /// between the two keeps every day's exercises.
+    static func cycle(for split: Split) -> [Slot]? {
+        switch split {
+        case .recommended: nil
+        case .upperLower: [upper, lower]
+        case .pushPullLegs: [push, pull, legs]
+        case .pushPullLegsUpperLower: [push, pull, legsAndAbs, upper, lower]
+        case .fullBody: [fullBody]
+        }
+    }
+
     /// A named split repeats its days in order when the count doesn't divide evenly: PPL on
     /// 4 days is Push, Pull, Legs, Push.
     static func slots(for split: Split = .recommended, daysPerWeek count: Int) -> [Slot] {
-        let cycle: [Slot]
-        switch split {
-        case .recommended:
+        guard let cycle = cycle(for: split) else {
             switch count {
             case ...2: return [upper, lower]
             case 3: return [push, pull, legs]
@@ -68,9 +80,6 @@ enum RoutineTemplate {
             case 5: return [push, pull, legsAndAbs, upper, lower]
             default: return [push, pull, legs, push, pull, legs]
             }
-        case .upperLower: cycle = [upper, lower]
-        case .pushPullLegs: cycle = [push, pull, legs]
-        case .fullBody: cycle = [fullBody]
         }
         return (0..<max(count, 0)).map { cycle[$0 % cycle.count] }
     }

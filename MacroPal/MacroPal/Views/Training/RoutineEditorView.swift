@@ -152,10 +152,7 @@ struct RoutineEditorView: View {
             defer { isInterpreting = false }
             do {
                 let request = try await RoutineAssistant.interpret(text)
-                let resolved = request.resolve(
-                    namedWeekdays: RoutineRequest.weekdays(in: text),
-                    currentWeekdays: selectedWeekdays
-                )
+                let resolved = request.resolve(message: text, currentWeekdays: selectedWeekdays)
                 withAnimation {
                     selectedWeekdays = resolved.weekdays
                     split = resolved.split
