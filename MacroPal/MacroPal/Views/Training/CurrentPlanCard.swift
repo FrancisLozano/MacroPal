@@ -53,8 +53,12 @@ struct CurrentPlanCard: View {
                             }
                             .buttonStyle(.plain)
                             .accessibilityHint(showWeek ? "Hides the week" : "Shows the week")
+                            // The expanded week already marks today, so the today line would
+                            // repeat it.
                             if showWeek {
                                 week(plan: plan)
+                            } else {
+                                todayRow
                             }
                         }
                     }
@@ -79,23 +83,28 @@ struct CurrentPlanCard: View {
     }
 
     private func summary(plan: WorkoutPlan) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Gym Workout")
-                    .font(.title3.bold())
-                Text(daysPerWeek(plan.days.count))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-            // The expanded week already marks today, so the line would repeat it.
-            if !showWeek {
-                separator
-                Text(today.map { "Today: \($0.name)" } ?? "Today: Rest day")
-                    .font(.subheadline.bold())
-            }
+        VStack(alignment: .leading, spacing: 2) {
+            Text("Gym Workout")
+                .font(.title3.bold())
+            Text(daysPerWeek(plan.days.count))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
+    }
+
+    /// "Today: Legs & Abs", spaced like a line of the week and opening that day the same way.
+    @ViewBuilder
+    private var todayRow: some View {
+        separator
+            .padding(.vertical, 14)
+        if let today {
+            dayLink(today, title: "Today: \(today.name)", isBold: false)
+        } else {
+            Text("Today: Rest day")
+                .font(.subheadline)
+        }
     }
 
     /// Every workout of the week under the summary, one line each ("Monday: Push", today in
@@ -106,18 +115,26 @@ struct CurrentPlanCard: View {
             ForEach(plan.sortedDays) { day in
                 separator
                     .padding(.vertical, 14)
-                NavigationLink {
-                    PlanDayDetailView(day: day)
-                } label: {
-                    Text("\(Calendar.current.weekdaySymbols[day.weekday - 1]): \(day.name)")
-                        .font(.subheadline)
-                        .fontWeight(day.weekday == todayWeekday ? .bold : .regular)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
+                dayLink(
+                    day,
+                    title: "\(Calendar.current.weekdaySymbols[day.weekday - 1]): \(day.name)",
+                    isBold: day.weekday == todayWeekday
+                )
             }
         }
+    }
+
+    private func dayLink(_ day: PlanDay, title: String, isBold: Bool) -> some View {
+        NavigationLink {
+            PlanDayDetailView(day: day)
+        } label: {
+            Text(title)
+                .font(.subheadline)
+                .fontWeight(isBold ? .bold : .regular)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     /// A 1-pt line rather than `Divider()`: the system hairline blurs away at some row
