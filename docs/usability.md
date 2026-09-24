@@ -84,11 +84,11 @@ rest of the day's work:
    them at the end of the week — including how Edit Routine by message does with your own
    wording (note the exact message and what it filled in).
 
-**Small leftovers, fine to do anytime:**
-- `WorkoutSession.planDayName` / `exerciseNames` are now only used by `WorkoutSessionTests`,
-  since Workout History was the only screen that used them. Delete them with their tests, or
-  keep them if a history screen comes back.
-- `Insight.RuleIdentifier.strengthStall` stays so old stored `Insight` rows still decode.
+**Small leftovers:**
+- ~~`WorkoutSession.planDayName` / `exerciseNames`~~ deleted 2026-09-23 with their tests; only
+  Workout History used them. If a history screen comes back, they're in git history before
+  that commit (the session label joined its sets' plan days: "Push + Pull").
+- Kept on purpose: `Insight.RuleIdentifier.strengthStall` stays so old stored `Insight` rows still decode.
   The rule itself is gone.
 
 ## A week of real use (2026-09-24 → 2026-09-30)
@@ -120,7 +120,7 @@ built from those entries. This week is for collecting the next round.
 - Edit Routine by message: does it read what you type? Note any message it gets wrong.
 
 **Not seen in the app yet** — note it if you run into one: the protein callout (needs 4 logged
-days), a muscle reaching Novice on the body map, a Progress chart with several sessions, ft/in height entry, a "Push + Pull" History label.
+days), a muscle reaching Novice on the body map, a Progress chart with several sessions, ft/in height entry.
 
 ### Things you might want adjusted — and where they live
 
@@ -258,9 +258,8 @@ Both messages were checked by forcing the first attempt to fail with a temporary
 - **Unplanned workouts dropped RPE and session notes** (only the old form could enter them;
   old sessions still show theirs).
 - **The plan day is stored per set, as a copied name** (`WorkoutSetEntry.planDayName`), not
-  on the session and not as a link to `PlanDay`. A session's label ("Pull", "Push + Pull") is
-  derived from the sets it still has, so unchecking a plan set takes the label with it, and
-  history survives plan edits. A session-level field was tried first and kept a stale label.
+  on the session and not as a link to `PlanDay`, so unchecking a plan set takes its day with
+  it and history survives plan edits. The Progress tab's History shows it per day. A session-level field was tried first and kept a stale label.
   Sessions from before 2026-09-22 have no day and show the date.
 - **The levels explainer reads the engine's own numbers** — `MuscleLevelEngine`'s
   `levelMinimumBodyweights` and `levelMinimumMonths` — so the
