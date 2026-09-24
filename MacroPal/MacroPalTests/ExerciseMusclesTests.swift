@@ -12,7 +12,7 @@ struct ExerciseMusclesTests {
         let deadlift = ExerciseMuscleData.profile(forName: "Deadlift", group: .back)
         // Ties (hamstrings and glutes at 1.0) go head to toe.
         #expect(deadlift.primaryMuscles == [.glutes, .hamstrings, .lowerBack])
-        #expect(deadlift.secondaryMuscles == [.traps, .quads, .forearms, .lats])
+        #expect(deadlift.secondaryMuscles == [.traps, .quads, .forearms, .lats, .adductors])
     }
 
     @Test func primaryIsOrderedByInvolvement() {
@@ -58,6 +58,13 @@ struct ExerciseMusclesTests {
             let hasDrawing = ExerciseIllustration(exerciseName: name) != nil
             #expect(hasDrawing != Self.startersWithoutDrawing.contains(name), "\(name): drawing is \(hasDrawing ? "there" : "missing")")
         }
+    }
+
+    @Test func theAdductorMachineWorksTheAdductors() {
+        let profile = ExerciseMuscleData.profile(forName: "Adductor Machine", group: .legs)
+        #expect(profile.primaryMuscles == [.adductors])
+        #expect(BodyFigure.muscles(on: .front).contains(.adductors))
+        #expect(BodyFigure.muscles(on: .back).contains(.adductors))
     }
 
     @Test func drawingNamesComeFromTheExerciseName() {

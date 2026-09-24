@@ -66,7 +66,7 @@ enum ExerciseMuscleData {
         "push-up": bodyweight(0.65, [.chest: 1, .shoulders: 0.6, .triceps: 0.6, .abs: 0.3]),
         "chest dip": bodyweight(0.9, [.chest: 1, .triceps: 0.8, .shoulders: 0.5]),
 
-        "deadlift": profile([.hamstrings: 1, .glutes: 1, .lowerBack: 0.8, .quads: 0.6, .traps: 0.6, .forearms: 0.4, .lats: 0.4]),
+        "deadlift": profile([.hamstrings: 1, .glutes: 1, .lowerBack: 0.8, .quads: 0.6, .traps: 0.6, .forearms: 0.4, .lats: 0.4, .adductors: 0.3]),
         "pull-up": bodyweight(1.0, [.lats: 1, .biceps: 0.6, .forearms: 0.4, .traps: 0.4]),
         "lat pulldown": profile([.lats: 1, .biceps: 0.6, .forearms: 0.3]),
         "barbell row": profile([.lats: 1, .traps: 0.7, .biceps: 0.5, .lowerBack: 0.4]),
@@ -94,17 +94,16 @@ enum ExerciseMuscleData {
         "overhead triceps extension": profile([.triceps: 1]),
         "single-arm triceps extension": profile([.triceps: 1]),
 
-        "back squat": profile([.quads: 1, .glutes: 0.8, .hamstrings: 0.4, .lowerBack: 0.3, .abs: 0.3]),
-        "front squat": profile([.quads: 1, .glutes: 0.6, .abs: 0.4]),
-        "romanian deadlift": profile([.hamstrings: 1, .glutes: 0.8, .lowerBack: 0.5]),
-        "leg press": profile(scale: 0.6, [.quads: 1, .glutes: 0.7, .hamstrings: 0.3]),
-        "walking lunge": profile(scale: 2, [.quads: 1, .glutes: 0.8, .hamstrings: 0.4]),
-        "bulgarian split squat": profile(scale: 2, [.quads: 1, .glutes: 0.8]),
+        "back squat": profile([.quads: 1, .glutes: 0.8, .adductors: 0.5, .hamstrings: 0.4, .lowerBack: 0.3, .abs: 0.3]),
+        "front squat": profile([.quads: 1, .glutes: 0.6, .adductors: 0.4, .abs: 0.4]),
+        "romanian deadlift": profile([.hamstrings: 1, .glutes: 0.8, .lowerBack: 0.5, .adductors: 0.3]),
+        "leg press": profile(scale: 0.6, [.quads: 1, .glutes: 0.7, .adductors: 0.3, .hamstrings: 0.3]),
+        "walking lunge": profile(scale: 2, [.quads: 1, .glutes: 0.8, .adductors: 0.4, .hamstrings: 0.4]),
+        "bulgarian split squat": profile(scale: 2, [.quads: 1, .glutes: 0.8, .adductors: 0.4]),
         "leg extension": profile([.quads: 1]),
         "leg curl": profile([.hamstrings: 1]),
         "seated leg curl": profile([.hamstrings: 1]),
-        // The body map has no adductors (inner thigh), so this credits no muscle.
-        "adductor machine": profile([:]),
+        "adductor machine": profile([.adductors: 1]),
         "hip thrust": profile([.glutes: 1, .hamstrings: 0.5]),
         "standing calf raise": profile(scale: 0.5, [.calves: 1]),
 

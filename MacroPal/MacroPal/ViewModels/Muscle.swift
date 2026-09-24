@@ -10,7 +10,7 @@ import Foundation
 enum Muscle: String, CaseIterable, Identifiable {
     case chest, shoulders, biceps, triceps, forearms
     case abs, obliques, traps, lats, lowerBack
-    case glutes, quads, hamstrings, calves
+    case glutes, adductors, quads, hamstrings, calves
 
     var id: Self { self }
 
@@ -27,6 +27,7 @@ enum Muscle: String, CaseIterable, Identifiable {
         case .lats: "Lats"
         case .lowerBack: "Lower Back"
         case .glutes: "Glutes"
+        case .adductors: "Adductors"
         case .quads: "Quads"
         case .hamstrings: "Hamstrings"
         case .calves: "Calves"

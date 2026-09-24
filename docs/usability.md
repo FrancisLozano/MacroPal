@@ -31,7 +31,7 @@ rest of the day's work:
   Curl, Seated Leg Curl, Floor Back Extension, Adductor Machine, Machine Ab Crunch — each with
   a muscle profile and How to Do It / Common Mistakes. No drawing for Cable Lateral Raise,
   Machine Shoulder Press, Chest-Supported Dumbbell Row or Machine Ab Crunch (no match in
-  Everkinetic). **Adductor Machine credits no muscle**: the body map has no adductors.
+  Everkinetic). Then **adductors were added to the body map** (see the decision below).
   See the decisions below.
 - **Exercise drawings** (after that): a start → end line drawing above "3 sets × 10 reps"
   on the Workout tab, and Profile → Acknowledgements. See the GIFs decision below.
@@ -146,6 +146,7 @@ Values as of 2026-09-23. "In app" means you can change it yourself; the rest are
 | Rest time, auto-start rest timer | 120 s, off | In app: Profile → Workout |
 | Set rows reps-first or weight-first | reps-first | In app: Profile → Workout |
 | Volume per level (too easy / too hard) | 90 / 600 / 2,500 / 7,500 / 15,000 bodyweights | `MuscleLevelEngine.levelMinimumBodyweights` (the ⓘ sheet follows) |
+| How much each leg lift works the adductors | squat 0.5; front squat, lunge, split squat 0.4; deadlifts, leg press 0.3; adductor machine 1 | `.adductors` entries in `ExerciseMuscleData.swift` |
 | Bodyweight share per rep of a bodyweight move | push-up 0.65, dip 0.9, pull-up 1.0, hanging leg raise 0.3, ab wheel 0.5, plank 0.1 per logged rep (as seconds) | `bodyweight(…)` entries in `ExerciseMuscleData.swift` |
 | Machine Chest Press / Shoulder Press / Ab Crunch counted at | 0.7 × the stack (like leg press 0.6; leg curl machines count 1×) | `"machine chest press"` in `ExerciseMuscleData.swift` |
 | Female volume | divided by 0.65 | `MuscleLevelEngine.femaleFactor` |
@@ -231,6 +232,14 @@ Both messages were checked by forcing the first attempt to fail with a temporary
   suggests Triceps, Pull suggests Biceps, Upper suggests both. The picker's `List` gets a new
   `.id` whenever its headings change, since its rows are buttons (the List button bug);
   checked in the simulator by switching Suggested ↔ All and then picking a row.
+- **Adductors are on the body map** (2026-09-23 night, user request). `Muscle.adductors`
+  (after glutes, head to toe). Front: a wedge on the upper inner thigh, with the inner quad
+  teardrop moved down toward the knee to make room; back: a strip inside the hamstrings,
+  below the glutes (the inner hamstring got narrower). Drawn with the macOS render harness
+  from the body-map notes. Credited by Adductor Machine (1), Back Squat (0.5), Front Squat,
+  Walking Lunge and Bulgarian Split Squat (0.4), Deadlift, Romanian Deadlift and Leg Press
+  (0.3) — so past squats colour them straight away (checked in the simulator), and like every
+  level they never drop.
 - **Starters added in an update still arrive** (2026-09-23). The catalog now remembers which
   names it seeded (`starterExercisesSeededNames`), so a new starter (Machine Chest Press)
   reaches existing installs while one you deleted stays deleted. New starters go in both
