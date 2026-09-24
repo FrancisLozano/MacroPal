@@ -1,44 +1,44 @@
 # Usability Notes & Feedback Log
 
 **Status:** Living document — ongoing, not tied to a phase
-**Started:** 2026-09-06 · **Last updated:** 2026-09-23 (night)
+**Started:** 2026-09-06 · **Last updated:** 2026-09-23 (late night)
 
-## Start here (as of 2026-09-23, night)
+## Start here (as of 2026-09-23, late night)
 
-**Where things stand.** All 13 Training / Goals suggestions from 2026-09-23 are built,
-committed and pushed to `origin/main`; the working tree is clean. **Nothing is being built
-right now** — the next step is the week of real use (Next tasks). The last piece, **Edit
-Routine by message**, was built at night: a split menu plus a "Describe it" field that fills
-in the form with Apple's on-device model; on request, "PPL twice a week" (→ 6 days PPL) and
-"ppl and U/L" (→ the new PPL + U/L split) were then made to work. Plan, what changed and a
-table of how messages read: [routine-by-message-plan.md](routine-by-message-plan.md). The
-rest of the day's work:
+**Where things stand.** Everything is committed and pushed to `origin/main` (last code
+commit `78a491d`, then this doc); the working tree is clean. **Nothing is being built right now.** The app is now
+**running on the user's iPhone** (installed from Xcode) — the first physical-device use. The
+next step is the week of real use (Next tasks), starting 2026-09-24.
 
-- **Exercise screen** (a plan day → an exercise, or an unplanned workout): a
-  **Workout / Overview / Progress** switch. Plan and what changed while building:
-  [exercise-screen-plan.md](exercise-screen-plan.md).
-- **Muscle colors come from lifetime volume**, not 1RM, and all 1RM code is deleted. The
-  numbers are under **Decisions worth remembering** and **Things to know about the muscle
-  levels**; the constants are in the **Things you might want adjusted** table.
-- The user's answers to every open question are recorded under **Decisions**. None are
-  pending.
+Built on 2026-09-23, in order (details under **Decisions worth remembering**, commits under
+**What changed on 2026-09-23**):
 
-- **Choose Exercise under headings** (after that, from use on the iPhone): Suggested / All
-  stay, and the list is grouped Chest, Triceps, Biceps, Back, Shoulders, Legs, Abs. Arms is
-  split into Biceps and Triceps, and Core reads "Abs". Then 12 starters you use were added:
-  Machine Chest Press, Single-Arm Triceps Extension, Cable Lateral Raise, Machine Shoulder
-  Press, Chest-Supported Dumbbell Row, Close-Grip Row, Single-Arm Cable Rear Delt Fly, Preacher
-  Curl, Seated Leg Curl, Floor Back Extension, Adductor Machine, Machine Ab Crunch, and
-  Single-Arm Cable Triceps Extension (high pulley, extending in front of you — the user's
-  wording; an overhead low-pulley version was added then dropped on request) — each with
-  a muscle profile and How to Do It / Common Mistakes. No drawing for Cable Lateral Raise,
-  Machine Shoulder Press, Chest-Supported Dumbbell Row or Machine Ab Crunch (no match in
-  Everkinetic). Then **adductors were added to the body map** (see the decision below).
-  See the decisions below.
-- **Exercise drawings** (after that): a start → end line drawing above "3 sets × 10 reps"
-  on the Workout tab, and Profile → Acknowledgements. See the GIFs decision below.
-- **Rest over notification** (after that, same night): a banner when the app is in the
-  background, a card sliding up from the bottom when it's open. See the decision below.
+- **Daytime:** all 13 Training / Goals suggestions — Training layout, the exercise screen
+  (**Workout / Overview / Progress**, [exercise-screen-plan.md](exercise-screen-plan.md)),
+  muscle colors from lifetime volume (all 1RM code deleted), and **Edit Routine by message**
+  with Apple's on-device model ([routine-by-message-plan.md](routine-by-message-plan.md)).
+- **Night, from here on at the user's request:**
+  - **Rest over notification** — a banner when the app is in the background, a card sliding
+    up from the bottom when it's open.
+  - **Exercise drawings** — a start → end line drawing above "3 sets × 10 reps" (Everkinetic,
+    CC BY-SA 4.0, credited in Profile → About → Acknowledgements). 42 of 51 starters have one.
+  - **Dead code removed** — `WorkoutSession.planDayName` / `exerciseNames`.
+  - **Choose Exercise under headings** — Chest, Triceps, Biceps, Back, Shoulders, Legs, Abs,
+    with Suggested / All kept. Arms split into Biceps / Triceps, Core reads "Abs", rear delt
+    flies moved to Back.
+  - **13 new starter exercises** the user does: Machine Chest Press, Single-Arm Triceps
+    Extension, Single-Arm Cable Triceps Extension (high pulley, in front of you), Cable
+    Lateral Raise, Machine Shoulder Press, Chest-Supported Dumbbell Row, Close-Grip Row,
+    Single-Arm Cable Rear Delt Fly, Preacher Curl, Seated Leg Curl, Floor Back Extension,
+    Adductor Machine, Machine Ab Crunch. New starters now reach existing installs.
+  - **Adductors on the body map.**
+  - **Exercise search matches word by word** ("single arm tricep" finds "Single-Arm Cable
+    Triceps Extension").
+
+**Answered questions (no need to re-ask):** the "Today" line on the Current Plan card goes by
+the phone's weekday — the plan day on that weekday, "Rest day" otherwise; skipping a day
+doesn't shift the rest. A single-arm cable triceps pushdown and an extension are the same
+movement family; the user does the one in front of the body, not overhead.
 
 **What the app has now**, so you know what you're judging:
 
@@ -63,8 +63,11 @@ rest of the day's work:
   fixes (text for all 51 starter exercises in `ExerciseGuide.swift`; none for exercises you
   create). *Progress*: total volume, this week vs last, volume-per-session bars, History
   (swipe a day to delete it).
+- **Choose Exercise** — Suggested / All, grouped under Chest, Triceps, Biceps, Back,
+  Shoulders, Legs, Abs; word-by-word search; + for a new exercise. 51 starter exercises.
 - **Profile** — Personal Info, Workout settings (set-row order, default sets/reps, rest
-  timer; Show PRs was removed), Goal & Daily Targets, Units (lb/kg, cm or ft/in).
+  timer; Show PRs was removed), Goal & Daily Targets, Units (lb/kg, cm or ft/in), About →
+  Acknowledgements.
 - **Widget** — small (calorie ring) and medium (calories + Protein / Carbs / Fat).
 
 **Simulator notes for the next session:**
@@ -87,12 +90,15 @@ rest of the day's work:
 - Model failures are logged: `xcrun simctl spawn booted log show --last 5m --predicate
   'subsystem == "com.francislozano.MacroPal" AND category == "RoutineAssistant"' --info`.
 
-## Next tasks (as of 2026-09-23, night)
+## Next tasks (as of 2026-09-23, late night)
 
-1. **Tune the volume thresholds** once real weeks are logged: `MuscleLevelEngine.levelMinimumBodyweights`
+1. **Use the app for a week on the iPhone (2026-09-24 → 09-30)** and log what you notice — see
+   **A week of real use** below. On 09-30, ask for "triage the week".
+2. **Tune the volume thresholds** once real weeks are logged: `MuscleLevelEngine.levelMinimumBodyweights`
    (90 / 600 / 2,500 / 7,500 / 15,000 bodyweights), the tenure months, and the bodyweight shares
-   in `ExerciseMuscleData.swift`. The ⓘ sheet follows the constants.
-2. **Keep logging** Likes / Dislikes / Suggestions during the week of use below, then triage
+   in `ExerciseMuscleData.swift` (including the new adductor credits). The ⓘ sheet follows the
+   constants.
+3. **Keep logging** Likes / Dislikes / Suggestions during the week of use below, then triage
    them at the end of the week — including how Edit Routine by message does with your own
    wording (note the exact message and what it filled in).
 
@@ -130,6 +136,11 @@ built from those entries. This week is for collecting the next round.
 - Is anything still slow to log — count the taps if it feels like too many.
 - Do the callouts show up when they should, and are they useful or noise?
 - Edit Routine by message: does it read what you type? Note any message it gets wrong.
+- New tonight: the "Rest over" banner / bottom card (right moment? 4 s long enough?), the
+  exercise drawings (helpful or in the way?), the Choose Exercise headings, and whether any
+  exercise you do is still missing (name it and the equipment).
+- On the iPhone: anything that looks or feels different from the simulator — this is the
+  first time on a real device.
 
 **Not seen in the app yet** — note it if you run into one: the protein callout (needs 4 logged
 days), a muscle reaching Novice on the body map, a Progress chart with several sessions, ft/in height entry.
@@ -186,12 +197,18 @@ a screenshot or sketch works best, as with the whiteboard for Training.
   exercise you create. Checked first: Everkinetic has no chest-supported row; wger's
   "Incline Chest-Supported Dumbbell Row" image is tagged CC BY-SA 4.0 but sourced from a
   blog by someone else, so its rights are unclear and it wasn't used.
-- HealthKit step import (needs a physical iPhone and permissions).
+- **"Today" doesn't refresh at midnight.** The Current Plan card works out today's workout
+  when it's drawn; left open on the Training tab past midnight it shows yesterday's until it
+  redraws (switch tabs). Offered, not requested; a fix would redraw on the day changing.
+- HealthKit step import (now possible — the app runs on the user's iPhone — needs
+  permissions).
 - Default Time from the Workout settings reference screenshot (only once timed exercises
   exist).
 - Bring back RPE / session notes for unplanned workouts, if they're missed.
-- Portfolio extras: try the app on a physical iPhone (nothing has been checked on one); move
-  the Backlog to GitHub Issues if it grows again (SPEC.md §7 suggests it).
+- Not checked yet: the rest timer ending while the unplanned-workout sheet is open, and the
+  rest notification on the lock screen of a real iPhone.
+- Portfolio extras: move the Backlog to GitHub Issues if it grows again (SPEC.md §7 suggests
+  it).
 
 ### Watch for: the store retry at launch
 
@@ -374,6 +391,14 @@ the user logged the first Training suggestions and the layout ones were built.
 | `9388e7b` | `ExerciseScreen` (Workout / Overview / Progress). Overview: muscles with Primary / Secondary beside the figure, Flip View, How to Do It + Common Mistakes (`ExerciseGuide`). Progress in volume (total, week vs week, bars, History with swipe-delete). Workout History, its detail screen and the 1RM chart deleted |
 | `f365400` | Muscle levels from lifetime volume ÷ bodyweight (90 / 600 / 2,500 / 7,500 / 15,000), tenure cap kept (World Class ≥ 5 years, Novice ≥ 2 weeks); How Levels Work rewritten; `LiftStandard`, `OneRepMaxEstimator`, `StrengthStallRule` deleted |
 | `e4ac35e` | Progress tab volume counted like the body map (both dumbbells, machines scaled, bodyweight share); Show PRs setting deleted |
+| `dcafcd2`, `110041d` | Edit Routine by message (split menu, "Describe it" with on-device Foundation Models); "PPL twice a week" and "ppl and U/L" read in code |
+| `d67b4c7` | Rest over: a local notification (banner in the background), a bottom "Rest over" card in the app; ending the rest moved into `RestTimerModel`; `RestNotifications`, `RestOverCard` |
+| `203888d` | Start → end exercise drawings on the Workout tab (`ExerciseIllustration`, `Assets.xcassets/Exercises`), Profile → Acknowledgements |
+| `f97d1ce` | `WorkoutSession.planDayName` / `exerciseNames` deleted; `WorkoutSessionTests` → `WorkoutViewModelTests` |
+| `42cc1f3` | Choose Exercise under muscle headings; Biceps / Triceps groups (stored Arms moved at launch); 12 new starters; seeding remembers names so new starters reach existing installs; rear delt flies → Back |
+| `7d930f7` | Adductors on the body map, credited by the adductor machine and (partly) squats, lunges, deadlifts, leg press |
+| `6dc8ae6` | Single-arm cable triceps exercises added; "your own photo" parked |
+| `78a491d` | Search matches word by word; the single-arm cable move is Single-Arm Cable Triceps Extension (overhead version dropped; stored ones renamed / removed if unused) |
 
 ### What changed on 2026-09-22
 
@@ -565,7 +590,15 @@ restored by copying back a backup of the store (see Housekeeping).
 sessions of one lift), an Exercise Progress chart with several sessions, the ft/in height
 entry, and a "Push + Pull" History label (unit-tested only).
 
-**Not yet verified:** anything on a physical device.
+**Verified (2026-09-23, night):** the Rest over card in the app and the banner from the home
+screen, with no second card on coming back; the drawings in light and dark mode; the picker
+headings, Suggested ↔ All then picking a row (List button bug not hit), search results
+picking; Arms → Biceps / Triceps and the new starters arriving in the existing simulator
+store; adductors colored from past squats and the Adductor Machine's Overview; the single-arm
+rename / removal on launch.
+
+**Physical device:** the user installed and runs the app on their iPhone as of 2026-09-23
+night. Nothing has been checked there in a structured way yet — that's the week of use.
 
 ### Housekeeping
 
@@ -647,8 +680,8 @@ actually improving or just accumulating complaints.
 | Likes | 1 |
 | Dislikes | 13 |
 | Suggestions | 20 |
-| Triaged (in Backlog) | 48 |
-| Done | 46 |
+| Triaged (in Backlog) | 53 |
+| Done | 51 |
 | No change needed | 1 |
 | Won't Fix | 0 |
 
@@ -706,6 +739,11 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P2 | Overview tab: a GIF of the exercise and Muscles Involved — body figure, Primary / Secondary labels, Flip View | Suggestions → Training (2026-09-23, Overview tab; reference: Caliber's Overview) | Done — built 2026-09-23 (`ExerciseOverviewTab`): Muscles Involved card: the figure on the left (primary solid, secondary light, the thumbnail's colors) with Primary / Secondary listed beside it on the right, most-involved first, and Flip View under the figure (lists moved beside the figure on user request, same evening). Then, also on request, **How to Do It** (numbered steps) and **Common Mistakes** (each mistake with its fix) cards under it, from `ExerciseGuides` — written for all 38 starter exercises (general coaching cues, not from one source; a test checks every starter exercise has one). Exercises the user created show a one-line note instead. Opens on the side with more of the primary muscles. Primary is involvement ≥ 0.8 (`ExerciseProfile.primaryMuscles`, now shared with the thumbnail; `ExerciseMusclesTests`); a full-body guess with nothing that high uses its top muscles. No GIF (decided). Checked in the simulator (Cable Crunch: Abs primary, Obliques secondary; flip to the back shows nothing highlighted). A back-first exercise opening on the back not seen live |
 | P2 | Muscle colors by volume moved (sets × reps × weight, e.g. 2 × 8 × 35 lb = 560 lb), keeping 1RM as a data point | Suggestions → Training (2026-09-23, muscle colors) | Done — built 2026-09-23 with the proposed thresholds (see Decisions and Things to know about the muscle levels): `MuscleLevelEngine` rewritten on lifetime volume, ⓘ How Levels Work shows each level's volume in the user's unit and its time, `MuscleLevelEngineTests` rewritten (3 weeks → Novice, a year → Advanced, World Class needs 5 years, levels survive a break). 1RM code deleted. Checked in the simulator: the sheet reads 20,400 lb → Novice … 3,405,000 lb and 5 years → World Class at a 227 lb bodyweight; the simulator's muscles all show Beginner (little logged volume) |
 | P3 | Edit Routine by describing it in a message ("4 days a week, upper/lower") | Suggestions → Training (2026-09-23, ⋯ menu, Edit half) | Done — built 2026-09-23 ([routine-by-message-plan.md](routine-by-message-plan.md)): a split menu (Recommended / Upper/Lower / PPL / Full Body, new Full Body day) and a "Describe it" field that fills in the weekdays and split via on-device Foundation Models; nothing saves until Save. `RoutineTemplateTests`, `RoutineRequestTests`. Checked in the simulator ("4 days a week, upper/lower" → Mon/Tue/Thu/Fri Upper/Lower; "Mon Wed Fri full body"; picking PPL; all cancelled, plan unchanged). Follow-up on request: "PPL twice a week" → 6 days PPL and "ppl and U/L" → the new PPL + U/L split, both read in code (`MessageCues`) and checked in the simulator |
+| P2 | Rest timer ends with a banner in the background and a card from the bottom in the app | Parked follow-up + user request (direct, 2026-09-23 night) | Done (d67b4c7) — checked in the simulator |
+| P2 | A picture of the exercise above the sets — Everkinetic start → end drawings, credited in Acknowledgements; 9 starters have none (own-photo option parked) | User request (direct, 2026-09-23 night) | Done (203888d, later additions) — checked in the simulator, light and dark |
+| P1 | Choose Exercise under muscle headings (Chest, Triceps, Biceps, Back, Shoulders, Legs, Abs) and the exercises the user does added (13) | User request (direct, 2026-09-23 night, from iPhone use) | Done (42cc1f3, 6dc8ae6, 78a491d) — checked in the simulator |
+| P2 | Adductors on the body map | User request (direct, 2026-09-23 night) | Done (7d930f7) — checked in the simulator |
+| P1 | Exercise search missed "single arm tricep" (whole-query match) — now word by word | User report (direct, 2026-09-23 night) | Done (78a491d) — checked in the simulator |
 | P1 | Steps goal with a bar chart (whiteboard Goals card) — `StepEntry` (one total per day; logging a day again replaces it), `UserProfile.stepGoal` (default 10,000, migrates existing stores), Steps row on the Goals card, Steps screen with 7/30-day bars (green when the goal is met), dashed goal line, and average / goal-met counted over logged days; `StepsViewModelTests` | User request (direct, 2026-09-19, whiteboard sketch) | Done (a46cfe9) |
 
 Priority scale: **P1** (actively annoying, fix soon) / **P2** (worth doing, no rush) /
