@@ -1,13 +1,15 @@
 # Usability Notes & Feedback Log
 
 **Status:** Living document — ongoing, not tied to a phase
-**Started:** 2026-09-06 · **Last updated:** 2026-09-23
+**Started:** 2026-09-06 · **Last updated:** 2026-09-23 (afternoon)
 
 ## Start here (as of 2026-09-23)
 
-**The backlog is empty.** 35 of 36 triaged items are Done and 1 was verified as "No change
-needed". Everything is pushed to `origin/main` (`ed8f353`). The app is no longer built from a
-list: the next changes should come from using it for real (see **Next task**).
+**The first Training suggestions are in.** On 2026-09-23 the user logged 13 suggestions for
+Training and Goals; the layout ones were built the same day (5 Backlog rows Done), and the big
+ones — a new exercise screen, volume-based muscle colors, describing a routine in a message —
+are triaged and waiting on a few decisions. Everything is pushed to `origin/main` (`46f6ff5`).
+See **Next tasks** for the order.
 
 **What the app has now**, so you know what you're judging:
 
@@ -26,10 +28,35 @@ list: the next changes should come from using it for real (see **Next task**).
   timer), Goal & Daily Targets, Units (lb/kg, cm or ft/in).
 - **Widget** — small (calorie ring) and medium (calories + Protein / Carbs / Fat).
 
-## Next task: a week of real use (2026-09-24 → 2026-09-30)
+## Next tasks (as of 2026-09-23)
 
-The raw log hasn't had an entry since 2026-09-08, and everything since was built from those
-entries. This week is for collecting the next round.
+1. **Decide the four open questions** before planning the big items (answers go in
+   **Decisions worth remembering**):
+   - *Volume-based colors:* what makes a muscle "strong" — volume per week or per session, and
+     compared against what (your own past weeks, bodyweight, a fixed table)? The deleted
+     Weekly view counted sets per muscle and is a possible starting point (git history before
+     `373f28e`).
+   - *Edit Routine from a message:* turning "4 days a week, upper/lower" into a plan needs an
+     LLM — the Phase 4 layer that was deliberately skipped. The alternative is a short form
+     (days a week + a split picker) with the same result and no AI.
+   - *Exercise GIFs:* they need a source you're allowed to use (a free exercise database), or
+     leave them out for now.
+   - *Complete Exercise instead of per-set checks:* sets would only save on that tap, so leaving
+     the screen midway loses them — or sets keep saving as you type and Complete Exercise just
+     finishes. Pick one.
+2. **Plan the exercise screen** (Workout / Overview / Progress tabs) — write it up as a plan
+   before building; Workout tab first, since it replaces how sets are logged today.
+3. **Build it in steps:** Workout tab → Progress tab (then move Workout History and Exercise
+   Progress off the Training page into it) → Overview tab.
+4. **Volume-based muscle colors**, once question 1 is answered — it changes how levels are
+   computed, so the ⓘ How Levels Work sheet and `MuscleLevelEngineTests` change with it.
+5. **Edit Routine by message or form**, depending on the answer.
+6. **Keep logging** Likes / Dislikes / Suggestions during the week of use below.
+
+## A week of real use (2026-09-24 → 2026-09-30)
+
+The raw log went from 2026-09-08 to 2026-09-23 without an entry, and everything in between was
+built from those entries. This week is for collecting the next round.
 
 ### Every day
 
@@ -44,6 +71,8 @@ entries. This week is for collecting the next round.
 ### What to watch for
 
 - Does the Training page feel as calm as Nutrition now?
+- The Current Plan card: is expanding the week in place better than a separate page, and is
+  drag-to-reorder (⋯ → Reorder Workouts) easy to find?
 - Do you miss the Weekly body-map view (sets per muscle this week)?
 - Are the level targets fair — does a level come too easily or feel out of reach?
 - Does the rest timer get in the way, or do you miss it when the app is in the background?
@@ -147,8 +176,9 @@ Both messages were checked by forcing the first attempt to fail with a temporary
 - **Edit Routine matches days by weekday, then name.** When the split changes, a day keeps
   its exercises on the same weekday if the new split has a day of that name there, and
   otherwise moves to the nearest same-named day (Sat–Sun counts as 1 apart). Closest pairs
-  are claimed first, so as many days carry over as the names allow. The warning and `apply`
-  share `RoutineTemplate.match`, so what the editor warns about is what gets deleted.
+  are claimed first, so as many days carry over as the names allow. Since 2026-09-23 the editor
+  no longer warns which days' exercises will be removed (user request) — `apply` still deletes
+  them, so a split change can drop exercises without notice.
 - **Removable set rows:** only unlogged rows *past* the baseline (the plan's set count, or
   the default sets for an unplanned exercise). Baseline rows would just come back the next
   time the screen opens; logged rows are still removed by unchecking.
@@ -156,6 +186,14 @@ Both messages were checked by forcing the first attempt to fail with a temporary
   heading + white card from stacks, because the cards are full of buttons and a `List` is
   where the button-detachment bug lives. Any new Training card should use `TrainingSection`
   (title optional, accessory button optional).
+- **The Current Plan card expands in place; there's no week page.** Tapping "Gym Workout"
+  toggles the week inside the card (remembered in `@AppStorage("trainingShowWeek")`), the way
+  the Macros card's pie toggles carbs and fat. Reordering is a mode of the same card: a
+  `List` exists only while reordering, for its native drag handles, and holds no buttons
+  (Cancel / Save sit below it), so the button-detachment bug can't reach them. Saving calls
+  `WorkoutPlan.reorderDays`, which keeps the weekdays and swaps the workouts between them.
+- **Lines in the plan card are a 1-pt `Rectangle`, not `Divider()`** — the system hairline
+  blurred away at some row positions, so some of the week's lines went missing.
 - **The Weekly body-map view is deleted, not hidden** (`WeeklyMuscleVolume`, its tests and
   `VolumePalette`). It's in git history before `373f28e` if it's ever wanted back.
 
@@ -167,7 +205,8 @@ The 2026-09-19 stretch merged Body and Workouts into **one Training tab**, follo
 [discovery-workouts-body-redesign.md](discovery-workouts-body-redesign.md) (Option 2) and the
 user's whiteboard sketch — body map on top, Current Plan, Goals below. On 2026-09-22 all three
 of that doc's success criteria were met, and in the evening the tab was restyled to match
-Nutrition. 2026-09-23 closed the last two P3s and the outstanding re-checks.
+Nutrition. 2026-09-23 closed the last two P3s and the outstanding re-checks; in the afternoon
+the user logged the first Training suggestions and the layout ones were built.
 
 ### What changed on 2026-09-23
 
@@ -179,6 +218,11 @@ Nutrition. 2026-09-23 closed the last two P3s and the outstanding re-checks.
 | `9dd2034` | The launch-time store retry now logs (category `Store`), so a caught migration race is visible |
 | `2d971c2` | Shared Xcode schemes committed (they're the only scheme files); the old untracked `scratchpad/` mockup deleted |
 | `4b76216` | Log Weight / Log Steps keep typed input when you tap above the sheet; Log Weight gets Cancel and focuses its field on open |
+| `9b9b9c5`, `a31ce7a` | 13 Training and Goals suggestions logged (the exercise-screen ones reference Caliber's set-entry and Overview screens, described in words — the screenshots aren't in the repo) |
+| `9ccca06` | "Training" title at the same height as "Nutrition" (own large title above the scroll view, empty inline nav title, so no small title appears on scroll); scroll bar hidden. Goals card: tap the goal weight / today's steps for that history, Log is a + button, History buttons gone |
+| `b8ced0d` | Goals card + buttons made smaller |
+| `5307cdb` | Current Plan card: "Gym Workout" / "5 Days a Week" / "Today: Legs & Abs"; tapping it expands the week in place (like Macros) instead of opening a page (`WeekPlanView` deleted); calendar icon → ⋯ menu with Reorder Workouts (drag handles in the card, Cancel / Save, `WorkoutPlan.reorderDays` + `WorkoutPlanTests`) and Edit Routine (half sheet, days caption and removal warnings gone) |
+| `ff37c2d`, `46f6ff5` | "Today: …" is tappable (opens that day), spaced like the week's lines, not bold; the week's lines aren't bold either |
 
 ### What changed on 2026-09-22
 
@@ -452,9 +496,9 @@ actually improving or just accumulating complaints.
 |---|---|
 | Likes | 1 |
 | Dislikes | 13 |
-| Suggestions | 7 |
-| Triaged (in Backlog) | 36 |
-| Done | 35 |
+| Suggestions | 20 |
+| Triaged (in Backlog) | 46 |
+| Done | 40 |
 | No change needed | 1 |
 | Won't Fix | 0 |
 
@@ -501,6 +545,16 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P2 | Progress card: ⓘ instead of the Level/Weekly toggle — the card was too tall. It's now just "Progress", an ⓘ and the two figures: the Weekly view is gone (`WeeklyMuscleVolume`, its tests and `VolumePalette` deleted), and so are the color chips and the description under the figures. The ⓘ opens **How Levels Work** (`MuscleLevelInfoView`): the two things a muscle needs to move up (strength vs. bodyweight from the last 90 days, and time trained), then each level in its color with what it means, the Squat and Bench targets in the user's unit from their logged bodyweight (rounded to 5 lb / 2.5 kg; multiples only if no weight is logged; female standards applied from Profile), and the time required. The numbers come from the same `StrengthClass` thresholds and a new `MuscleLevelEngine.levelMinimumMonths` (the tenure cap now reads from it), so the sheet can't drift from the engine. The card still shows a one-line prompt when there's no bodyweight or no workout, since the figures can't say that themselves | User request (direct, 2026-09-22, screenshot of the legend) | Done — checked in the simulator 2026-09-22 |
 | P2 | Training page laid out like Nutrition — Progress, Current Plan and Goals are gray headings above white rounded cards on the grouped gray background, with each section's button in its heading (the ⓘ, the week-plan calendar) the way Nutrition has the pie and ⓘ. The plan's "Workout · N days a week" line became "N days a week" inside the card. Shared `TrainingSection` view; built from stacks, not a `List`, to stay clear of the List button-detachment bug with all the card buttons. The shortcuts card (History / Progress / Unplanned) has no heading | User request (direct, 2026-09-22) | Done — checked in the simulator 2026-09-22 next to Nutrition; the calendar heading button opens the week |
 | P2 | Log Weight / Log Steps drop what was typed when you tap the dimmed area above the sheet — both now use `.interactiveDismissDisabled` once there's an edit (Log Steps compares against the day's prefilled total, so an untouched prefill still closes on a tap); Cancel still discards. Log Weight had no Cancel, so it needed one once the tap-away was blocked, and it now focuses its field on open like Log Steps | Noticed 2026-09-22, listed under Next task | Done (4b76216) — checked in the simulator 2026-09-23 (typed a value in each, tapped above: sheet stayed with the value; Cancel closed it and nothing was saved) |
+| P2 | Training title lined up with Nutrition's and no small title on scroll — own large title pinned above the scroll view with an empty inline nav title, as Nutrition does; scroll bar hidden | Suggestions → Training (2026-09-23, three entries: headline height, title on scroll, scroll bar) | Done (9ccca06) — checked in the simulator 2026-09-23 |
+| P2 | Goals card simplified — History buttons removed, Log is a small + on the right, tapping the goal weight / today's steps opens that history (the goals are edited there) | Suggestions → Goals (2026-09-23, two entries) | Done (9ccca06, b8ced0d) — checked in the simulator 2026-09-23 |
+| P2 | Current Plan card reads "Gym Workout" / "5 Days a Week" / a line / "Today: Legs & Abs" (tappable, opens the day); no arrows | Suggestions → Training (2026-09-23, Current Plan card) | Done (5307cdb, ff37c2d, 46f6ff5) — checked in the simulator 2026-09-23 |
+| P2 | Tapping the card shows the whole week in place — one line per workout ("Monday: Push") with lines between; tapping one opens its exercises; the separate week page is gone | Suggestions → Training (2026-09-23, "shows all the week's workouts") + follow-ups in chat | Done (5307cdb, 46f6ff5) — checked in the simulator 2026-09-23 |
+| P2 | ⋯ menu replaces the calendar icon: Reorder Workouts (drag handles in the card, Save / Cancel) and Edit Routine (half sheet, no caption or removal warnings) | Suggestions → Training (2026-09-23, ⋯ menu) | Done (5307cdb) — drag, Save and Cancel checked in the simulator 2026-09-23 (plan put back afterwards). The "describe it in a message" half is its own row below |
+| P1 | Exercise screen with **Workout / Overview / Progress** tabs, opened from a plan day's exercise. Workout tab: rest timer; one row per set — "Set 1", lbs box, reps box, "Last: …" under each; one Complete Exercise button instead of per-set checks; an ⓘ says where to change the number of sets (Add Set goes) | Suggestions → Training (2026-09-23, tabs + Workout tab; reference: Caliber's set-entry screen) | Triaged — decide how Complete Exercise saves first (Next tasks, 1) |
+| P2 | Progress tab: that exercise's history; then Workout History and Exercise Progress move off the Training page | Suggestions → Training (2026-09-23, Progress tab) | Triaged — after the Workout tab |
+| P2 | Overview tab: a GIF of the exercise and Muscles Involved — body figure, Primary / Secondary labels, Flip View | Suggestions → Training (2026-09-23, Overview tab; reference: Caliber's Overview) | Triaged — GIFs need a source (Next tasks, 1) |
+| P2 | Muscle colors by volume moved (sets × reps × weight, e.g. 2 × 8 × 35 lb = 560 lb), keeping 1RM as a data point | Suggestions → Training (2026-09-23, muscle colors) | Triaged — needs a decision on what counts as "strong" (Next tasks, 1) |
+| P3 | Edit Routine by describing it in a message ("4 days a week, upper/lower") | Suggestions → Training (2026-09-23, ⋯ menu, Edit half) | Triaged — needs an LLM (Phase 4, skipped) or becomes a short form (Next tasks, 1) |
 | P1 | Steps goal with a bar chart (whiteboard Goals card) — `StepEntry` (one total per day; logging a day again replaces it), `UserProfile.stepGoal` (default 10,000, migrates existing stores), Steps row on the Goals card, Steps screen with 7/30-day bars (green when the goal is met), dashed goal line, and average / goal-met counted over logged days; `StepsViewModelTests` | User request (direct, 2026-09-19, whiteboard sketch) | Done (a46cfe9) |
 
 Priority scale: **P1** (actively annoying, fix soon) / **P2** (worth doing, no rush) /
