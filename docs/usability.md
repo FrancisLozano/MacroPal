@@ -1,14 +1,15 @@
 # Usability Notes & Feedback Log
 
 **Status:** Living document — ongoing, not tied to a phase
-**Started:** 2026-09-06 · **Last updated:** 2026-09-23 (afternoon)
+**Started:** 2026-09-06 · **Last updated:** 2026-09-23 (evening)
 
 ## Start here (as of 2026-09-23)
 
 **The first Training suggestions are in.** On 2026-09-23 the user logged 13 suggestions for
 Training and Goals; the layout ones were built the same day (5 Backlog rows Done), and the big
 ones — a new exercise screen, volume-based muscle colors, describing a routine in a message —
-are triaged and waiting on a few decisions. Everything is pushed to `origin/main` (`46f6ff5`).
+are triaged, their four open decisions were settled the same evening, and the exercise screen
+has a plan ([exercise-screen-plan.md](exercise-screen-plan.md)). Everything is pushed to `origin/main` (`46f6ff5`).
 See **Next tasks** for the order.
 
 **What the app has now**, so you know what you're judging:
@@ -30,27 +31,20 @@ See **Next tasks** for the order.
 
 ## Next tasks (as of 2026-09-23)
 
-1. **Decide the four open questions** before planning the big items (answers go in
-   **Decisions worth remembering**):
-   - *Volume-based colors:* what makes a muscle "strong" — volume per week or per session, and
-     compared against what (your own past weeks, bodyweight, a fixed table)? The deleted
-     Weekly view counted sets per muscle and is a possible starting point (git history before
-     `373f28e`).
-   - *Edit Routine from a message:* turning "4 days a week, upper/lower" into a plan needs an
-     LLM — the Phase 4 layer that was deliberately skipped. The alternative is a short form
-     (days a week + a split picker) with the same result and no AI.
-   - *Exercise GIFs:* they need a source you're allowed to use (a free exercise database), or
-     leave them out for now.
-   - *Complete Exercise instead of per-set checks:* sets would only save on that tap, so leaving
-     the screen midway loses them — or sets keep saving as you type and Complete Exercise just
-     finishes. Pick one.
-2. **Plan the exercise screen** (Workout / Overview / Progress tabs) — write it up as a plan
-   before building; Workout tab first, since it replaces how sets are logged today.
+1. ~~**Decide the four open questions.**~~ Done 2026-09-23 — see **Decisions worth
+   remembering** (lifetime volume ÷ bodyweight, on-device AI with a form fallback, no GIFs,
+   sets save as you type).
+2. ~~**Plan the exercise screen.**~~ Done 2026-09-23 —
+   [exercise-screen-plan.md](exercise-screen-plan.md). Three small open questions at its end
+   can be answered while building.
 3. **Build it in steps:** Workout tab → Progress tab (then move Workout History and Exercise
    Progress off the Training page into it) → Overview tab.
-4. **Volume-based muscle colors**, once question 1 is answered — it changes how levels are
-   computed, so the ⓘ How Levels Work sheet and `MuscleLevelEngineTests` change with it.
-5. **Edit Routine by message or form**, depending on the answer.
+4. **Volume-based muscle colors** — replaces the 1RM rule in `MuscleLevelEngine`, so the ⓘ
+   How Levels Work sheet and `MuscleLevelEngineTests` change with it. Tune the proposed
+   thresholds (Decisions) against real logged weeks first.
+5. **Edit Routine by message** — Foundation Models (`@Generable` plan: day count + split
+   names), form fallback when Apple Intelligence isn't available. Worth a short plan first,
+   like step 2.
 6. **Keep logging** Likes / Dislikes / Suggestions during the week of use below.
 
 ## A week of real use (2026-09-24 → 2026-09-30)
@@ -148,6 +142,28 @@ Both messages were checked by forcing the first attempt to fail with a temporary
 (removed before committing); a normal launch logs nothing.
 
 ## Decisions worth remembering
+
+- **Muscle colors will come from lifetime volume, not 1RM** (decided 2026-09-23, not built
+  yet). Every set's sets × reps × weight is credited to the muscles it works and added up over
+  all time. That total ÷ bodyweight sets the level, so the colors track sustained work: about
+  3 weeks of training should reach Novice, and about a year should reach Advanced. 1RM stays
+  as a data point in Exercise Progress but no longer affects the body map. *Proposed starting
+  thresholds* (bodyweights moved per muscle, to tune after real use): Novice 90, Intermediate
+  600, Advanced 2,500, Elite 7,500, World Class 15,000. This assumes about 2 sessions a week
+  of 3 × 10 at half bodyweight at the start, rising to about 50 bodyweights a week. Since the
+  total only grows, a muscle **never drops a level** after a break; that's accepted for now.
+  Bodyweight moves (pull-ups, dips) need a stand-in load, probably a share of bodyweight.
+- **Edit Routine by message uses Apple's on-device Foundation Models** (iOS 26: no API key,
+  no server, free). "4 days a week, upper/lower" becomes a typed `@Generable` result that goes
+  through the same `RoutineTemplate` apply path as today. Devices without Apple Intelligence
+  get a short form (days a week + split picker). The Claude API was ruled out because it needs
+  a backend to keep the key out of the app.
+- **No exercise GIFs for now.** The Overview tab has just Muscles Involved. The free GIF
+  databases have unclear licenses.
+- **Sets save as you type; Complete Exercise only finishes.** Leaving the exercise screen
+  midway loses nothing. Boxes start empty with last session's value as the placeholder, and
+  Complete fills empty boxes from those placeholders, so a repeat workout is still one tap.
+  Details in [exercise-screen-plan.md](exercise-screen-plan.md).
 
 - **Insights are live, not stored.** Rules return `InsightFinding` values that are recomputed
   from the data and shown where they're relevant; they vanish when the condition stops. No
@@ -550,11 +566,11 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P2 | Current Plan card reads "Gym Workout" / "5 Days a Week" / a line / "Today: Legs & Abs" (tappable, opens the day); no arrows | Suggestions → Training (2026-09-23, Current Plan card) | Done (5307cdb, ff37c2d, 46f6ff5) — checked in the simulator 2026-09-23 |
 | P2 | Tapping the card shows the whole week in place — one line per workout ("Monday: Push") with lines between; tapping one opens its exercises; the separate week page is gone | Suggestions → Training (2026-09-23, "shows all the week's workouts") + follow-ups in chat | Done (5307cdb, 46f6ff5) — checked in the simulator 2026-09-23 |
 | P2 | ⋯ menu replaces the calendar icon: Reorder Workouts (drag handles in the card, Save / Cancel) and Edit Routine (half sheet, no caption or removal warnings) | Suggestions → Training (2026-09-23, ⋯ menu) | Done (5307cdb) — drag, Save and Cancel checked in the simulator 2026-09-23 (plan put back afterwards). The "describe it in a message" half is its own row below |
-| P1 | Exercise screen with **Workout / Overview / Progress** tabs, opened from a plan day's exercise. Workout tab: rest timer; one row per set — "Set 1", lbs box, reps box, "Last: …" under each; one Complete Exercise button instead of per-set checks; an ⓘ says where to change the number of sets (Add Set goes) | Suggestions → Training (2026-09-23, tabs + Workout tab; reference: Caliber's set-entry screen) | Triaged — decide how Complete Exercise saves first (Next tasks, 1) |
-| P2 | Progress tab: that exercise's history; then Workout History and Exercise Progress move off the Training page | Suggestions → Training (2026-09-23, Progress tab) | Triaged — after the Workout tab |
-| P2 | Overview tab: a GIF of the exercise and Muscles Involved — body figure, Primary / Secondary labels, Flip View | Suggestions → Training (2026-09-23, Overview tab; reference: Caliber's Overview) | Triaged — GIFs need a source (Next tasks, 1) |
-| P2 | Muscle colors by volume moved (sets × reps × weight, e.g. 2 × 8 × 35 lb = 560 lb), keeping 1RM as a data point | Suggestions → Training (2026-09-23, muscle colors) | Triaged — needs a decision on what counts as "strong" (Next tasks, 1) |
-| P3 | Edit Routine by describing it in a message ("4 days a week, upper/lower") | Suggestions → Training (2026-09-23, ⋯ menu, Edit half) | Triaged — needs an LLM (Phase 4, skipped) or becomes a short form (Next tasks, 1) |
+| P1 | Exercise screen with **Workout / Overview / Progress** tabs, opened from a plan day's exercise. Workout tab: rest timer; one row per set — "Set 1", lbs box, reps box, "Last: …" under each; one Complete Exercise button instead of per-set checks; an ⓘ says where to change the number of sets (Add Set goes) | Suggestions → Training (2026-09-23, tabs + Workout tab; reference: Caliber's set-entry screen) | Triaged — planned in [exercise-screen-plan.md](exercise-screen-plan.md), step 1; sets save as you type |
+| P2 | Progress tab: that exercise's history; then Workout History and Exercise Progress move off the Training page | Suggestions → Training (2026-09-23, Progress tab) | Triaged — plan step 2, after the Workout tab |
+| P2 | Overview tab: a GIF of the exercise and Muscles Involved — body figure, Primary / Secondary labels, Flip View | Suggestions → Training (2026-09-23, Overview tab; reference: Caliber's Overview) | Triaged — plan step 3; no GIFs (decided 2026-09-23) |
+| P2 | Muscle colors by volume moved (sets × reps × weight, e.g. 2 × 8 × 35 lb = 560 lb), keeping 1RM as a data point | Suggestions → Training (2026-09-23, muscle colors) | Triaged — lifetime volume ÷ bodyweight, no 1RM in the level (decided 2026-09-23, see Decisions); 1RM stays as a data point in Exercise Progress |
+| P3 | Edit Routine by describing it in a message ("4 days a week, upper/lower") | Suggestions → Training (2026-09-23, ⋯ menu, Edit half) | Triaged — on-device Foundation Models with a form fallback (decided 2026-09-23) |
 | P1 | Steps goal with a bar chart (whiteboard Goals card) — `StepEntry` (one total per day; logging a day again replaces it), `UserProfile.stepGoal` (default 10,000, migrates existing stores), Steps row on the Goals card, Steps screen with 7/30-day bars (green when the goal is met), dashed goal line, and average / goal-met counted over logged days; `StepsViewModelTests` | User request (direct, 2026-09-19, whiteboard sketch) | Done (a46cfe9) |
 
 Priority scale: **P1** (actively annoying, fix soon) / **P2** (worth doing, no rush) /
