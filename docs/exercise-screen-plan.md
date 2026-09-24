@@ -1,6 +1,6 @@
 # Exercise Screen Plan (Workout / Overview / Progress)
 
-**Status:** Plan — not started
+**Status:** Step 1 (Workout tab) built 2026-09-23; steps 2–3 not started
 **Written:** 2026-09-23 · Next tasks step 2 in [usability.md](usability.md#next-tasks-as-of-2026-09-23)
 **Source:** Suggestions → Training (2026-09-23): tabs, Workout tab, Overview tab, Progress tab.
 Backlog rows: the P1 exercise screen, the P2 Progress tab and the P2 Overview tab.
@@ -24,6 +24,20 @@ under the navigation title (exercise name, inline). The current body turns into
 - **No GIFs.** Overview has just Muscles Involved.
 
 ## Step 1 — Workout tab (P1)
+
+**Built 2026-09-23** — how it differs from the plan below:
+- Still `ExerciseTrackView`, no tab control yet: a control with one tab is noise. The rename
+  to `ExerciseScreen` + segmented control comes with the Progress tab.
+- The rest timer stays at the **bottom**, as on the day list; it's the same shared bar.
+- **Unlogging takes clearing both boxes.** Clearing one box of a logged set puts its value
+  back; on an unlogged row, typing only one box takes the other from the suggestion.
+- Focusing a box **selects its number**, so typing replaces it (the cursor otherwise landed
+  in front of the number).
+- Suggestions from a saved set carry down only to rows with no last session; rows that have
+  one keep suggesting it.
+- Logic in `SetRow` (`SetRowTests`), "Last:" in `WorkoutViewModel.lastSessionSets` /
+  `lastValue` (`LastSessionSetsTests`). The unused `WorkoutViewModel.lastSet` is gone;
+  `bestEstimated1RMKg` stays for the Progress tab.
 
 **Layout** (reference: Caliber's set entry):
 

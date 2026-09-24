@@ -54,14 +54,21 @@ final class WorkoutViewModel {
             .max()
     }
 
-    /// The most recent set logged for `exercise` in `sessions` (which must be newest-first).
-    static func lastSet(for exercise: Exercise, in sessions: [WorkoutSession]) -> WorkoutSetEntry? {
-        for session in sessions {
+    /// The sets of `exercise` from the most recent session before `cutoff` that has any, in the
+    /// order they were logged — the exercise screen's "Last:" values. `sessions` must be
+    /// newest-first.
+    static func lastSessionSets(for exercise: Exercise, in sessions: [WorkoutSession], before cutoff: Date) -> [WorkoutSetEntry] {
+        for session in sessions where session.date < cutoff {
             let sets = session.setEntries
                 .filter { $0.exercise == exercise }
                 .sorted { $0.setNumber < $1.setNumber }
-            if let last = sets.last { return last }
+            if !sets.isEmpty { return sets }
         }
-        return nil
+        return []
+    }
+
+    /// Set `index` (0-based) of a previous session, or its final set when it had fewer.
+    static func lastValue(forSet index: Int, in lastSets: [WorkoutSetEntry]) -> WorkoutSetEntry? {
+        index < lastSets.count ? lastSets[index] : lastSets.last
     }
 }

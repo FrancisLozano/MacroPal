@@ -6,17 +6,19 @@
 import SwiftUI
 import SwiftData
 
-/// Track one exercise's sets for a day (today, unless an unplanned workout is back-dated). Each
-/// row is a set: reps × weight, how heavy that is against your best estimated 1RM, and a check
-/// to log it. Rows start prefilled from your last set so a repeat set is a single tap. Used
-/// from a plan day (with its sets × reps target) and from an unplanned workout (no target).
-/// Row order, the % bar, unplanned defaults and the rest timer follow Profile → Workout.
+/// Track one exercise's sets for a day (today, unless an unplanned workout is back-dated): the
+/// Workout tab of the exercise screen. Each row is a set with a weight box and a reps box, and
+/// "Last:" under each from the previous session. Sets save as you type — when you leave a row
+/// — so backing out midway loses nothing; Complete Exercise logs the untouched rows at their
+/// suggested values and goes back. Clearing both boxes unlogs a set. Used from a plan day (with
+/// its sets × reps target) and from an unplanned workout (Profile → Workout's default sets).
+/// Column order, units and the rest timer follow Profile → Workout.
 struct ExerciseTrackView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
     @Environment(RestTimerModel.self) private var restTimer
     @AppStorage(WeightUnit.storageKey) private var unit: WeightUnit = .lb
     @AppStorage(WorkoutPreferences.weightFirstKey) private var weightFirst = WorkoutPreferences.weightFirstDefault
-    @AppStorage(WorkoutPreferences.showPRsKey) private var showPRs = WorkoutPreferences.showPRsDefault
     @AppStorage(WorkoutPreferences.defaultSetsKey) private var defaultSets = WorkoutPreferences.defaultSetsDefault
     @AppStorage(WorkoutPreferences.defaultRepsKey) private var defaultReps = WorkoutPreferences.defaultRepsDefault
     @AppStorage(WorkoutPreferences.restSecondsKey) private var restSeconds = WorkoutPreferences.restSecondsDefault
@@ -24,8 +26,8 @@ struct ExerciseTrackView: View {
     @Query(sort: \WorkoutSession.date, order: .reverse) private var sessions: [WorkoutSession]
 
     let exercise: Exercise?
-    /// The plan's sets × reps (`reps` prefills rows — the bottom of a range; `repsLabel` is
-    /// "10" or "8–10"), or nil for an unplanned workout.
+    /// The plan's sets × reps (`reps` is the suggestion with no history — the bottom of a
+    /// range; `repsLabel` is "10" or "8–10"), or nil for an unplanned workout.
     let target: (sets: Int, reps: Int, repsLabel: String)?
     let date: Date
     /// Recorded on each logged set so Workout History can say "Pull".
@@ -46,43 +48,60 @@ struct ExerciseTrackView: View {
     }
 
     @State private var rows: [SetRow] = []
-    @FocusState private var isEditing: Bool
+    /// The store's entry behind each logged row.
+    @State private var entries: [SetRow.ID: WorkoutSetEntry] = [:]
+    @State private var isShowingSetsInfo = false
+    @FocusState private var focus: Field?
+    /// The focused box's selection — all of it on focus, so typing replaces the number.
+    @State private var selection: TextSelection?
 
     private let viewModel = WorkoutViewModel()
 
-    struct SetRow: Identifiable {
-        let id = UUID()
-        var weightText: String
-        var repsText: String
-        /// Non-nil once the set is logged; unchecking deletes it.
-        var entry: WorkoutSetEntry?
-    }
+    private enum Field: Hashable {
+        case weight(SetRow.ID)
+        case reps(SetRow.ID)
 
-    private var referenceKg: Double? {
-        guard let exercise else { return nil }
-        return WorkoutViewModel.bestEstimated1RMKg(
-            for: exercise, in: sessions, before: Calendar.current.startOfDay(for: date)
-        )
+        var rowID: SetRow.ID {
+            switch self {
+            case .weight(let id), .reps(let id): id
+            }
+        }
     }
 
     private var loggedCount: Int {
-        rows.filter { $0.entry != nil }.count
+        rows.filter(\.isLogged).count
+    }
+
+    private var canComplete: Bool {
+        rows.contains { $0.isLogged || $0.wouldLogOnComplete }
     }
 
     var body: some View {
         ScrollView {
             VStack(spacing: 12) {
                 header
-                ForEach($rows) { $row in
-                    setRow($row, number: (rows.firstIndex { $0.id == row.id } ?? 0) + 1)
+                VStack(spacing: 0) {
+                    ForEach(Array(rows.indices), id: \.self) { index in
+                        if index > 0 {
+                            Rectangle()
+                                .fill(Color(.separator))
+                                .frame(height: 1)
+                                .padding(.leading, 12)
+                        }
+                        setRow($rows[index], number: index + 1)
+                    }
                 }
+                .background(.background.secondary, in: RoundedRectangle(cornerRadius: 14))
+
                 Button {
-                    rows.append(blankRow())
+                    complete()
                 } label: {
-                    Label("Add Set", systemImage: "plus")
+                    Text("Complete Exercise")
+                        .font(.headline)
                         .frame(maxWidth: .infinity, minHeight: 44)
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(.borderedProminent)
+                .disabled(!canComplete)
             }
             .padding()
         }
@@ -98,23 +117,35 @@ struct ExerciseTrackView: View {
                 }
                 .disabled(restTimer.timer != nil)
             }
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") { focus = nil }
+            }
         }
         .safeAreaInset(edge: .bottom) {
             RestTimerBar()
         }
         .onAppear(perform: buildRows)
+        .onChange(of: focus) { old, new in
+            if let old, old.rowID != new?.rowID {
+                commit(old.rowID)
+            }
+            selectAll(in: new)
+        }
+        // Backing out with a box still focused: save what's there.
+        .onDisappear {
+            for row in rows { commit(row.id) }
+        }
     }
 
-    /// The target and progress. The exercise's name is already the navigation title, so the
-    /// card shows what it works instead of repeating it.
+    /// The target, progress and where to change the number of sets.
     private var header: some View {
-        HStack(spacing: 12) {
-            ExerciseThumbnail(exercise: exercise)
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
             VStack(alignment: .leading, spacing: 4) {
                 if let target {
                     Text("\(target.sets) sets × \(target.repsLabel) reps")
                         .font(.headline)
-                    Text("\(loggedCount) of \(target.sets) done")
+                    Text("\(loggedCount) of \(rows.count) done")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 } else {
@@ -123,203 +154,202 @@ struct ExerciseTrackView: View {
                 }
             }
             Spacer(minLength: 0)
+            Button {
+                isShowingSetsInfo = true
+            } label: {
+                Image(systemName: "info.circle")
+                    .font(.title3)
+            }
+            .accessibilityLabel("Changing the number of sets")
+            .popover(isPresented: $isShowingSetsInfo) {
+                Text(setsInfo)
+                    .font(.subheadline)
+                    .padding()
+                    .frame(width: 280)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .presentationCompactAdaptation(.popover)
+            }
         }
-        .padding()
-        .background(.background.secondary, in: RoundedRectangle(cornerRadius: 14))
+        .padding(.horizontal, 4)
+    }
+
+    private var setsInfo: String {
+        if target != nil {
+            "The number of sets comes from your plan. To change it, go back to the day's list and use ⋯ → Edit Sets & Reps on this exercise."
+        } else {
+            "An unplanned exercise gets Profile → Workout → Default Sets. Change it there."
+        }
     }
 
     private func setRow(_ row: Binding<SetRow>, number: Int) -> some View {
-        let isLogged = row.wrappedValue.entry != nil
-        return HStack(spacing: 10) {
-            if isRemovable(row.wrappedValue, number: number) {
-                Button {
-                    remove(row.wrappedValue)
-                } label: {
-                    setNumber(number)
-                        .overlay(alignment: .topLeading) {
-                            Image(systemName: "minus.circle.fill")
-                                .symbolRenderingMode(.palette)
-                                .foregroundStyle(.white, .red)
-                                .font(.body)
-                                .offset(x: -8, y: -8)
-                        }
+        let id = row.wrappedValue.id
+        return HStack(alignment: .top, spacing: 12) {
+            HStack(spacing: 4) {
+                Text("Set \(number)")
+                    .font(.subheadline.weight(.semibold))
+                if row.wrappedValue.isLogged {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.green)
+                        .accessibilityLabel("Logged")
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Remove set \(number)")
+            }
+            .frame(width: 72, height: 36, alignment: .leading)
+
+            if weightFirst {
+                weightBox(row, id: id)
+                repsBox(row, id: id)
             } else {
-                setNumber(number)
+                repsBox(row, id: id)
+                weightBox(row, id: id)
             }
-
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 4) {
-                    if weightFirst {
-                        weightField(row)
-                        Text("×")
-                            .foregroundStyle(.secondary)
-                        repsField(row)
-                    } else {
-                        repsField(row)
-                        Text("×")
-                            .foregroundStyle(.secondary)
-                        weightField(row)
-                    }
-                }
-                .focused($isEditing)
-                .multilineTextAlignment(.trailing)
-                .disabled(isLogged)
-                .font(.subheadline.weight(.semibold))
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 8))
-
-                intensityBar(for: row.wrappedValue)
-            }
-
-            Spacer(minLength: 0)
-
-            Button {
-                toggle(row)
-            } label: {
-                Image(systemName: isLogged ? "checkmark.circle.fill" : "checkmark.circle")
-                    .font(.title)
-                    .foregroundStyle(isLogged ? Color.green : Color.secondary)
-            }
-            .buttonStyle(.plain)
-            .disabled(!isLogged && !isValid(row.wrappedValue))
-            .accessibilityLabel(isLogged ? "Unlog set \(number)" : "Log set \(number)")
         }
         .padding(12)
-        .background(.background.secondary, in: RoundedRectangle(cornerRadius: 14))
     }
 
-    private func setNumber(_ number: Int) -> some View {
-        Text("\(number)")
-            .font(.title3.bold())
-            .frame(width: 32, height: 40)
-            .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 8))
+    private func weightBox(_ row: Binding<SetRow>, id: SetRow.ID) -> some View {
+        box(
+            text: row.weightText, placeholder: row.wrappedValue.weightPlaceholder,
+            suffix: unit.symbol, last: row.wrappedValue.last.map { SetRow.format($0.weight) },
+            keyboard: .decimalPad, field: .weight(id)
+        )
     }
 
-    private func repsField(_ row: Binding<SetRow>) -> some View {
-        HStack(spacing: 4) {
-            TextField("0", text: row.repsText)
-                .keyboardType(.numberPad)
-                .frame(width: 34)
-            Text("reps")
-                .foregroundStyle(.secondary)
-        }
+    private func repsBox(_ row: Binding<SetRow>, id: SetRow.ID) -> some View {
+        box(
+            text: row.repsText, placeholder: row.wrappedValue.repsPlaceholder,
+            suffix: "reps", last: row.wrappedValue.last.map { String($0.reps) },
+            keyboard: .numberPad, field: .reps(id)
+        )
     }
 
-    private func weightField(_ row: Binding<SetRow>) -> some View {
-        HStack(spacing: 4) {
-            TextField("0", text: row.weightText)
-                .keyboardType(.decimalPad)
-                .frame(width: 56)
-            Text(unit.symbol)
-                .foregroundStyle(.secondary)
-        }
-    }
-
-    /// "30% of 130 lb" with a colored bar; hidden until there's history from an earlier day to
-    /// compare to, or when Show PRs is off in Profile → Workout.
-    @ViewBuilder
-    private func intensityBar(for row: SetRow) -> some View {
-        if showPRs, let referenceKg, let weight = Double(row.weightText), weight > 0 {
-            let fraction = unit.toKg(weight) / referenceKg
-            VStack(alignment: .leading, spacing: 3) {
-                Text("\(Int((fraction * 100).rounded()))% of \(unit.formattedLift(fromKg: referenceKg)) \(unit.symbol)")
-                    .font(.caption)
+    /// A number box with its unit, and "Last: …" under it.
+    private func box(
+        text: Binding<String>, placeholder: String, suffix: String, last: String?,
+        keyboard: UIKeyboardType, field: Field
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 4) {
+                TextField(placeholder, text: text, selection: selectionBinding(for: field))
+                    .keyboardType(keyboard)
+                    .multilineTextAlignment(.trailing)
+                    .focused($focus, equals: field)
+                Text(suffix)
                     .foregroundStyle(.secondary)
-                ProgressView(value: min(fraction, 1))
-                    .tint(intensityColor(fraction))
             }
+            .font(.body.weight(.semibold))
+            .padding(.horizontal, 10)
+            .frame(height: 36)
+            .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 8))
+            .contentShape(Rectangle())
+            .onTapGesture { focus = field }
+
+            Text("Last: \(last ?? "–")")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
+        .frame(maxWidth: .infinity)
     }
 
-    private func intensityColor(_ fraction: Double) -> Color {
-        switch fraction {
-        case ..<0.4: .green
-        case ..<0.6: .yellow
-        case ..<0.8: .orange
-        default: .red
+    private func selectionBinding(for field: Field) -> Binding<TextSelection?> {
+        Binding(
+            get: { focus == field ? selection : nil },
+            set: { if focus == field { selection = $0 } }
+        )
+    }
+
+    private func selectAll(in field: Field?) {
+        guard let field, let row = rows.first(where: { $0.id == field.rowID }) else {
+            selection = nil
+            return
         }
+        let text = if case .weight = field { row.weightText } else { row.repsText }
+        selection = TextSelection(range: text.startIndex..<text.endIndex)
     }
 
-    private func isValid(_ row: SetRow) -> Bool {
-        guard let weight = Double(row.weightText), let reps = Int(row.repsText) else { return false }
-        return weight >= 0 && reps > 0
-    }
-
-    private func toggle(_ row: Binding<SetRow>) {
-        if let entry = row.wrappedValue.entry {
-            row.wrappedValue.entry = nil
-            modelContext.delete(entry)
-        } else if let exercise, isValid(row.wrappedValue),
-                  let weight = Double(row.wrappedValue.weightText), let reps = Int(row.wrappedValue.repsText) {
-            row.wrappedValue.entry = viewModel.logSet(
-                exercise: exercise, weightKg: unit.toKg(weight), reps: reps, on: date,
-                planDayName: planDayName, context: modelContext
+    /// Saves, updates or unlogs a row to match its boxes.
+    private func commit(_ id: SetRow.ID, startsRest: Bool = true) {
+        guard let index = rows.firstIndex(where: { $0.id == id }) else { return }
+        rows[index].completeFromPlaceholders()
+        switch rows[index].change {
+        case .none:
+            return
+        case .insert(let values):
+            guard let exercise else { return }
+            entries[id] = viewModel.logSet(
+                exercise: exercise, weightKg: unit.toKg(values.weight), reps: values.reps,
+                on: date, planDayName: planDayName, context: modelContext
             )
-            isEditing = false
-            fillForward(from: row.wrappedValue)
-            if autoRestTimer {
+            rows[index].saved = values
+            SetRow.suggest(values, below: index, in: &rows)
+            if startsRest && autoRestTimer {
                 restTimer.start(seconds: restSeconds)
             }
+        case .update(let values):
+            entries[id]?.weightKg = unit.toKg(values.weight)
+            entries[id]?.reps = values.reps
+            rows[index].saved = values
+            SetRow.suggest(values, below: index, in: &rows)
+        case .delete:
+            if let entry = entries.removeValue(forKey: id) {
+                modelContext.delete(entry)
+            }
+            rows[index].saved = nil
         }
     }
 
-    /// The rows `buildRows` pads up to every time the screen opens.
-    private var baselineRowCount: Int {
-        target?.sets ?? defaultSets
-    }
-
-    /// Only an unlogged row past the baseline can go — a baseline row would just come back the
-    /// next time the screen opens, and a logged one is removed by unchecking it.
-    private func isRemovable(_ row: SetRow, number: Int) -> Bool {
-        row.entry == nil && number > baselineRowCount
-    }
-
-    private func remove(_ row: SetRow) {
-        isEditing = false
-        rows.removeAll { $0.id == row.id }
-    }
-
-    /// Copies a just-logged set into the later rows that don't have a weight yet, so on a
-    /// first-ever session the weight only has to be typed once. Rows with a weight are left
-    /// alone — that's either a prefill from history or something the user typed.
-    private func fillForward(from logged: SetRow) {
-        guard let index = rows.firstIndex(where: { $0.id == logged.id }) else { return }
-        for later in rows.indices where later > index && rows[later].entry == nil && rows[later].weightText.isEmpty {
-            rows[later].weightText = logged.weightText
-            rows[later].repsText = logged.repsText
+    /// Logs every row that isn't yet, at its suggested values where untouched, then goes back
+    /// to the list.
+    private func complete() {
+        focus = nil
+        for index in rows.indices where !rows[index].isLogged {
+            rows[index].fillEmptyFromPlaceholders()
+            commit(rows[index].id, startsRest: false)
         }
+        if autoRestTimer {
+            restTimer.start(seconds: restSeconds)
+        }
+        dismiss()
     }
 
-    /// The day's already-logged sets first (checked), then blank rows up to the target, all
-    /// prefilled from the last set of this exercise.
+    /// The day's logged sets first, then empty rows up to the plan's (or the default) number of
+    /// sets, each suggesting last session's set with the same number.
     private func buildRows() {
         guard rows.isEmpty, let exercise else { return }
+        let dayStart = Calendar.current.startOfDay(for: date)
         let logged = (sessions.first { Calendar.current.isDate($0.date, inSameDayAs: date) }?.setEntries ?? [])
             .filter { $0.exercise == exercise }
             .sorted { $0.setNumber < $1.setNumber }
-        rows = logged.map { entry in
-            SetRow(
-                weightText: unit.formattedLift(fromKg: entry.weightKg),
-                repsText: String(entry.reps),
-                entry: entry
-            )
+        let lastSets = WorkoutViewModel.lastSessionSets(for: exercise, in: sessions, before: dayStart)
+        let count = max(target?.sets ?? defaultSets, logged.count)
+
+        rows = (0..<count).map { index in
+            var row = SetRow()
+            if let last = WorkoutViewModel.lastValue(forSet: index, in: lastSets) {
+                row.last = values(of: last)
+                row.weightPlaceholder = SetRow.format(row.last!.weight)
+                row.repsPlaceholder = String(last.reps)
+            } else {
+                row.repsPlaceholder = String(target?.reps ?? defaultReps)
+            }
+            if index < logged.count {
+                let saved = values(of: logged[index])
+                row.saved = saved
+                row.weightText = SetRow.format(saved.weight)
+                row.repsText = String(saved.reps)
+            }
+            return row
         }
-        while rows.count < baselineRowCount {
-            rows.append(blankRow())
+        for (index, entry) in logged.enumerated() {
+            entries[rows[index].id] = entry
+            if let saved = rows[index].saved {
+                SetRow.suggest(saved, below: index, in: &rows)
+            }
         }
     }
 
-    private func blankRow() -> SetRow {
-        if let last = rows.last(where: { !$0.weightText.isEmpty }) ?? rows.last {
-            return SetRow(weightText: last.weightText, repsText: last.repsText)
-        }
-        if let exercise, let last = WorkoutViewModel.lastSet(for: exercise, in: sessions) {
-            return SetRow(weightText: unit.formattedLift(fromKg: last.weightKg), repsText: String(last.reps))
-        }
-        return SetRow(weightText: "", repsText: String(target?.reps ?? defaultReps))
+    /// A stored set in the user's unit, rounded the way the boxes show it.
+    private func values(of entry: WorkoutSetEntry) -> SetValues {
+        SetValues(weight: (unit.fromKg(entry.weightKg) * 10).rounded() / 10, reps: entry.reps)
     }
 }
