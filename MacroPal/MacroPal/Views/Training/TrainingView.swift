@@ -14,17 +14,30 @@ struct TrainingView: View {
     @State private var isPresentingLogWorkoutSheet = false
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                BodyMapCard()
-                CurrentPlanCard()
-                GoalsCard()
-                moreCard
+        // Title laid out like Nutrition's (see `DailySummaryView.header`): an empty inline
+        // navigation title and our own large title pinned above the scroll view, so it sits at
+        // the same height on both tabs and no small "Training" appears in the bar on scroll.
+        VStack(alignment: .leading, spacing: 0) {
+            Text("Training")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+                .padding(.horizontal)
+                .padding(.top, 8)
+
+            ScrollView {
+                VStack(spacing: 20) {
+                    BodyMapCard()
+                    CurrentPlanCard()
+                    GoalsCard()
+                    moreCard
+                }
+                .padding(.vertical)
             }
-            .padding(.vertical)
+            .scrollIndicators(.hidden)
         }
         .background(Color(.systemGroupedBackground))
-        .navigationTitle("Training")
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $isPresentingLogWorkoutSheet) {
             UnplannedWorkoutView()
         }

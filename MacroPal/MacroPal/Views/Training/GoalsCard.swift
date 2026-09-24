@@ -6,17 +6,16 @@
 import SwiftUI
 import SwiftData
 
-/// Goals section of the Training page. Each row shows the current value against its goal,
-/// tapping the value edits the goal, and the chart icon opens that goal's progress graph.
+/// Goals section of the Training page. Each row shows the current value against its goal;
+/// tapping the value opens that goal's history (where the goal itself is edited), and the +
+/// logs a new value.
 struct GoalsCard: View {
     @Query private var profiles: [UserProfile]
     @Query private var stepEntries: [StepEntry]
     @Query private var weightEntries: [WeightEntry]
     @AppStorage(WeightUnit.storageKey) private var unit: WeightUnit = .lb
 
-    @State private var isPresentingGoalWeightSheet = false
     @State private var isPresentingLogWeightSheet = false
-    @State private var isPresentingStepGoalSheet = false
     @State private var isPresentingLogStepsSheet = false
 
     private let stepsViewModel = StepsViewModel()
@@ -41,8 +40,8 @@ struct GoalsCard: View {
                         Text("Goal weight")
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                        Button {
-                            isPresentingGoalWeightSheet = true
+                        NavigationLink {
+                            WeightHistoryView()
                         } label: {
                             HStack(alignment: .firstTextBaseline, spacing: 4) {
                                 Text(goalText)
@@ -52,22 +51,10 @@ struct GoalsCard: View {
                             }
                             .foregroundStyle(Color.primary)
                         }
+                        .accessibilityLabel("Goal weight \(goalText) \(unit.symbol). Weight history")
                     }
                     Spacer()
-                    Button {
-                        isPresentingLogWeightSheet = true
-                    } label: {
-                        Label("Log", systemImage: "plus")
-                    }
-                    .buttonStyle(.bordered)
-                    NavigationLink {
-                        WeightHistoryView()
-                    } label: {
-                        Image(systemName: "chart.line.uptrend.xyaxis")
-                            .padding(8)
-                    }
-                    .buttonStyle(.bordered)
-                    .accessibilityLabel("Weight progress")
+                    logButton("Log weight") { isPresentingLogWeightSheet = true }
                 }
 
                 ForEach(weightFindings) { finding in
@@ -80,23 +67,9 @@ struct GoalsCard: View {
             }
             .padding()
         }
-        .sheet(isPresented: $isPresentingGoalWeightSheet) {
-            if let profile {
-                NavigationStack {
-                    GoalWeightEditView(profile: profile)
-                }
-            }
-        }
         .sheet(isPresented: $isPresentingLogWeightSheet) {
             NavigationStack {
                 LogWeightEntryView()
-            }
-        }
-        .sheet(isPresented: $isPresentingStepGoalSheet) {
-            if let profile {
-                NavigationStack {
-                    StepGoalEditView(profile: profile)
-                }
             }
         }
         .sheet(isPresented: $isPresentingLogStepsSheet) {
@@ -106,7 +79,7 @@ struct GoalsCard: View {
         }
     }
 
-    /// Today's steps against the goal; tapping the numbers edits the goal.
+    /// Today's steps against the goal; tapping the numbers opens the steps history.
     private var stepsRow: some View {
         let today = stepsViewModel.steps(on: .now, in: stepEntries)
         let goal = profile?.stepGoal ?? 10_000
@@ -115,8 +88,8 @@ struct GoalsCard: View {
                 Text("Steps today")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Button {
-                    isPresentingStepGoalSheet = true
+                NavigationLink {
+                    StepsHistoryView()
                 } label: {
                     HStack(alignment: .firstTextBaseline, spacing: 4) {
                         Text(today, format: .number)
@@ -130,24 +103,22 @@ struct GoalsCard: View {
                     }
                     .foregroundStyle(Color.primary)
                 }
-                .accessibilityLabel("\(today) of \(goal) steps today. Edit steps goal")
+                .accessibilityLabel("\(today) of \(goal) steps today. Steps history")
             }
             Spacer()
-            Button {
-                isPresentingLogStepsSheet = true
-            } label: {
-                Label("Log", systemImage: "plus")
-            }
-            .buttonStyle(.bordered)
-            NavigationLink {
-                StepsHistoryView()
-            } label: {
-                Image(systemName: "chart.bar.fill")
-                    .padding(8)
-            }
-            .buttonStyle(.bordered)
-            .accessibilityLabel("Steps progress")
+            logButton("Log steps") { isPresentingLogStepsSheet = true }
         }
+    }
+
+    private func logButton(_ accessibilityLabel: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: "plus")
+                .fontWeight(.semibold)
+                .padding(4)
+        }
+        .buttonStyle(.bordered)
+        .buttonBorderShape(.circle)
+        .accessibilityLabel(accessibilityLabel)
     }
 
     private var goalText: String {

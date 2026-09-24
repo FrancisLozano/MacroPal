@@ -18,8 +18,9 @@ list: the next changes should come from using it for real (see **Next task**).
   history.
 - **Training** — body map colored by strength level (ⓘ → How Levels Work), Current Plan card
   (today's day → per-set tracking with rest timer and "% of best"), week view and Edit Routine,
-  Goals card (weight + steps, each with Log and a chart), Workout History, Exercise Progress
-  (best 1RM, next-level target, chart), Log an Unplanned Workout.
+  Goals card (weight + steps, each with a + to log; tap the value for its history and chart),
+  Workout History, Exercise Progress (best 1RM, next-level target, chart), Log an Unplanned
+  Workout.
 - **Profile** — Personal Info, Workout settings (set-row order, PRs, default sets/reps, rest
   timer), Goal & Daily Targets, Units (lb/kg, cm or ft/in).
 - **Widget** — small (calorie ring) and medium (calories + Protein / Carbs / Fat).
@@ -59,8 +60,8 @@ Values as of 2026-09-23. "In app" means you can change it yourself; the rest are
 | Adjustment | Now | Where |
 |---|---|---|
 | Calorie / macro targets | 2,000 kcal · 150P / 200C / 65F | In app: Profile → Goal & Daily Targets |
-| Step goal | 10,000 | In app: tap the numbers on the Goals card's steps row |
-| Goal weight | 154.3 lb | In app: tap the goal weight on the Goals card |
+| Step goal | 10,000 | In app: Goals card → tap today's steps → Daily Goal |
+| Goal weight | 154.3 lb | In app: Goals card → tap the goal weight → Goal Weight |
 | lb/kg, cm or ft/in | lb, cm | In app: Profile → Units & Measurements |
 | Default sets / reps for new exercises | 3 × 10 | In app: Profile → Workout |
 | Rest time, auto-start rest timer | 120 s, off | In app: Profile → Workout |
