@@ -28,7 +28,9 @@ rest of the day's work:
   split into Biceps and Triceps, and Core reads "Abs". Then 12 starters you use were added:
   Machine Chest Press, Single-Arm Triceps Extension, Cable Lateral Raise, Machine Shoulder
   Press, Chest-Supported Dumbbell Row, Close-Grip Row, Single-Arm Cable Rear Delt Fly, Preacher
-  Curl, Seated Leg Curl, Floor Back Extension, Adductor Machine, Machine Ab Crunch — each with
+  Curl, Seated Leg Curl, Floor Back Extension, Adductor Machine, Machine Ab Crunch, and then
+  both single-arm cable triceps moves (Single-Arm Cable Triceps Pushdown, high pulley;
+  Single-Arm Overhead Cable Triceps Extension, low pulley) — each with
   a muscle profile and How to Do It / Common Mistakes. No drawing for Cable Lateral Raise,
   Machine Shoulder Press, Chest-Supported Dumbbell Row or Machine Ab Crunch (no match in
   Everkinetic). Then **adductors were added to the body map** (see the decision below).
@@ -52,13 +54,13 @@ rest of the day's work:
   field that fills both in), Goals card (weight + steps,
   each with a + to log; tap the value for its history and chart), Log an Unplanned Workout.
   No all-workouts history (removed on request); past sets live in each exercise's Progress.
-- **Exercise screen** — *Workout*: a start → end drawing of the exercise (41 starters), a row per set (reps and lb boxes, "Last:" from the
+- **Exercise screen** — *Workout*: a start → end drawing of the exercise (43 starters), a row per set (reps and lb boxes, "Last:" from the
   previous session), boxes start empty with the suggestion in gray, sets save when you leave
   the row, clearing both boxes unlogs a set, Complete Exercise logs untouched rows at their
   suggestion and goes back, ⓘ says where to change the set count, rest timer (its end: a banner
   in the background, a "Rest over" card from the bottom in the app). *Overview*:
   figure with Primary / Secondary beside it, Flip View, How to Do It, Common Mistakes with
-  fixes (text for all 50 starter exercises in `ExerciseGuide.swift`; none for exercises you
+  fixes (text for all 52 starter exercises in `ExerciseGuide.swift`; none for exercises you
   create). *Progress*: total volume, this week vs last, volume-per-session bars, History
   (swipe a day to delete it).
 - **Profile** — Personal Info, Workout settings (set-row order, default sets/reps, rest
@@ -176,6 +178,14 @@ a screenshot or sketch works best, as with the whiteboard for Training.
 
 - A per-lift goal you set yourself on Exercise Progress (needs a new model field — optional
   or defaulted where it's declared, so no versioned schema is needed).
+- **Your own photo for exercises without a drawing** (user, 2026-09-23: later). Tap the empty
+  image spot on the Workout tab to take or pick a photo, saved on the exercise (a new
+  optional field, so no versioned schema). Would cover the 9 starters with no drawing —
+  Face Pull, Hip Thrust, Plank, Hanging Leg Raise, Dumbbell Shoulder Press, Cable Lateral
+  Raise, Machine Shoulder Press, Chest-Supported Dumbbell Row, Machine Ab Crunch — and any
+  exercise you create. Checked first: Everkinetic has no chest-supported row; wger's
+  "Incline Chest-Supported Dumbbell Row" image is tagged CC BY-SA 4.0 but sourced from a
+  blog by someone else, so its rights are unclear and it wasn't used.
 - HealthKit step import (needs a physical iPhone and permissions).
 - Default Time from the Workout settings reference screenshot (only once timed exercises
   exist).
@@ -253,7 +263,7 @@ Both messages were checked by forcing the first attempt to fail with a temporary
   night, on request). The free GIF and photo databases have unclear licenses (free-exercise-db
   is Unlicense, but its images came from elsewhere with no stated rights). Everkinetic's line
   drawings are CC BY-SA 4.0: a start and an end position per exercise, shown side by side above
-  "3 sets × 10 reps" (`ExerciseIllustration`). 41 of the 50 starter exercises have one (the 12 added later — see below — brought 8); Face
+  "3 sets × 10 reps" (`ExerciseIllustration`). 43 of the 52 starter exercises have one (the 14 added later — see below — brought 10); Face
   Pull, Hip Thrust, Plank, Hanging Leg Raise and Dumbbell Shoulder Press don't, because the
   closest drawing showed a different movement. Assets are `Assets.xcassets/Exercises/exercise-<name>-start/end`,
   looked up from the exercise's name, so a custom exercise with a starter's name gets its drawing too.

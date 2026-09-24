@@ -51,6 +51,8 @@ enum StarterExerciseCatalog {
         ("Skull Crusher", .triceps, "Barbell"),
         ("Overhead Triceps Extension", .triceps, "Dumbbell"),
         ("Single-Arm Triceps Extension", .triceps, "Dumbbell"),
+        ("Single-Arm Cable Triceps Pushdown", .triceps, "Cable"),
+        ("Single-Arm Overhead Cable Triceps Extension", .triceps, "Cable"),
         // Legs
         ("Back Squat", .legs, "Barbell"),
         ("Front Squat", .legs, "Barbell"),
@@ -81,6 +83,7 @@ enum StarterExerciseCatalog {
         "Machine Shoulder Press", "Chest-Supported Dumbbell Row", "Close-Grip Row",
         "Single-Arm Cable Rear Delt Fly", "Preacher Curl", "Seated Leg Curl",
         "Floor Back Extension", "Adductor Machine", "Machine Ab Crunch",
+        "Single-Arm Cable Triceps Pushdown", "Single-Arm Overhead Cable Triceps Extension",
     ]
 
     /// Inserts each starter exercise once per install, skipping any name the user already has.

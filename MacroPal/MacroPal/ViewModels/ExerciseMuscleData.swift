@@ -93,6 +93,8 @@ enum ExerciseMuscleData {
         "skull crusher": profile([.triceps: 1]),
         "overhead triceps extension": profile([.triceps: 1]),
         "single-arm triceps extension": profile([.triceps: 1]),
+        "single-arm cable triceps pushdown": profile([.triceps: 1]),
+        "single-arm overhead cable triceps extension": profile([.triceps: 1]),
 
         "back squat": profile([.quads: 1, .glutes: 0.8, .adductors: 0.5, .hamstrings: 0.4, .lowerBack: 0.3, .abs: 0.3]),
         "front squat": profile([.quads: 1, .glutes: 0.6, .adductors: 0.4, .abs: 0.4]),
