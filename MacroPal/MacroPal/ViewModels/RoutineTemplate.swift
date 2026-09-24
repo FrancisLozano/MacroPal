@@ -89,14 +89,6 @@ enum RoutineTemplate {
         return min(gap, 7 - gap)
     }
 
-    /// Days of `plan` that would lose their exercises if the split changed to `weekdays`.
-    static func daysLosingExercises(weekdays: Set<Int>, plan: WorkoutPlan?) -> [PlanDay] {
-        guard let plan else { return [] }
-        return match(split: split(for: weekdays), to: plan.sortedDays, name: \.name, weekday: \.weekday)
-            .leftover
-            .filter { !$0.exercises.isEmpty }
-    }
-
     /// Replaces `plan`'s days with a split for `weekdays` (`Calendar` weekday numbers), keeping
     /// the exercises of any day whose name carries over. Creates the plan if there isn't one.
     @discardableResult

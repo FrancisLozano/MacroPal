@@ -5,7 +5,6 @@
 
 import Foundation
 import SwiftData
-import SwiftUI // for `Array.move(fromOffsets:toOffset:)`
 
 /// The user's weekly training routine. Single-row in practice — there is one current plan.
 @Model
@@ -25,14 +24,13 @@ final class WorkoutPlan {
         days.first { $0.weekday == weekday }
     }
 
-    /// Reorders the workouts while leaving the training weekdays (and so the rest days) where
-    /// they are — the workouts swap places between those weekdays.
-    func moveDays(from source: IndexSet, to destination: Int) {
-        let ordered = sortedDays
-        let weekdays = ordered.map(\.weekday)
-        var reordered = ordered
-        reordered.move(fromOffsets: source, toOffset: destination)
-        for (day, weekday) in zip(reordered, weekdays) {
+    /// Puts the workouts in the given order while leaving the training weekdays (and so the rest
+    /// days) where they are — the workouts swap places between those weekdays. `ordered` must
+    /// hold this plan's days; anything else is ignored.
+    func reorderDays(_ ordered: [PlanDay]) {
+        let weekdays = sortedDays.map(\.weekday)
+        guard ordered.count == weekdays.count, Set(ordered.map(\.persistentModelID)) == Set(days.map(\.persistentModelID)) else { return }
+        for (day, weekday) in zip(ordered, weekdays) {
             day.weekday = weekday
         }
     }

@@ -41,9 +41,6 @@ struct RoutineEditorView: View {
                         dayToggle(weekday)
                     }
                 }
-                Text(countCaption)
-                    .font(.caption)
-                    .foregroundStyle(isValid ? Color.secondary : Color.red)
             }
 
             VStack(alignment: .leading, spacing: 8) {
@@ -57,12 +54,6 @@ struct RoutineEditorView: View {
                             Spacer()
                             Text(item.slot.name)
                         }
-                    }
-                    ForEach(losingExercises) { day in
-                        Label(removalWarning(for: day), systemImage: "exclamationmark.triangle.fill")
-                            .font(.subheadline)
-                            .foregroundStyle(.orange)
-                            .padding(.top, 4)
                     }
                 } else {
                     Text("Pick between \(RoutineTemplate.daysPerWeekRange.lowerBound) and \(RoutineTemplate.daysPerWeekRange.upperBound) days.")
@@ -83,21 +74,6 @@ struct RoutineEditorView: View {
                     .disabled(!isValid)
             }
         }
-    }
-
-    /// Days whose name drops out of the new split — saving deletes their exercises.
-    private var losingExercises: [PlanDay] {
-        RoutineTemplate.daysLosingExercises(weekdays: selectedWeekdays, plan: plan)
-    }
-
-    private func removalWarning(for day: PlanDay) -> String {
-        let count = day.exercises.count
-        return "\(day.name)'s \(count == 1 ? "exercise" : "\(count) exercises") will be removed."
-    }
-
-    private var countCaption: String {
-        let count = selectedWeekdays.count
-        return count == 1 ? "1 day a week" : "\(count) days a week"
     }
 
     private func dayToggle(_ weekday: Int) -> some View {

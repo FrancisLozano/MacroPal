@@ -17,7 +17,8 @@ list: the next changes should come from using it for real (see **Next task**).
   barcode scanning, My Meals built from foods, oz/cups/tbsp/tsp and fractions. Daily Log
   history.
 - **Training** — body map colored by strength level (ⓘ → How Levels Work), Current Plan card
-  (today's day → per-set tracking with rest timer and "% of best"), week view and Edit Routine,
+  ("Gym Workout"; tap to expand the week in place, a day → per-set tracking with rest timer and
+  "% of best"; ⋯ → drag to reorder or Edit Routine),
   Goals card (weight + steps, each with a + to log; tap the value for its history and chart),
   Workout History, Exercise Progress (best 1RM, next-level target, chart), Log an Unplanned
   Workout.
