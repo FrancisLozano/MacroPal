@@ -444,25 +444,15 @@ enum ExerciseGuides {
             ("Arching the lower back to push the weight up.", "Brace your abs and keep your ribs down."),
             ("Stopping short of a full stretch.", "Lower until the dumbbell is behind your neck, then press."),
         ]),
-        "single-arm cable triceps pushdown": guide([
+        "single-arm cable triceps extension": guide([
             "Set a single handle on the high pulley and stand facing the stack.",
             "Hold the handle in one hand, elbow bent and tucked against your side.",
-            "Push the handle down until your arm is straight, moving only at the elbow.",
-            "Let it come back up slowly until your forearm is just past level.",
+            "Extend your arm down in front of you until it's straight, moving only at the elbow.",
+            "Let the handle come back up slowly until your forearm is just past level.",
         ], [
             ("Elbow drifting forward or away from your side.", "Pin it to your ribs; only the forearm moves."),
             ("Leaning over the handle to push with bodyweight.", "Stand tall and use a weight one arm can move alone."),
             ("Letting the handle yank the arm back up.", "Control the way up as much as the way down."),
-        ]),
-        "single-arm overhead cable triceps extension": guide([
-            "Set a single handle on the low pulley and stand with your back to the stack.",
-            "Hold the handle behind your head, upper arm pointing up beside your ear.",
-            "Straighten the arm toward the ceiling, keeping the upper arm still.",
-            "Lower the handle slowly back behind your head for a full stretch.",
-        ], [
-            ("Upper arm swinging forward as you extend.", "Keep the elbow pointing up; support it with your other hand if needed."),
-            ("Arching the lower back.", "Brace your abs and stagger your feet for balance."),
-            ("Short reps near the top.", "Let the handle go all the way behind your head each rep."),
         ]),
         "cable lateral raise": guide([
             "Set a handle on the lowest pulley and stand side-on to the stack.",

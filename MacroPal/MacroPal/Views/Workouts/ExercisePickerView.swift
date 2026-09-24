@@ -22,19 +22,31 @@ struct ExercisePickerView: View {
     @State private var isPresentingNewExerciseForm = false
 
     private var results: [Exercise] {
-        let descriptor: FetchDescriptor<Exercise>
-        if searchText.trimmingCharacters(in: .whitespaces).isEmpty {
-            descriptor = FetchDescriptor<Exercise>(sortBy: [SortDescriptor(\.name)])
-        } else {
-            descriptor = FetchDescriptor<Exercise>(
-                predicate: #Predicate { $0.name.localizedStandardContains(searchText) },
-                sortBy: [SortDescriptor(\.name)]
-            )
-        }
-        let fetched = (try? modelContext.fetch(descriptor)) ?? []
+        let all = (try? modelContext.fetch(FetchDescriptor<Exercise>(sortBy: [SortDescriptor(\.name)]))) ?? []
         // Searching always looks across everything; the suggestion filter only narrows browsing.
-        guard showsSuggestedOnly, !suggestedGroups.isEmpty, searchText.isEmpty else { return fetched }
-        return fetched.filter { suggestedGroups.contains($0.muscleGroup) }
+        if !Self.words(in: searchText).isEmpty {
+            return all.filter { Self.matches(name: $0.name, query: searchText) }
+        }
+        guard showsSuggestedOnly, !suggestedGroups.isEmpty else { return all }
+        return all.filter { suggestedGroups.contains($0.muscleGroup) }
+    }
+
+    /// True when every word typed appears somewhere in the name, in any order and ignoring
+    /// case, accents and punctuation — so "single arm tricep ext" finds "Single-Arm Overhead
+    /// Cable Triceps Extension". Matching the whole query as one piece missed hyphens and
+    /// words in between.
+    static func matches(name: String, query: String) -> Bool {
+        let nameWords = words(in: name)
+        return words(in: query).allSatisfy { typed in
+            nameWords.contains { $0.hasPrefix(typed) } || nameWords.joined().contains(typed)
+        }
+    }
+
+    /// Lowercased, accent-free words, split on anything that isn't a letter or digit.
+    static func words(in text: String) -> [String] {
+        text.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
+            .split { !$0.isLetter && !$0.isNumber }
+            .map(String.init)
     }
 
     /// `exercises` under their group's heading, in `MuscleGroup.choices` order, leaving out

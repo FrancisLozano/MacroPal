@@ -40,6 +40,18 @@ struct ExerciseCatalogTests {
         #expect(MuscleGroup.core.displayName == "Abs")
     }
 
+    // MARK: Search
+
+    @Test func searchMatchesEachWordAnywhereInTheName() {
+        let name = "Single-Arm Overhead Cable Triceps Extension"
+        #expect(ExercisePickerView.matches(name: name, query: "single arm"))
+        #expect(ExercisePickerView.matches(name: name, query: "tricep extension"))
+        #expect(ExercisePickerView.matches(name: name, query: "cable single-arm ext"))
+        #expect(ExercisePickerView.matches(name: "Push-Up", query: "pushup"))
+        #expect(!ExercisePickerView.matches(name: name, query: "dumbbell"))
+        #expect(!ExercisePickerView.matches(name: "Barbell Row", query: "row curl"))
+    }
+
     // MARK: Arms → Biceps / Triceps
 
     @Test func armExercisesSplitIntoBicepsAndTriceps() {
@@ -63,6 +75,32 @@ struct ExerciseCatalogTests {
         #expect(curl.muscleGroup == .biceps)
         #expect(rearDelt.muscleGroup == .back)
         #expect(lateral.muscleGroup == .shoulders)
+    }
+
+    @Test func renamedStartersTakeTheirNewNameAndUnusedRetiredOnesGo() {
+        let context = container.mainContext
+        let pushdown = Exercise(name: "Single-Arm Cable Triceps Pushdown", muscleGroup: .triceps, equipment: "Cable")
+        let overhead = Exercise(name: "Single-Arm Overhead Cable Triceps Extension", muscleGroup: .triceps, equipment: "Cable")
+        [pushdown, overhead].forEach(context.insert)
+
+        StarterExerciseCatalog.regroup(in: context)
+        #expect(pushdown.name == "Single-Arm Cable Triceps Extension")
+        #expect(names(in: context) == ["Single-Arm Cable Triceps Extension"])
+
+        // Seeding afterwards doesn't add the new name a second time.
+        StarterExerciseCatalog.seedIfNeeded(in: context, defaults: freshDefaults())
+        let all = (try? context.fetch(FetchDescriptor<Exercise>())) ?? []
+        #expect(all.filter { $0.name == "Single-Arm Cable Triceps Extension" }.count == 1)
+    }
+
+    @Test func aRetiredStarterWithLoggedSetsStays() {
+        let context = container.mainContext
+        let overhead = Exercise(name: "Single-Arm Overhead Cable Triceps Extension", muscleGroup: .triceps, equipment: "Cable")
+        context.insert(overhead)
+        WorkoutViewModel().logSet(exercise: overhead, weightKg: 10, reps: 12, context: context)
+
+        StarterExerciseCatalog.regroup(in: context)
+        #expect(names(in: context).contains("Single-Arm Overhead Cable Triceps Extension"))
     }
 
     // MARK: Seeding

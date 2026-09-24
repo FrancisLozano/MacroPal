@@ -28,9 +28,9 @@ rest of the day's work:
   split into Biceps and Triceps, and Core reads "Abs". Then 12 starters you use were added:
   Machine Chest Press, Single-Arm Triceps Extension, Cable Lateral Raise, Machine Shoulder
   Press, Chest-Supported Dumbbell Row, Close-Grip Row, Single-Arm Cable Rear Delt Fly, Preacher
-  Curl, Seated Leg Curl, Floor Back Extension, Adductor Machine, Machine Ab Crunch, and then
-  both single-arm cable triceps moves (Single-Arm Cable Triceps Pushdown, high pulley;
-  Single-Arm Overhead Cable Triceps Extension, low pulley) — each with
+  Curl, Seated Leg Curl, Floor Back Extension, Adductor Machine, Machine Ab Crunch, and
+  Single-Arm Cable Triceps Extension (high pulley, extending in front of you — the user's
+  wording; an overhead low-pulley version was added then dropped on request) — each with
   a muscle profile and How to Do It / Common Mistakes. No drawing for Cable Lateral Raise,
   Machine Shoulder Press, Chest-Supported Dumbbell Row or Machine Ab Crunch (no match in
   Everkinetic). Then **adductors were added to the body map** (see the decision below).
@@ -54,13 +54,13 @@ rest of the day's work:
   field that fills both in), Goals card (weight + steps,
   each with a + to log; tap the value for its history and chart), Log an Unplanned Workout.
   No all-workouts history (removed on request); past sets live in each exercise's Progress.
-- **Exercise screen** — *Workout*: a start → end drawing of the exercise (43 starters), a row per set (reps and lb boxes, "Last:" from the
+- **Exercise screen** — *Workout*: a start → end drawing of the exercise (42 starters), a row per set (reps and lb boxes, "Last:" from the
   previous session), boxes start empty with the suggestion in gray, sets save when you leave
   the row, clearing both boxes unlogs a set, Complete Exercise logs untouched rows at their
   suggestion and goes back, ⓘ says where to change the set count, rest timer (its end: a banner
   in the background, a "Rest over" card from the bottom in the app). *Overview*:
   figure with Primary / Secondary beside it, Flip View, How to Do It, Common Mistakes with
-  fixes (text for all 52 starter exercises in `ExerciseGuide.swift`; none for exercises you
+  fixes (text for all 51 starter exercises in `ExerciseGuide.swift`; none for exercises you
   create). *Progress*: total volume, this week vs last, volume-per-session bars, History
   (swipe a day to delete it).
 - **Profile** — Personal Info, Workout settings (set-row order, default sets/reps, rest
@@ -238,7 +238,13 @@ Both messages were checked by forcing the first attempt to fail with a temporary
   (user, same night), next to Face Pull, so all three rear-delt moves are suggested on Pull
   days; they still credit shoulders first, and traps went 0.4 → 0.6 to match Face Pull.
   `regroup` moves a stored starter listed in its `moved` table only while it's still in its
-  old group. "Core" displays as "Abs" (the stored value is still `core`). Suggestions follow: Push
+  old group; it also applies `renamed` (Single-Arm Cable Triceps Pushdown → … Extension) and
+  deletes `retired` starters (the overhead cable extension) only if no logged set or plan
+  uses them.
+- **Exercise search matches word by word** (2026-09-23): every typed word must appear in the
+  name, in any order, ignoring case and punctuation, and a word may be the start of a longer
+  one — "single arm tricep" finds "Single-Arm … Triceps …". It used to need the whole query
+  as one piece, so hyphens and words in between hid exercises. `ExercisePickerView.matches`. "Core" displays as "Abs" (the stored value is still `core`). Suggestions follow: Push
   suggests Triceps, Pull suggests Biceps, Upper suggests both. The picker's `List` gets a new
   `.id` whenever its headings change, since its rows are buttons (the List button bug);
   checked in the simulator by switching Suggested ↔ All and then picking a row.
@@ -263,7 +269,7 @@ Both messages were checked by forcing the first attempt to fail with a temporary
   night, on request). The free GIF and photo databases have unclear licenses (free-exercise-db
   is Unlicense, but its images came from elsewhere with no stated rights). Everkinetic's line
   drawings are CC BY-SA 4.0: a start and an end position per exercise, shown side by side above
-  "3 sets × 10 reps" (`ExerciseIllustration`). 43 of the 52 starter exercises have one (the 14 added later — see below — brought 10); Face
+  "3 sets × 10 reps" (`ExerciseIllustration`). 42 of the 51 starter exercises have one (the 13 added later — see below — brought 9); Face
   Pull, Hip Thrust, Plank, Hanging Leg Raise and Dumbbell Shoulder Press don't, because the
   closest drawing showed a different movement. Assets are `Assets.xcassets/Exercises/exercise-<name>-start/end`,
   looked up from the exercise's name, so a custom exercise with a starter's name gets its drawing too.

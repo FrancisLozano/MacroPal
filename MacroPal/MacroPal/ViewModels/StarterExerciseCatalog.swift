@@ -51,8 +51,7 @@ enum StarterExerciseCatalog {
         ("Skull Crusher", .triceps, "Barbell"),
         ("Overhead Triceps Extension", .triceps, "Dumbbell"),
         ("Single-Arm Triceps Extension", .triceps, "Dumbbell"),
-        ("Single-Arm Cable Triceps Pushdown", .triceps, "Cable"),
-        ("Single-Arm Overhead Cable Triceps Extension", .triceps, "Cable"),
+        ("Single-Arm Cable Triceps Extension", .triceps, "Cable"),
         // Legs
         ("Back Squat", .legs, "Barbell"),
         ("Front Squat", .legs, "Barbell"),
@@ -83,7 +82,7 @@ enum StarterExerciseCatalog {
         "Machine Shoulder Press", "Chest-Supported Dumbbell Row", "Close-Grip Row",
         "Single-Arm Cable Rear Delt Fly", "Preacher Curl", "Seated Leg Curl",
         "Floor Back Extension", "Adductor Machine", "Machine Ab Crunch",
-        "Single-Arm Cable Triceps Pushdown", "Single-Arm Overhead Cable Triceps Extension",
+        "Single-Arm Cable Triceps Extension",
     ]
 
     /// Inserts each starter exercise once per install, skipping any name the user already has.
@@ -112,17 +111,42 @@ enum StarterExerciseCatalog {
         "single-arm cable rear delt fly": (.shoulders, .back),
     ]
 
-    /// Brings stored exercises up to the current groups: the old Arms group splits into Biceps
-    /// and Triceps, and `moved` starters change heading. Runs at every launch; once there's
-    /// nothing left to move it only reads.
+    /// Starters renamed after they were seeded: lowercased old name → new name.
+    private static let renamed: [String: String] = [
+        // The in-front-of-you extension (user, 2026-09-23); it was briefly called a pushdown.
+        "single-arm cable triceps pushdown": "Single-Arm Cable Triceps Extension",
+    ]
+
+    /// Starters taken back out of the catalog. Removed from a store only while no logged set
+    /// or plan uses them; otherwise they stay as the user's own exercise.
+    private static let retired: Set<String> = ["single-arm overhead cable triceps extension"]
+
+    /// Brings stored exercises up to the current catalog: the old Arms group splits into
+    /// Biceps and Triceps, `moved` starters change heading, `renamed` ones take their new name
+    /// and unused `retired` ones go. Runs at every launch, before seeding; once there's nothing
+    /// left to change it only reads.
     static func regroup(in context: ModelContext) {
-        let exercises = (try? context.fetch(FetchDescriptor<Exercise>())) ?? []
+        var exercises = (try? context.fetch(FetchDescriptor<Exercise>())) ?? []
+        var names = Set(exercises.map { $0.name.lowercased() })
         for exercise in exercises {
             if exercise.muscleGroup == .arms {
                 exercise.muscleGroup = armGroup(forName: exercise.name)
             } else if let move = moved[exercise.name.lowercased()], exercise.muscleGroup == move.from {
                 exercise.muscleGroup = move.to
             }
+            if let newName = renamed[exercise.name.lowercased()], !names.contains(newName.lowercased()) {
+                names.insert(newName.lowercased())
+                exercise.name = newName
+            }
+        }
+
+        exercises = exercises.filter { retired.contains($0.name.lowercased()) }
+        guard !exercises.isEmpty else { return }
+        let sets = (try? context.fetch(FetchDescriptor<WorkoutSetEntry>())) ?? []
+        let planned = (try? context.fetch(FetchDescriptor<PlanExercise>())) ?? []
+        let used = Set(sets.compactMap(\.exercise?.persistentModelID) + planned.compactMap(\.exercise?.persistentModelID))
+        for exercise in exercises where !used.contains(exercise.persistentModelID) {
+            context.delete(exercise)
         }
     }
 
