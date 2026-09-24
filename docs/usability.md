@@ -1,16 +1,22 @@
 # Usability Notes & Feedback Log
 
 **Status:** Living document — ongoing, not tied to a phase
-**Started:** 2026-09-06 · **Last updated:** 2026-09-23 (evening)
+**Started:** 2026-09-06 · **Last updated:** 2026-09-23 (late evening)
 
-## Start here (as of 2026-09-23)
+## Start here (as of 2026-09-23, late evening)
 
-**The first Training suggestions are in.** On 2026-09-23 the user logged 13 suggestions for
-Training and Goals; the layout ones were built the same day (5 Backlog rows Done), and the big
-ones — a new exercise screen, volume-based muscle colors, describing a routine in a message —
-are triaged, their four open decisions were settled the same evening, and the exercise screen
-has a plan ([exercise-screen-plan.md](exercise-screen-plan.md)). Everything is pushed to `origin/main` (`46f6ff5`).
-See **Next tasks** for the order.
+**Where things stand.** All 13 Training / Goals suggestions from 2026-09-23 are built except
+one: describing a routine in a message (Next tasks, step 1). Everything is committed and pushed
+to `origin/main` (`e4ac35e`), and the working tree is clean. The rest of the day's work:
+
+- **Exercise screen** (a plan day → an exercise, or an unplanned workout): a
+  **Workout / Overview / Progress** switch. Plan and what changed while building:
+  [exercise-screen-plan.md](exercise-screen-plan.md).
+- **Muscle colors come from lifetime volume**, not 1RM, and all 1RM code is deleted. The
+  numbers are under **Decisions worth remembering** and **Things to know about the muscle
+  levels**; the constants are in the **Things you might want adjusted** table.
+- The user's answers to every open question are recorded under **Decisions**. None are
+  pending.
 
 **What the app has now**, so you know what you're judging:
 
@@ -19,33 +25,57 @@ See **Next tasks** for the order.
   callout, a Breakfast/Lunch/Dinner carousel with quick-add. Food search (Open Food Facts),
   barcode scanning, My Meals built from foods, oz/cups/tbsp/tsp and fractions. Daily Log
   history.
-- **Training** — body map colored by strength level (ⓘ → How Levels Work), Current Plan card
-  ("Gym Workout"; tap to expand the week in place; ⋯ → drag to reorder or Edit Routine),
-  Goals card (weight + steps, each with a + to log; tap the value for its history and chart),
-  Log an Unplanned Workout. A day → an exercise opens the **exercise screen**: *Workout*
-  (a row per set with "Last:", sets save as you type, Complete Exercise, rest timer),
-  *Overview* (Muscles Involved: body figure, Primary / Secondary, Flip View; How to Do It;
-  Common Mistakes with fixes) and *Progress* (total volume, this week vs last, volume per session, that exercise's history).
-- **Profile** — Personal Info, Workout settings (set-row order, PRs, default sets/reps, rest
-  timer), Goal & Daily Targets, Units (lb/kg, cm or ft/in).
+- **Training** — body map colored by volume level (ⓘ → How Levels Work: each level in lb/kg
+  for your bodyweight plus the time it needs), Current Plan card ("Gym Workout"; tap to
+  expand the week in place; ⋯ → drag to reorder or Edit Routine), Goals card (weight + steps,
+  each with a + to log; tap the value for its history and chart), Log an Unplanned Workout.
+  No all-workouts history (removed on request); past sets live in each exercise's Progress.
+- **Exercise screen** — *Workout*: a row per set (reps and lb boxes, "Last:" from the
+  previous session), boxes start empty with the suggestion in gray, sets save when you leave
+  the row, clearing both boxes unlogs a set, Complete Exercise logs untouched rows at their
+  suggestion and goes back, ⓘ says where to change the set count, rest timer. *Overview*:
+  figure with Primary / Secondary beside it, Flip View, How to Do It, Common Mistakes with
+  fixes (text for all 38 starter exercises in `ExerciseGuide.swift`; none for exercises you
+  create). *Progress*: total volume, this week vs last, volume-per-session bars, History
+  (swipe a day to delete it).
+- **Profile** — Personal Info, Workout settings (set-row order, default sets/reps, rest
+  timer; Show PRs was removed), Goal & Daily Targets, Units (lb/kg, cm or ft/in).
 - **Widget** — small (calorie ring) and medium (calories + Protein / Carbs / Fat).
 
-## Next tasks (as of 2026-09-23)
+**Simulator notes for the next session:**
+- iPhone 17 Pro, `A30B354E-BDCE-4007-B1A0-9F79091EE9E5`. The simulator tool's screenshot
+  fails there, so use `xcrun simctl io … screenshot` instead.
+- A full `xcodebuild test` (with UI tests) shuts the simulator down. Run
+  `-only-testing:MacroPalTests`, or boot it again afterwards.
+- Today's Cable Crunch sets in the simulator (3 × 30 lb: 8, 12, 12) are the user's own.
+  Don't delete them while testing.
+- Its muscles all show Beginner: there isn't enough volume logged to reach Novice.
 
-1. ~~**Decide the four open questions.**~~ Done 2026-09-23 — see **Decisions worth
-   remembering** (lifetime volume ÷ bodyweight, on-device AI with a form fallback, no GIFs,
-   sets save as you type).
-2. ~~**Plan the exercise screen.**~~ Done 2026-09-23 —
-   [exercise-screen-plan.md](exercise-screen-plan.md). Three small open questions at its end
-   can be answered while building.
-3. ~~**Build it in steps:** Workout tab → Progress tab → Overview tab.~~ All three built
-   2026-09-23; Workout History and Exercise Progress are off the Training page.
-4. ~~**Volume-based muscle colors.**~~ Built 2026-09-23 with the proposed thresholds; the
-   1RM code is gone. Tune the thresholds once real weeks are logged (see the table below).
-5. **Edit Routine by message** — Foundation Models (`@Generable` plan: day count + split
-   names), form fallback when Apple Intelligence isn't available. Worth a short plan first,
-   like step 2.
-6. **Keep logging** Likes / Dislikes / Suggestions during the week of use below.
+## Next tasks (as of 2026-09-23, late evening)
+
+1. **Edit Routine by message** — the only suggestion from 2026-09-23 still open (Backlog P3).
+   Decided: Apple's on-device Foundation Models (iOS 26.5 target: no API key, no server). The
+   model returns a `@Generable` result (days per week, split names, maybe weekdays), and it
+   goes through the existing `RoutineTemplate` apply path (`RoutineTemplate.match` / `split(for:)`,
+   `RoutineTemplateTests`) so exercises carry over as they do today. Devices without Apple
+   Intelligence get a short form (days a week + split picker). **Write a short plan first**,
+   as [exercise-screen-plan.md](exercise-screen-plan.md) was done, and show it to the user
+   before building. Open points for that plan: what the model may return (only splits
+   `RoutineTemplate` knows, or free-form day names?), how to show the result before it's
+   applied, and how to test it (the model can't run in unit tests, so test the mapping from
+   the `@Generable` value).
+2. **Tune the volume thresholds** once real weeks are logged: `MuscleLevelEngine.levelMinimumBodyweights`
+   (90 / 600 / 2,500 / 7,500 / 15,000 bodyweights), the tenure months, and the bodyweight shares
+   in `ExerciseMuscleData.swift`. The ⓘ sheet follows the constants.
+3. **Keep logging** Likes / Dislikes / Suggestions during the week of use below, then triage
+   them at the end of the week.
+
+**Small leftovers, fine to do anytime:**
+- `WorkoutSession.planDayName` / `exerciseNames` are now only used by `WorkoutSessionTests`,
+  since Workout History was the only screen that used them. Delete them with their tests, or
+  keep them if a history screen comes back.
+- `Insight.RuleIdentifier.strengthStall` stays so old stored `Insight` rows still decode.
+  The rule itself is gone.
 
 ## A week of real use (2026-09-24 → 2026-09-30)
 
@@ -243,6 +273,11 @@ the user logged the first Training suggestions and the layout ones were built.
 | `b8ced0d` | Goals card + buttons made smaller |
 | `5307cdb` | Current Plan card: "Gym Workout" / "5 Days a Week" / "Today: Legs & Abs"; tapping it expands the week in place (like Macros) instead of opening a page (`WeekPlanView` deleted); calendar icon → ⋯ menu with Reorder Workouts (drag handles in the card, Cancel / Save, `WorkoutPlan.reorderDays` + `WorkoutPlanTests`) and Edit Routine (half sheet, days caption and removal warnings gone) |
 | `ff37c2d`, `46f6ff5` | "Today: …" is tappable (opens that day), spaced like the week's lines, not bold; the week's lines aren't bold either |
+| `9380468`, `7d659f9` | Suggestions triaged; the four decisions recorded (volume levels, on-device AI for Edit Routine, no GIFs, sets save as you type) and the exercise screen planned |
+| `7f2e2f5` | Exercise screen Workout tab: set rows with "Last:", suggestions instead of prefills, save as you type, Complete Exercise, ⓘ for the set count, select-all on focus; Add Set / checks / % of best removed. `SetRow` + `SetRowTests`, `LastSessionSetsTests` |
+| `9388e7b` | `ExerciseScreen` (Workout / Overview / Progress). Overview: muscles with Primary / Secondary beside the figure, Flip View, How to Do It + Common Mistakes (`ExerciseGuide`). Progress in volume (total, week vs week, bars, History with swipe-delete). Workout History, its detail screen and the 1RM chart deleted |
+| `f365400` | Muscle levels from lifetime volume ÷ bodyweight (90 / 600 / 2,500 / 7,500 / 15,000), tenure cap kept (World Class ≥ 5 years, Novice ≥ 2 weeks); How Levels Work rewritten; `LiftStandard`, `OneRepMaxEstimator`, `StrengthStallRule` deleted |
+| `e4ac35e` | Progress tab volume counted like the body map (both dumbbells, machines scaled, bodyweight share); Show PRs setting deleted |
 
 ### What changed on 2026-09-22
 
@@ -516,8 +551,8 @@ actually improving or just accumulating complaints.
 | Likes | 1 |
 | Dislikes | 13 |
 | Suggestions | 20 |
-| Triaged (in Backlog) | 46 |
-| Done | 40 |
+| Triaged (in Backlog) | 48 |
+| Done | 45 |
 | No change needed | 1 |
 | Won't Fix | 0 |
 
@@ -569,7 +604,7 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P2 | Current Plan card reads "Gym Workout" / "5 Days a Week" / a line / "Today: Legs & Abs" (tappable, opens the day); no arrows | Suggestions → Training (2026-09-23, Current Plan card) | Done (5307cdb, ff37c2d, 46f6ff5) — checked in the simulator 2026-09-23 |
 | P2 | Tapping the card shows the whole week in place — one line per workout ("Monday: Push") with lines between; tapping one opens its exercises; the separate week page is gone | Suggestions → Training (2026-09-23, "shows all the week's workouts") + follow-ups in chat | Done (5307cdb, 46f6ff5) — checked in the simulator 2026-09-23 |
 | P2 | ⋯ menu replaces the calendar icon: Reorder Workouts (drag handles in the card, Save / Cancel) and Edit Routine (half sheet, no caption or removal warnings) | Suggestions → Training (2026-09-23, ⋯ menu) | Done (5307cdb) — drag, Save and Cancel checked in the simulator 2026-09-23 (plan put back afterwards). The "describe it in a message" half is its own row below |
-| P1 | Exercise screen with **Workout / Overview / Progress** tabs, opened from a plan day's exercise. Workout tab: rest timer; one row per set — "Set 1", lbs box, reps box, "Last: …" under each; one Complete Exercise button instead of per-set checks; an ⓘ says where to change the number of sets (Add Set goes) | Suggestions → Training (2026-09-23, tabs + Workout tab; reference: Caliber's set-entry screen) | In Progress — Workout tab built 2026-09-23 ([exercise-screen-plan.md](exercise-screen-plan.md), step 1): set rows with "Last:", sets save as you type, Complete Exercise, ⓘ for the set count; Add Set and the % of best bar gone. Checked in the simulator (Cable Crunch: typed set 1, backed out and reopened, Complete logged 2–3, clearing both boxes unlogged each; test sets removed). Not checked live: "Last:" with a real previous session (unit-tested) and the unplanned flow. Tabs come with the Progress tab |
+| P1 | Exercise screen with **Workout / Overview / Progress** tabs, opened from a plan day's exercise. Workout tab: rest timer; one row per set — "Set 1", lbs box, reps box, "Last: …" under each; one Complete Exercise button instead of per-set checks; an ⓘ says where to change the number of sets (Add Set goes) | Suggestions → Training (2026-09-23, tabs + Workout tab; reference: Caliber's set-entry screen) | Done (7f2e2f5, 9388e7b) — Workout tab built 2026-09-23 ([exercise-screen-plan.md](exercise-screen-plan.md), step 1): set rows with "Last:", sets save as you type, Complete Exercise, ⓘ for the set count; Add Set and the % of best bar gone. Checked in the simulator (Cable Crunch: typed set 1, backed out and reopened, Complete logged 2–3, clearing both boxes unlogged each; test sets removed). Not checked live: "Last:" with a real previous session (unit-tested) and the unplanned flow. The Workout / Overview / Progress control followed in 9388e7b |
 | P2 | Progress tab: that exercise's history; then Workout History and Exercise Progress move off the Training page | Suggestions → Training (2026-09-23, Progress tab) | Done — built 2026-09-23: `ExerciseScreen` with a Workout / Progress control; the Progress tab is Exercise Progress for that one exercise plus a History list (each day's sets as "30 × 12", the plan day, the day's volume; swipe to delete that day's sets of the exercise). Workout History and its detail screen are deleted (user: no all-workouts history), and Exercise Progress's exercise picker with them; the Training page keeps only Log an Unplanned Workout. Checked in the simulator (Cable Crunch: 1RM 42 lb, Beginner → Novice, History "Wed, Sep 23 · Legs & Abs · 960 lb"; switching tabs keeps the logged sets). Swipe-to-delete not tried live — the only sets were the user's |
 | P2 | Progress tab measured in volume instead of 1RM — headline total volume, this week vs last week (± %), volume per session as tappable bars (`ExerciseVolumeChart`, replacing the 1RM line chart), history unchanged; 1RM summary, level bar and stall callout removed from the tab. `WorkoutProgressViewModel.volumeSummary` + a test | User request (direct, 2026-09-23, "I do not want to really see 1rm, I am more interested in total volume") | Done — checked in the simulator 2026-09-23 (Cable Crunch: 960 lb total, this week 960 / last week 0, one bar; tapping it shows "Sep 23 · 960 lb · 3 sets") |
 | P2 | Overview tab: a GIF of the exercise and Muscles Involved — body figure, Primary / Secondary labels, Flip View | Suggestions → Training (2026-09-23, Overview tab; reference: Caliber's Overview) | Done — built 2026-09-23 (`ExerciseOverviewTab`): Muscles Involved card: the figure on the left (primary solid, secondary light, the thumbnail's colors) with Primary / Secondary listed beside it on the right, most-involved first, and Flip View under the figure (lists moved beside the figure on user request, same evening). Then, also on request, **How to Do It** (numbered steps) and **Common Mistakes** (each mistake with its fix) cards under it, from `ExerciseGuides` — written for all 38 starter exercises (general coaching cues, not from one source; a test checks every starter exercise has one). Exercises the user created show a one-line note instead. Opens on the side with more of the primary muscles. Primary is involvement ≥ 0.8 (`ExerciseProfile.primaryMuscles`, now shared with the thumbnail; `ExerciseMusclesTests`); a full-body guess with nothing that high uses its top muscles. No GIF (decided). Checked in the simulator (Cable Crunch: Abs primary, Obliques secondary; flip to the back shows nothing highlighted). A back-first exercise opening on the back not seen live |
