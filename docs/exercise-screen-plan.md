@@ -1,6 +1,6 @@
 # Exercise Screen Plan (Workout / Overview / Progress)
 
-**Status:** Step 1 (Workout tab) built 2026-09-23; steps 2–3 not started
+**Status:** Built — all three steps done 2026-09-23
 **Written:** 2026-09-23 · Next tasks step 2 in [usability.md](usability.md#next-tasks-as-of-2026-09-23)
 **Source:** Suggestions → Training (2026-09-23): tabs, Workout tab, Overview tab, Progress tab.
 Backlog rows: the P1 exercise screen, the P2 Progress tab and the P2 Overview tab.
@@ -90,6 +90,15 @@ afterwards.
 
 ## Step 2 — Progress tab (P2)
 
+**Built 2026-09-23.** `ExerciseScreen` holds the segmented control (Workout / Progress) and
+the title; `ExerciseProgressTab` is the old Exercise Progress minus its picker, plus History
+(`WorkoutProgressViewModel.history`, `ExerciseHistoryTests`). Volume is shown per History row
+rather than as a chart. Workout History (and `WorkoutSessionDetailView`) are deleted, so
+swiping a History day deletes that exercise's sets from it — the only way left to remove
+past sets. The screen is on the grouped gray background with white cards, like Training.
+**Changed the same evening:** the tab is measured in volume, not 1RM — total volume, this
+week vs last, a volume-per-session bar chart, then History (see usability.md Decisions).
+
 - That exercise's **Exercise Progress** (best estimated 1RM, next-level target, chart, from
   `ExerciseProgressView`, minus its exercise picker), plus **volume per session** as a second
   line or bars, since volume is now what drives the body map.
@@ -101,6 +110,12 @@ afterwards.
 
 ## Step 3 — Overview tab (P2)
 
+**Built 2026-09-23** (`ExerciseOverviewTab`), as planned. The control reads Workout /
+Overview / Progress. Primary is involvement ≥ 0.8 (the thumbnail's existing solid/light
+line) rather than exactly 1.0, now in `ExerciseProfile.primaryMuscles` for both.
+Added after review: Primary / Secondary beside the figure, and How to Do It + Common
+Mistakes cards (`ExerciseGuides`, starter exercises only).
+
 - **Muscles Involved:** the existing body figure (`BodyFigure`) with this exercise's
   muscles filled: primary (involvement 1.0) solid, secondary (< 1.0) light. `Primary` /
   `Secondary` lists under it come from `ExerciseMuscleData`. **Flip View** switches front and
@@ -109,8 +124,7 @@ afterwards.
 
 ## Open questions (small, can be answered while building)
 
-1. Once Progress has its own tab, where does the all-exercise **Workout History** live? Keep
-   one "History" row on the Training page, or drop it?
+1. ~~Where does the all-exercise Workout History live?~~ Dropped (user, 2026-09-23).
 2. **Show PRs** in Profile → Workout: move it to control the "% of best" line on the Progress
    tab, or delete it?
 3. Unplanned workout: after Complete Exercise, go back to the exercise picker (to add the

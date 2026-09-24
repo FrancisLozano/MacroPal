@@ -7,7 +7,7 @@ import SwiftUI
 import SwiftData
 
 /// Track one exercise's sets for a day (today, unless an unplanned workout is back-dated): the
-/// Workout tab of the exercise screen. Each row is a set with a weight box and a reps box, and
+/// Workout tab of `ExerciseScreen`. Each row is a set with a weight box and a reps box, and
 /// "Last:" under each from the previous session. Sets save as you type — when you leave a row
 /// — so backing out midway loses nothing; Complete Exercise logs the untouched rows at their
 /// suggested values and goes back. Clearing both boxes unlogs a set. Used from a plan day (with
@@ -91,7 +91,7 @@ struct ExerciseTrackView: View {
                         setRow($rows[index], number: index + 1)
                     }
                 }
-                .background(.background.secondary, in: RoundedRectangle(cornerRadius: 14))
+                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
 
                 Button {
                     complete()
@@ -103,11 +103,10 @@ struct ExerciseTrackView: View {
                 .buttonStyle(.borderedProminent)
                 .disabled(!canComplete)
             }
-            .padding()
+            .padding([.horizontal, .bottom])
+            .padding(.top, 4)
         }
         .scrollDismissesKeyboard(.interactively)
-        .navigationTitle(exercise?.name ?? "Exercise")
-        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {

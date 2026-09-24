@@ -6,8 +6,9 @@
 import SwiftUI
 import SwiftData
 
-/// One surface for training: progress body map, current plan, goals, and shortcuts to past
-/// sessions. Replaces the separate Body and Workouts tabs.
+/// One surface for training: progress body map, current plan, goals, and logging an unplanned
+/// workout. Each exercise's history lives in its Progress tab. Replaces the separate Body and
+/// Workouts tabs.
 struct TrainingView: View {
     @Environment(\.modelContext) private var modelContext
 
@@ -29,7 +30,7 @@ struct TrainingView: View {
                     BodyMapCard()
                     CurrentPlanCard()
                     GoalsCard()
-                    moreCard
+                    unplannedWorkoutCard
                 }
                 .padding(.vertical)
             }
@@ -46,46 +47,23 @@ struct TrainingView: View {
         }
     }
 
-    private var moreCard: some View {
+    private var unplannedWorkoutCard: some View {
         TrainingSection(nil) {
-            VStack(spacing: 0) {
-                NavigationLink {
-                    WorkoutHistoryView()
-                } label: {
-                    moreRow("Workout History", systemImage: "clock.arrow.circlepath")
+            Button {
+                isPresentingLogWorkoutSheet = true
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "plus.circle")
+                        .foregroundStyle(Color.accentColor)
+                        .frame(width: 20)
+                    Text("Log an Unplanned Workout")
+                    Spacer()
                 }
-                Divider().padding(.leading, 44)
-                NavigationLink {
-                    ExerciseProgressView()
-                } label: {
-                    moreRow("Exercise Progress", systemImage: "chart.line.uptrend.xyaxis")
-                }
-                Divider().padding(.leading, 44)
-                Button {
-                    isPresentingLogWorkoutSheet = true
-                } label: {
-                    moreRow("Log an Unplanned Workout", systemImage: "plus.circle", showsChevron: false)
-                }
+                .padding()
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
         }
-    }
-
-    private func moreRow(_ title: String, systemImage: String, showsChevron: Bool = true) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: systemImage)
-                .foregroundStyle(Color.accentColor)
-                .frame(width: 20)
-            Text(title)
-            Spacer()
-            if showsChevron {
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding()
-        .contentShape(Rectangle())
     }
 }
 

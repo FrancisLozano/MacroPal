@@ -35,6 +35,33 @@ struct ExerciseProfile {
     let loadScale: Double
     /// Muscle → involvement, 1.0 primary down to ~0.3 for a minor assist.
     let muscles: [Muscle: Double]
+
+    /// Involvement from which a muscle counts as a main mover (solid on the thumbnail).
+    static let primaryThreshold = 0.8
+
+    /// The main movers, most involved first. When nothing reaches the threshold (a full-body
+    /// guess), the most involved muscles stand in, so there's always a primary.
+    var primaryMuscles: [Muscle] {
+        let top = muscles.values.max() ?? 0
+        let cutoff = min(Self.primaryThreshold, top)
+        return ranked.filter { muscles[$0, default: 0] >= cutoff && top > 0 }
+    }
+
+    /// The assisting muscles, most involved first.
+    var secondaryMuscles: [Muscle] {
+        let primary = Set(primaryMuscles)
+        return ranked.filter { !primary.contains($0) }
+    }
+
+    /// Worked muscles by involvement, ties in `Muscle` order (head to toe).
+    private var ranked: [Muscle] {
+        let order = Dictionary(uniqueKeysWithValues: Muscle.allCases.enumerated().map { ($1, $0) })
+        return muscles.keys
+            .filter { muscles[$0, default: 0] > 0 }
+            .sorted { a, b in
+                muscles[a] == muscles[b] ? order[a, default: 0] < order[b, default: 0] : muscles[a, default: 0] > muscles[b, default: 0]
+            }
+    }
 }
 
 enum ExerciseMuscleData {

@@ -14,11 +14,19 @@ struct ExerciseThumbnail: View {
 
     private var colors: [Muscle: Color] {
         guard let exercise else { return [:] }
-        let profile = ExerciseMuscleData.profile(forName: exercise.name, group: exercise.muscleGroup)
-        return profile.muscles.mapValues { involvement in
-            involvement >= 0.8 ? Self.highlight : Self.highlight.opacity(0.45)
-        }
+        return Self.colors(for: ExerciseMuscleData.profile(forName: exercise.name, group: exercise.muscleGroup))
     }
+
+    /// Primary muscles solid, secondary light — shared with the exercise screen's Overview.
+    static func colors(for profile: ExerciseProfile) -> [Muscle: Color] {
+        var colors: [Muscle: Color] = [:]
+        for muscle in profile.secondaryMuscles { colors[muscle] = secondaryColor }
+        for muscle in profile.primaryMuscles { colors[muscle] = primaryColor }
+        return colors
+    }
+
+    static let primaryColor = highlight
+    static let secondaryColor = highlight.opacity(0.45)
 
     var body: some View {
         HStack(spacing: 2) {

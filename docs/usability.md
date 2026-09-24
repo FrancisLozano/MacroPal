@@ -20,11 +20,12 @@ See **Next tasks** for the order.
   barcode scanning, My Meals built from foods, oz/cups/tbsp/tsp and fractions. Daily Log
   history.
 - **Training** — body map colored by strength level (ⓘ → How Levels Work), Current Plan card
-  ("Gym Workout"; tap to expand the week in place, a day → per-set tracking with rest timer and
-  "% of best"; ⋯ → drag to reorder or Edit Routine),
+  ("Gym Workout"; tap to expand the week in place; ⋯ → drag to reorder or Edit Routine),
   Goals card (weight + steps, each with a + to log; tap the value for its history and chart),
-  Workout History, Exercise Progress (best 1RM, next-level target, chart), Log an Unplanned
-  Workout.
+  Log an Unplanned Workout. A day → an exercise opens the **exercise screen**: *Workout*
+  (a row per set with "Last:", sets save as you type, Complete Exercise, rest timer),
+  *Overview* (Muscles Involved: body figure, Primary / Secondary, Flip View; How to Do It;
+  Common Mistakes with fixes) and *Progress* (best 1RM, next-level target, chart, and that exercise's history with volume).
 - **Profile** — Personal Info, Workout settings (set-row order, PRs, default sets/reps, rest
   timer), Goal & Daily Targets, Units (lb/kg, cm or ft/in).
 - **Widget** — small (calorie ring) and medium (calories + Protein / Carbs / Fat).
@@ -37,11 +38,14 @@ See **Next tasks** for the order.
 2. ~~**Plan the exercise screen.**~~ Done 2026-09-23 —
    [exercise-screen-plan.md](exercise-screen-plan.md). Three small open questions at its end
    can be answered while building.
-3. **Build it in steps:** ~~Workout tab~~ (built 2026-09-23) → Progress tab (then move Workout History and Exercise
-   Progress off the Training page into it) → Overview tab.
+3. ~~**Build it in steps:** Workout tab → Progress tab → Overview tab.~~ All three built
+   2026-09-23; Workout History and Exercise Progress are off the Training page.
 4. **Volume-based muscle colors** — replaces the 1RM rule in `MuscleLevelEngine`, so the ⓘ
    How Levels Work sheet and `MuscleLevelEngineTests` change with it. Tune the proposed
-   thresholds (Decisions) against real logged weeks first.
+   thresholds (Decisions) against real logged weeks first. Also clear out the 1RM code nothing
+   shows any more: `LiftStandard` (+ tests), `ExerciseProgressPoint` / `progression`, and
+   `StrengthStallRule` (its callout was on the Progress tab) — or rework the stall rule on
+   volume. Then the Progress tab can show this exercise's share toward the muscle's next level.
 5. **Edit Routine by message** — Foundation Models (`@Generable` plan: day count + split
    names), form fallback when Apple Intelligence isn't available. Worth a short plan first,
    like step 2.
@@ -146,8 +150,8 @@ Both messages were checked by forcing the first attempt to fail with a temporary
 - **Muscle colors will come from lifetime volume, not 1RM** (decided 2026-09-23, not built
   yet). Every set's sets × reps × weight is credited to the muscles it works and added up over
   all time. That total ÷ bodyweight sets the level, so the colors track sustained work: about
-  3 weeks of training should reach Novice, and about a year should reach Advanced. 1RM stays
-  as a data point in Exercise Progress but no longer affects the body map. *Proposed starting
+  3 weeks of training should reach Novice, and about a year should reach Advanced. 1RM is gone
+  from the app's screens too — the Progress tab shows volume (user, 2026-09-23). *Proposed starting
   thresholds* (bodyweights moved per muscle, to tune after real use): Novice 90, Intermediate
   600, Advanced 2,500, Elite 7,500, World Class 15,000. This assumes about 2 sessions a week
   of 3 × 10 at half bodyweight at the start, rising to about 50 bodyweights a week. Since the
@@ -160,6 +164,12 @@ Both messages were checked by forcing the first attempt to fail with a temporary
   a backend to keep the key out of the app.
 - **No exercise GIFs for now.** The Overview tab has just Muscles Involved. The free GIF
   databases have unclear licenses.
+- **Progress is measured in volume, not 1RM** (user, 2026-09-23). The Progress tab shows
+  total volume, this week vs last (calendar weeks), a volume-per-session bar chart and the
+  history; the 1RM summary, Beginner → Novice bar and stall callout were removed from it.
+- **No all-workouts history.** Workout History was removed with the Progress tab (user,
+  2026-09-23): past sets are seen, and deleted, per exercise in its Progress tab.
+  `WorkoutSetEntry.planDayName` is still recorded and shows in each History row.
 - **Sets save as you type; Complete Exercise only finishes.** Leaving the exercise screen
   midway loses nothing. Boxes start empty with last session's value as the placeholder, and
   Complete fills empty boxes from those placeholders, so a repeat workout is still one tap.
@@ -567,8 +577,9 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P2 | Tapping the card shows the whole week in place — one line per workout ("Monday: Push") with lines between; tapping one opens its exercises; the separate week page is gone | Suggestions → Training (2026-09-23, "shows all the week's workouts") + follow-ups in chat | Done (5307cdb, 46f6ff5) — checked in the simulator 2026-09-23 |
 | P2 | ⋯ menu replaces the calendar icon: Reorder Workouts (drag handles in the card, Save / Cancel) and Edit Routine (half sheet, no caption or removal warnings) | Suggestions → Training (2026-09-23, ⋯ menu) | Done (5307cdb) — drag, Save and Cancel checked in the simulator 2026-09-23 (plan put back afterwards). The "describe it in a message" half is its own row below |
 | P1 | Exercise screen with **Workout / Overview / Progress** tabs, opened from a plan day's exercise. Workout tab: rest timer; one row per set — "Set 1", lbs box, reps box, "Last: …" under each; one Complete Exercise button instead of per-set checks; an ⓘ says where to change the number of sets (Add Set goes) | Suggestions → Training (2026-09-23, tabs + Workout tab; reference: Caliber's set-entry screen) | In Progress — Workout tab built 2026-09-23 ([exercise-screen-plan.md](exercise-screen-plan.md), step 1): set rows with "Last:", sets save as you type, Complete Exercise, ⓘ for the set count; Add Set and the % of best bar gone. Checked in the simulator (Cable Crunch: typed set 1, backed out and reopened, Complete logged 2–3, clearing both boxes unlogged each; test sets removed). Not checked live: "Last:" with a real previous session (unit-tested) and the unplanned flow. Tabs come with the Progress tab |
-| P2 | Progress tab: that exercise's history; then Workout History and Exercise Progress move off the Training page | Suggestions → Training (2026-09-23, Progress tab) | Triaged — plan step 2, after the Workout tab |
-| P2 | Overview tab: a GIF of the exercise and Muscles Involved — body figure, Primary / Secondary labels, Flip View | Suggestions → Training (2026-09-23, Overview tab; reference: Caliber's Overview) | Triaged — plan step 3; no GIFs (decided 2026-09-23) |
+| P2 | Progress tab: that exercise's history; then Workout History and Exercise Progress move off the Training page | Suggestions → Training (2026-09-23, Progress tab) | Done — built 2026-09-23: `ExerciseScreen` with a Workout / Progress control; the Progress tab is Exercise Progress for that one exercise plus a History list (each day's sets as "30 × 12", the plan day, the day's volume; swipe to delete that day's sets of the exercise). Workout History and its detail screen are deleted (user: no all-workouts history), and Exercise Progress's exercise picker with them; the Training page keeps only Log an Unplanned Workout. Checked in the simulator (Cable Crunch: 1RM 42 lb, Beginner → Novice, History "Wed, Sep 23 · Legs & Abs · 960 lb"; switching tabs keeps the logged sets). Swipe-to-delete not tried live — the only sets were the user's |
+| P2 | Progress tab measured in volume instead of 1RM — headline total volume, this week vs last week (± %), volume per session as tappable bars (`ExerciseVolumeChart`, replacing the 1RM line chart), history unchanged; 1RM summary, level bar and stall callout removed from the tab. `WorkoutProgressViewModel.volumeSummary` + a test | User request (direct, 2026-09-23, "I do not want to really see 1rm, I am more interested in total volume") | Done — checked in the simulator 2026-09-23 (Cable Crunch: 960 lb total, this week 960 / last week 0, one bar; tapping it shows "Sep 23 · 960 lb · 3 sets") |
+| P2 | Overview tab: a GIF of the exercise and Muscles Involved — body figure, Primary / Secondary labels, Flip View | Suggestions → Training (2026-09-23, Overview tab; reference: Caliber's Overview) | Done — built 2026-09-23 (`ExerciseOverviewTab`): Muscles Involved card: the figure on the left (primary solid, secondary light, the thumbnail's colors) with Primary / Secondary listed beside it on the right, most-involved first, and Flip View under the figure (lists moved beside the figure on user request, same evening). Then, also on request, **How to Do It** (numbered steps) and **Common Mistakes** (each mistake with its fix) cards under it, from `ExerciseGuides` — written for all 38 starter exercises (general coaching cues, not from one source; a test checks every starter exercise has one). Exercises the user created show a one-line note instead. Opens on the side with more of the primary muscles. Primary is involvement ≥ 0.8 (`ExerciseProfile.primaryMuscles`, now shared with the thumbnail; `ExerciseMusclesTests`); a full-body guess with nothing that high uses its top muscles. No GIF (decided). Checked in the simulator (Cable Crunch: Abs primary, Obliques secondary; flip to the back shows nothing highlighted). A back-first exercise opening on the back not seen live |
 | P2 | Muscle colors by volume moved (sets × reps × weight, e.g. 2 × 8 × 35 lb = 560 lb), keeping 1RM as a data point | Suggestions → Training (2026-09-23, muscle colors) | Triaged — lifetime volume ÷ bodyweight, no 1RM in the level (decided 2026-09-23, see Decisions); 1RM stays as a data point in Exercise Progress |
 | P3 | Edit Routine by describing it in a message ("4 days a week, upper/lower") | Suggestions → Training (2026-09-23, ⋯ menu, Edit half) | Triaged — on-device Foundation Models with a form fallback (decided 2026-09-23) |
 | P1 | Steps goal with a bar chart (whiteboard Goals card) — `StepEntry` (one total per day; logging a day again replaces it), `UserProfile.stepGoal` (default 10,000, migrates existing stores), Steps row on the Goals card, Steps screen with 7/30-day bars (green when the goal is met), dashed goal line, and average / goal-met counted over logged days; `StepsViewModelTests` | User request (direct, 2026-09-19, whiteboard sketch) | Done (a46cfe9) |

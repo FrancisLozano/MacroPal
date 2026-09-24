@@ -25,7 +25,7 @@ struct PlanExerciseRow: View {
     var body: some View {
         HStack(spacing: 12) {
             NavigationLink {
-                ExerciseTrackView(planExercise: planExercise)
+                ExerciseScreen(planExercise: planExercise)
             } label: {
                 HStack(spacing: 12) {
                     ExerciseThumbnail(exercise: planExercise.exercise)

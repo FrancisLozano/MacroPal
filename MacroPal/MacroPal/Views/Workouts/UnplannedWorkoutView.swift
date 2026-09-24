@@ -82,7 +82,7 @@ struct UnplannedWorkoutView: View {
             }
             .toolbar { doneButton }
             .navigationDestination(for: Exercise.self) { exercise in
-                ExerciseTrackView(exercise: exercise, date: date)
+                ExerciseScreen(exercise: exercise, date: date)
                     .toolbar { doneButton }
             }
             .sheet(isPresented: $isPresentingPicker) {

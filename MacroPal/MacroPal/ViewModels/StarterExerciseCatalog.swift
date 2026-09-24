@@ -59,6 +59,9 @@ enum StarterExerciseCatalog {
 
     /// Inserts the catalog once per install, skipping any name the user already has. Not
     /// re-run afterwards, so an exercise the user deletes stays deleted.
+    /// Every starter exercise's name, for checks that each one has its data.
+    static var names: [String] { entries.map(\.name) }
+
     static func seedIfNeeded(in context: ModelContext, defaults: UserDefaults = .standard) {
         guard !defaults.bool(forKey: seededKey) else { return }
         let existing = ((try? context.fetch(FetchDescriptor<Exercise>())) ?? []).map { $0.name.lowercased() }

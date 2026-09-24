@@ -72,6 +72,11 @@ struct BodyFigure: View {
         part(.calves, [(43, 157), (46.5, 158.5), (46.5, 170), (44.5, 182), (42.5, 170)]),
     ]
 
+    /// The muscles each side draws; forearms and shoulders are on both.
+    static func muscles(on side: BodySide) -> Set<Muscle> {
+        Set((side == .front ? frontParts : backParts).map(\.muscle))
+    }
+
     private static let backParts: [Part] = [
         part(.traps, [(46.5, 25), (44.5, 30.5), (34, 34.5), (30.5, 37.5), (40, 42), (46, 52), (50, 64),
                       (54, 52), (60, 42), (69.5, 37.5), (66, 34.5), (55.5, 30.5), (53.5, 25)], mirrored: false),
