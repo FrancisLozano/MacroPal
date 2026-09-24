@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 import os
+import UserNotifications
 
 private let storeLog = Logger(subsystem: "com.francislozano.MacroPal", category: "Store")
 
@@ -42,6 +43,14 @@ struct MacroPalApp: App {
             }
         }
     }()
+
+    /// Held here so it lives as long as the app; the notification center keeps only a weak
+    /// reference to its delegate.
+    private let notificationDelegate = RestNotificationDelegate()
+
+    init() {
+        UNUserNotificationCenter.current().delegate = notificationDelegate
+    }
 
     var body: some Scene {
         WindowGroup {

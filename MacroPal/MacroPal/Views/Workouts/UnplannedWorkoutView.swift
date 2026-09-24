@@ -103,6 +103,8 @@ struct UnplannedWorkoutView: View {
                 isPresentingPicker = true
             }
         }
+        // The sheet covers RootView's card, so it needs its own.
+        .restOverCard()
     }
 
     private var doneButton: some ToolbarContent {

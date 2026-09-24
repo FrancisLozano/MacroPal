@@ -38,6 +38,56 @@ struct WorkoutSettingsTests {
         #expect(timer.isFinished(at: start.addingTimeInterval(10)))
     }
 
+    // MARK: Rest notification
+
+    @MainActor
+    final class FakeNotifications: RestNotificationScheduling {
+        var scheduled: Date?
+        func schedule(at date: Date) { scheduled = date }
+        func cancel() { scheduled = nil }
+    }
+
+    @MainActor @Test func startAndAdjustRescheduleTheNotification() {
+        let start = Date(timeIntervalSince1970: 0)
+        let notifications = FakeNotifications()
+        let model = RestTimerModel(notifications: notifications)
+        model.start(seconds: 90, now: start)
+        #expect(notifications.scheduled == start.addingTimeInterval(90))
+        model.adjust(by: 15, now: start)
+        #expect(notifications.scheduled == start.addingTimeInterval(105))
+        model.stop()
+        #expect(notifications.scheduled == nil)
+        #expect(model.finishedAt == nil)
+    }
+
+    @MainActor @Test func restEndingWithTheAppOpenShowsTheCard() {
+        let start = Date(timeIntervalSince1970: 0)
+        let model = RestTimerModel(notifications: FakeNotifications())
+        model.start(seconds: 60, now: start)
+
+        model.finishIfDue(now: start.addingTimeInterval(59))
+        #expect(model.timer != nil)
+        #expect(model.finishedAt == nil)
+
+        let end = start.addingTimeInterval(60.5)
+        model.finishIfDue(now: end)
+        #expect(model.timer == nil)
+        #expect(model.finishedAt == end)
+
+        model.dismissFinished()
+        #expect(model.finishedAt == nil)
+    }
+
+    @MainActor @Test func restMissedInTheBackgroundSkipsTheCard() {
+        let start = Date(timeIntervalSince1970: 0)
+        let model = RestTimerModel(notifications: FakeNotifications())
+        model.start(seconds: 60, now: start)
+        // Back from the background five minutes later: the banner already said so.
+        model.finishIfDue(now: start.addingTimeInterval(360))
+        #expect(model.timer == nil)
+        #expect(model.finishedAt == nil)
+    }
+
     // MARK: Labels
 
     @Test func restAndRepsLabels() {

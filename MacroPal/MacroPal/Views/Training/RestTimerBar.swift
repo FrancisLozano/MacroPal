@@ -6,29 +6,19 @@
 import SwiftUI
 
 /// The running rest countdown, pinned above the tab bar on the workout screens: time left,
-/// a draining bar, −15 s / +15 s and Skip. Buzzes and disappears when the rest is over.
+/// a draining bar, −15 s / +15 s and Skip. Disappears when the rest is over, as the
+/// `RestOverCard` slides up in its place.
 struct RestTimerBar: View {
     @Environment(RestTimerModel.self) private var restTimer
-    @State private var finishedCount = 0
 
     var body: some View {
-        Group {
-            if let timer = restTimer.timer {
-                TimelineView(.periodic(from: .now, by: 1)) { context in
-                    if !timer.isFinished(at: context.date) {
-                        bar(timer)
-                    }
-                }
-                // Ends the rest when the time's up, even if nothing else changes on screen.
-                .task(id: timer.endsAt) {
-                    try? await Task.sleep(for: .seconds(timer.remaining(at: .now)))
-                    guard !Task.isCancelled, restTimer.timer?.endsAt == timer.endsAt else { return }
-                    restTimer.stop()
-                    finishedCount += 1
+        if let timer = restTimer.timer {
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                if !timer.isFinished(at: context.date) {
+                    bar(timer)
                 }
             }
         }
-        .sensoryFeedback(.success, trigger: finishedCount)
     }
 
     private func bar(_ timer: RestTimer) -> some View {

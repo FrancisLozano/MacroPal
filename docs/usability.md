@@ -23,6 +23,9 @@ rest of the day's work:
 - The user's answers to every open question are recorded under **Decisions**. None are
   pending.
 
+- **Rest over notification** (after that, same night): a banner when the app is in the
+  background, a card sliding up from the bottom when it's open. See the decision below.
+
 **What the app has now**, so you know what you're judging:
 
 - **Nutrition** — day picker, calorie ring segmented by macro (tap the pie to switch between
@@ -40,7 +43,8 @@ rest of the day's work:
 - **Exercise screen** — *Workout*: a row per set (reps and lb boxes, "Last:" from the
   previous session), boxes start empty with the suggestion in gray, sets save when you leave
   the row, clearing both boxes unlogs a set, Complete Exercise logs untouched rows at their
-  suggestion and goes back, ⓘ says where to change the set count, rest timer. *Overview*:
+  suggestion and goes back, ⓘ says where to change the set count, rest timer (its end: a banner
+  in the background, a "Rest over" card from the bottom in the app). *Overview*:
   figure with Primary / Secondary beside it, Flip View, How to Do It, Common Mistakes with
   fixes (text for all 38 starter exercises in `ExerciseGuide.swift`; none for exercises you
   create). *Progress*: total volume, this week vs last, volume-per-session bars, History
@@ -107,7 +111,8 @@ built from those entries. This week is for collecting the next round.
   drag-to-reorder (⋯ → Reorder Workouts) easy to find?
 - Do you miss the Weekly body-map view (sets per muscle this week)?
 - Are the level targets fair — does a level come too easily or feel out of reach?
-- Does the rest timer get in the way, or do you miss it when the app is in the background?
+- Does the rest timer get in the way? Does the "Rest over" banner / bottom card reach you
+  at the right moment, and does the card stay long enough (4 s)?
 - Is anything still slow to log — count the taps if it feels like too many.
 - Do the callouts show up when they should, and are they useful or noise?
 - Edit Routine by message: does it read what you type? Note any message it gets wrong.
@@ -138,6 +143,7 @@ Values as of 2026-09-23. "In app" means you can change it yourself; the rest are
 | Weekly body-map view | removed | git history before `373f28e` |
 | RPE / session notes on unplanned workouts | removed | old `LogWorkoutSessionView`, git history before `1737ed2` |
 | Rest-timer choices | 30 s – 5 min | `WorkoutPreferences.restChoices` |
+| How long the "Rest over" card stays | 4 s | `RestOverCard.visibleDuration` |
 | Splits, and which days a count spreads to | Recommended, Upper/Lower, PPL, PPL + U/L, Full Body; 3 days → Mon/Wed/Fri | `RoutineTemplate.Split`, `slots(for:daysPerWeek:)`, `defaultWeekdays(count:)` |
 | How a message is read | on-device model; weekdays, split names ("PPL", "U/L") and "twice" in code | `RoutineAssistant.instructions`, the `@Guide`s in `RoutineRequest`, word lists in `MessageCues` |
 
@@ -154,8 +160,6 @@ a screenshot or sketch works best, as with the whiteboard for Training.
 
 ### Parked follow-ups (not yet triaged)
 
-- A notification when the rest timer ends with the app in the background (the timer is one
-  shared `RestTimerModel`; it also doesn't survive quitting the app).
 - A per-lift goal you set yourself on Exercise Progress (needs a new model field — optional
   or defaulted where it's declared, so no versioned schema is needed).
 - HealthKit step import (needs a physical iPhone and permissions).
@@ -228,7 +232,16 @@ Both messages were checked by forcing the first attempt to fail with a temporary
   from now on; exercises already in the plan keep their own targets.
 - **The rest timer is one shared `RestTimerModel`** in the environment (created in
   `RootView`), so it keeps counting across the day list and the next exercise. It doesn't
-  survive quitting the app and doesn't notify in the background.
+  survive quitting the app.
+- **The end of a rest: a banner in the background, a card from the bottom in the app**
+  (built 2026-09-23 night). Every start / ±15s schedules one local notification for the end
+  time (`RestNotifications`, same identifier, so it's replaced); Skip cancels it. In the
+  background iOS shows it as the usual top banner — apps can't move that. With the app open,
+  `RestNotificationDelegate` hides the banner and `RestOverCard` slides up above the tab bar
+  instead ("Rest over · Time for your next set.", one buzz, gone after 4 s or on tap / swipe
+  down). A rest that ended more than 2 s ago was missed in the background, so coming back
+  doesn't show the card too. Permission is asked the first time a rest starts. The unplanned
+  workout sheet has its own card, since it covers `RootView`'s.
 - **Unplanned workouts dropped RPE and session notes** (only the old form could enter them;
   old sessions still show theirs).
 - **The plan day is stored per set, as a copied name** (`WorkoutSetEntry.planDayName`), not
