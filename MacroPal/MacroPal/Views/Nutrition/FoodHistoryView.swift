@@ -21,6 +21,7 @@ struct FoodHistoryView: View {
     @State private var isPresentingLogSheet = false
     @State private var mealTypeToLog: MealType = .breakfast
     @State private var selectedMacro: Macro?
+    @State private var isShowingMealCalories = false
     @AppStorage("foodHistoryShowPercent") private var showPercent = false
 
     private let viewModel = NutritionViewModel()
@@ -87,6 +88,9 @@ struct FoodHistoryView: View {
         }
         .navigationDestination(item: $selectedMacro) { macro in
             MacroBreakdownView(macro: macro, date: date, color: Self.color(for: macro))
+        }
+        .navigationDestination(isPresented: $isShowingMealCalories) {
+            MealCaloriesView(date: date)
         }
     }
 
@@ -162,7 +166,14 @@ struct FoodHistoryView: View {
             if let profile {
                 let totals = viewModel.dailyTotals(for: entriesForDate)
                 Section {
-                    caloriesCard(totals: totals, profile: profile)
+                    // Opens the day's calories by meal, as a pie chart.
+                    Button {
+                        isShowingMealCalories = true
+                    } label: {
+                        caloriesCard(totals: totals, profile: profile)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
                 } header: {
                     HStack {
                         Text("Calories and Macronutrients")
@@ -233,7 +244,8 @@ struct FoodHistoryView: View {
 
     // One full-width bar spanning the same total width as the three macro bars combined —
     // color matches the main Nutrition screen's calorie ring (`Color.blue`, its solo-macro
-    // color) so it reads as the same quantity across both screens.
+    // color) so it reads as the same quantity across both screens. The split by meal is left
+    // to the pie chart it opens: colored here, it competed with the macro bars below.
     private func caloriesCard(totals: MacroTotals, profile: UserProfile) -> some View {
         let target = Double(profile.calorieTarget)
         let eaten = totals.calories

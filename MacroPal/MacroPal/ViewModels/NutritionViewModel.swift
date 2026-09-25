@@ -62,8 +62,30 @@ struct MacroContribution {
     let share: Double
 }
 
+/// One meal's calories for the day.
+struct MealCalories {
+    let meal: MealType
+    let calories: Double
+    /// 0…1 of the calories eaten across the day's meals.
+    let share: Double
+}
+
 @Observable
 final class NutritionViewModel {
+    /// The day's calories split into Breakfast, Lunch and Dinner, in that order, every meal
+    /// included even when it's empty. Snacks aren't one of the Daily Log's meals, so they're
+    /// left out of both the calories and the shares.
+    func mealCalories(from entries: [FoodEntry]) -> [MealCalories] {
+        let meals: [MealType] = [.breakfast, .lunch, .dinner]
+        let calories = meals.map { meal in
+            entries.filter { $0.mealType == meal }.reduce(0) { $0 + $1.caloriesKcal }
+        }
+        let total = calories.reduce(0, +)
+        return zip(meals, calories).map { meal, kcal in
+            MealCalories(meal: meal, calories: kcal, share: total > 0 ? kcal / total : 0)
+        }
+    }
+
     /// The foods that contributed to `macro` across `entries`, biggest first. Entries with none
     /// of it (e.g. fat in black coffee) are left out; ties keep the order they were logged.
     func contributions(to macro: Macro, from entries: [FoodEntry]) -> [MacroContribution] {
