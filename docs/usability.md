@@ -3,12 +3,18 @@
 **Status:** Living document — ongoing, not tied to a phase
 **Started:** 2026-09-06 · **Last updated:** 2026-09-25
 
-## Start here (as of 2026-09-23, late night)
+## Start here (as of 2026-09-25)
 
 **Where things stand.** Everything is committed and pushed to `origin/main` (last code
-commit `78a491d`, then this doc); the working tree is clean. **Nothing is being built right now.** The app is now
-**running on the user's iPhone** (installed from Xcode) — the first physical-device use. The
-next step is the week of real use (Next tasks), starting 2026-09-24.
+commit `6f23b35`, then this doc); the working tree is clean. **Nothing is being built right now.** The app is
+**running on the user's iPhone** (installed from Xcode). The week of real use (Next tasks) runs
+2026-09-24 → 09-30; the first 9 entries from it are logged below (2 dislikes, 7 suggestions),
+not triaged yet.
+
+**2026-09-25:** four Daily Log changes, on request (details under **What changed on
+2026-09-25**): tap Protein / Carbs / Fat for that macro's foods; each meal heading shows its
+macros ("26p · 4c · 4f") and food rows show only name, brand and kcal; tap the calories bar for
+**Calories by Meal** (pie chart + total / goal / left); Snack is gone from the meal picker.
 
 Built on 2026-09-23, in order (details under **Decisions worth remembering**, commits under
 **What changed on 2026-09-23**):
@@ -46,7 +52,10 @@ movement family; the user does the one in front of the body, not overhead.
   protein only and all macros), Macros card (tap a macro → which foods it came from), protein
   callout, a Breakfast/Lunch/Dinner carousel with quick-add. Food search (Open Food Facts),
   barcode scanning, My Meals built from foods, oz/cups/tbsp/tsp and fractions. Daily Log
-  history.
+  history — the **Daily Log**: calories bar (tap → Calories by Meal pie), Protein / Carbs / Fat
+  bars (tap → which foods), Breakfast / Lunch / Dinner with each meal's macros in its heading
+  and food rows of name, brand and kcal (tap a food for its macros). Meals are Breakfast, Lunch
+  and Dinner only — no Snack.
 - **Training** — body map colored by volume level (ⓘ → How Levels Work: each level in lb/kg
   for your bodyweight plus the time it needs), Current Plan card ("Gym Workout"; tap to
   expand the week in place; ⋯ → drag to reorder or Edit Routine — weekdays, a split menu
@@ -103,6 +112,10 @@ movement family; the user does the one in front of the body, not overhead.
    wording (note the exact message and what it filled in).
 
 **Small leftovers:**
+- Food logged as **Snack** before 2026-09-25 still exists (the case stays in `MealType` so it
+  decodes) but shows on no Daily Log section or pie — it only counts in the day's calorie
+  total. The simulator has none; the iPhone might. If some turn up, move them to a meal by
+  editing them (their picker still offers Snack) — or ask for a one-time migration.
 - ~~`WorkoutSession.planDayName` / `exerciseNames`~~ deleted 2026-09-23 with their tests; only
   Workout History used them. If a history screen comes back, they're in git history before
   that commit (the session label joined its sets' plan days: "Push + Pull").
@@ -170,6 +183,8 @@ Values as of 2026-09-23. "In app" means you can change it yourself; the rest are
 | Weekly body-map view | removed | git history before `373f28e` |
 | RPE / session notes on unplanned workouts | removed | old `LogWorkoutSessionView`, git history before `1737ed2` |
 | Rest-timer choices | 30 s – 5 min | `WorkoutPreferences.restChoices` |
+| Calories by Meal colors | light blue / blue / dark blue | `MealType.calorieColor` in `MealCaloriesView.swift` |
+| Smallest pie slice with a % on it | 8% | `MealCaloriesView.pie` (`meal.share >= 0.08`) |
 | How long the "Rest over" card stays | 4 s | `RestOverCard.visibleDuration` |
 | Splits, and which days a count spreads to | Recommended, Upper/Lower, PPL, PPL + U/L, Full Body; 3 days → Mon/Wed/Fri | `RoutineTemplate.Split`, `slots(for:daysPerWeek:)`, `defaultWeekdays(count:)` |
 | How a message is read | on-device model; weekdays, split names ("PPL", "U/L") and "twice" in code | `RoutineAssistant.instructions`, the `@Guide`s in `RoutineRequest`, word lists in `MessageCues` |
@@ -225,6 +240,19 @@ Both messages were checked by forcing the first attempt to fail with a temporary
 (removed before committing); a normal launch logs nothing.
 
 ## Decisions worth remembering
+
+- **The Daily Log keeps color to the macros** (2026-09-25). The calories bar was split into
+  light / mid / dark blue by meal, with a matching dot beside each meal heading; the user found
+  it too busy next to the orange / green / purple macro bars, so the bar went back to solid
+  blue and the dots were removed. The meal split lives only in **Calories by Meal**, where the
+  pie has a legend. Nothing on the Daily Log hints that the bars are tappable — the same as
+  the macro bars, which have worked that way without complaint.
+- **Macros per meal, not per food, on the Daily Log** (2026-09-25, user: "for cleanliness").
+  A food row is name, brand and kcal; its macros are one tap away on its Log Food screen.
+- **Snack is hidden, not deleted** (2026-09-25). `MealType.logged` (Breakfast, Lunch, Dinner)
+  is the one list the Log Food picker, the Daily Log's sections and
+  `NutritionViewModel.mealCalories` use. `.snack` stays so stored entries decode; an entry
+  already saved as a snack keeps Snack in its picker so the picker isn't blank.
 
 - **Muscle colors come from lifetime volume, not 1RM** (decided and built 2026-09-23). Every
   set's weight × reps is credited to the muscles it works, by involvement, and added up over
@@ -370,6 +398,21 @@ user's whiteboard sketch — body map on top, Current Plan, Goals below. On 2026
 of that doc's success criteria were met, and in the evening the tab was restyled to match
 Nutrition. 2026-09-23 closed the last two P3s and the outstanding re-checks; in the afternoon
 the user logged the first Training suggestions and the layout ones were built.
+
+### What changed on 2026-09-25
+
+| Commit | What |
+|---|---|
+| `6f9c00b` | First week-of-use feedback logged (2 dislikes, 7 suggestions) |
+| `3bba892` | Daily Log: tap Protein / Carbs / Fat → the same `MacroBreakdownView` as the Nutrition screen, for the Daily Log's day |
+| `836ca50` | Daily Log: each meal heading shows its macros ("26p · 4c · 4f", hidden when empty); food rows drop their macro line |
+| `f21152e` | Daily Log: tap the calories bar → **Calories by Meal** (`MealCaloriesView`): Swift Charts pie in light / mid / dark blue with % on slices ≥ 8%, a legend "Lunch · 69% · 457 kcal", then Total Calories, Goal, Left (red "Over" past the goal). `NutritionViewModel.mealCalories` + `MealCaloriesTests`. The bar's own meal colors and heading dots were tried and removed before committing |
+| `6f23b35` | Snack hidden from the Log Food meal picker; `MealType.logged` shared by the picker, the Daily Log and `mealCalories` |
+
+All checked in the simulator (today: Apples 52 kcal breakfast, Pineapple Cake 457 lunch,
+Chicken breast bites 149 dinner → pie 8 / 69 / 23%, 658 of 2,000 kcal, 1,342 left; also in
+dark mode). The macro taps were checked after changing days (the List button bug), and on a
+day with food.
 
 ### What changed on 2026-09-23
 
@@ -678,10 +721,10 @@ actually improving or just accumulating complaints.
 | Metric | Count |
 |---|---|
 | Likes | 1 |
-| Dislikes | 13 |
-| Suggestions | 20 |
-| Triaged (in Backlog) | 53 |
-| Done | 51 |
+| Dislikes | 15 |
+| Suggestions | 28 |
+| Triaged (in Backlog) | 56 |
+| Done | 55 |
 | No change needed | 1 |
 | Won't Fix | 0 |
 
@@ -744,6 +787,10 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P1 | Choose Exercise under muscle headings (Chest, Triceps, Biceps, Back, Shoulders, Legs, Abs) and the exercises the user does added (13) | User request (direct, 2026-09-23 night, from iPhone use) | Done (42cc1f3, 6dc8ae6, 78a491d) — checked in the simulator |
 | P2 | Adductors on the body map | User request (direct, 2026-09-23 night) | Done (7d930f7) — checked in the simulator |
 | P1 | Exercise search missed "single arm tricep" (whole-query match) — now word by word | User report (direct, 2026-09-23 night) | Done (78a491d) — checked in the simulator |
+| P2 | Daily Log: tap Protein / Carbs / Fat to see which foods it came from, like the Nutrition screen | User request (direct, 2026-09-25) | Done (3bba892) — checked in the simulator |
+| P2 | Daily Log: each meal's macros in its heading ("26p 18c 4f"); food rows show only name, brand and kcal | User request (direct, 2026-09-25, two requests) | Done (836ca50) — checked in the simulator |
+| P2 | Daily Log: tap the calories bar for a pie chart of calories by meal, with total, goal and left (reference: MyFitnessPal's, without Snacks). Meal colors on the bar itself were tried and dropped as too busy | User request (direct, 2026-09-25, MyFitnessPal screenshot) | Done (f21152e) — checked in the simulator, light and dark |
+| P3 | Snack could be picked in Log Food but showed nowhere on the Daily Log — hidden from the picker | Found while building the row above (2026-09-25) | Done (6f23b35) — checked in the simulator |
 | P1 | Steps goal with a bar chart (whiteboard Goals card) — `StepEntry` (one total per day; logging a day again replaces it), `UserProfile.stepGoal` (default 10,000, migrates existing stores), Steps row on the Goals card, Steps screen with 7/30-day bars (green when the goal is met), dashed goal line, and average / goal-met counted over logged days; `StepsViewModelTests` | User request (direct, 2026-09-19, whiteboard sketch) | Done (a46cfe9) |
 
 Priority scale: **P1** (actively annoying, fix soon) / **P2** (worth doing, no rush) /
