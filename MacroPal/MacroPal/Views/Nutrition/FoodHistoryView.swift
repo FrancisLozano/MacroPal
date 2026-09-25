@@ -20,6 +20,7 @@ struct FoodHistoryView: View {
     @State private var isPresentingCalendar = false
     @State private var isPresentingLogSheet = false
     @State private var mealTypeToLog: MealType = .breakfast
+    @State private var selectedMacro: Macro?
     @AppStorage("foodHistoryShowPercent") private var showPercent = false
 
     private let viewModel = NutritionViewModel()
@@ -83,6 +84,19 @@ struct FoodHistoryView: View {
             NavigationStack {
                 LogFoodFlowView(initialMealType: mealTypeToLog, initialDate: date)
             }
+        }
+        .navigationDestination(item: $selectedMacro) { macro in
+            MacroBreakdownView(macro: macro, date: date, color: Self.color(for: macro))
+        }
+    }
+
+    /// The same macro colors as the Nutrition screen, so the breakdown looks the same from
+    /// either place.
+    private static func color(for macro: Macro) -> Color {
+        switch macro {
+        case .protein: .orange
+        case .carbs: .green
+        case .fat: .purple
         }
     }
 
@@ -261,12 +275,20 @@ struct FoodHistoryView: View {
 
     // Calories are intentionally left out here — still figuring out how that should be
     // presented, so for now this card is just the three macros. The grams/percent toggle
-    // lives in the section header above, not in here — see the "Macros" header.
+    // lives in the section header above, not in here — see the "Macros" header. Each macro
+    // opens which foods it came from, like the Macros rows on the Nutrition screen.
     private func macroTotalsCard(totals: MacroTotals, profile: UserProfile) -> some View {
         HStack(alignment: .top, spacing: 12) {
-            macroBar(name: "Protein", color: .orange, eaten: totals.proteinG, target: Double(profile.proteinTargetG))
-            macroBar(name: "Carbs", color: .green, eaten: totals.carbG, target: Double(profile.carbTargetG))
-            macroBar(name: "Fat", color: .purple, eaten: totals.fatG, target: Double(profile.fatTargetG))
+            ForEach(Macro.allCases) { macro in
+                Button {
+                    selectedMacro = macro
+                } label: {
+                    macroBar(name: macro.displayName, color: Self.color(for: macro), eaten: macro.grams(in: totals), target: macro.targetGrams(for: profile))
+                        .contentShape(Rectangle())
+                }
+                // Not the row-wide default style: each of the three is its own tap target.
+                .buttonStyle(.plain)
+            }
         }
         .padding(.vertical, 4)
     }
