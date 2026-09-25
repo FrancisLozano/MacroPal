@@ -29,12 +29,16 @@ enum LevelPalette {
 /// A stylized front or back figure whose muscles are filled from `colors`. Muscles missing
 /// from `colors` draw in the neutral "untrained" gray.
 ///
+/// With `onTapMuscle`, tapping a muscle — or near one, since some are only a few points
+/// wide — reports it.
+///
 /// Every outline is a list of points joined by a smooth curve (see `smoothPath`), so the
 /// shapes read as muscle rather than as a faceted mannequin. Muscles are kept a little apart
 /// from each other so the silhouette shows through as thin separation lines.
 struct BodyFigure: View {
     let side: BodySide
     var colors: [Muscle: Color] = [:]
+    var onTapMuscle: ((Muscle) -> Void)?
 
     private struct Part {
         let muscle: Muscle
@@ -132,16 +136,45 @@ struct BodyFigure: View {
         return path
     }
 
+    /// How far outside a muscle, in the 100 × 210 space, a tap still picks it.
+    private static let tapTolerance: CGFloat = 5
+
+    /// The 100 × 210 space scaled to fit `size` and centred in it.
+    private static func transform(for size: CGSize) -> CGAffineTransform {
+        let scale = min(size.width / 100, size.height / 210)
+        return CGAffineTransform(
+            a: scale, b: 0, c: 0, d: scale,
+            tx: (size.width - 100 * scale) / 2, ty: (size.height - 210 * scale) / 2
+        )
+    }
+
+    /// The muscle under `location` in a figure drawn at `size`: the one containing it, else
+    /// the nearest within `tapTolerance`.
+    static func muscle(at location: CGPoint, in size: CGSize, side: BodySide) -> Muscle? {
+        guard size.width > 0, size.height > 0 else { return nil }
+        let point = location.applying(transform(for: size).inverted())
+        var nearest: (muscle: Muscle, distance: CGFloat)?
+        for part in side == .front ? frontParts : backParts {
+            for points in part.mirrored ? [part.points, mirror(part.points)] : [part.points] {
+                let path = smoothPath(points)
+                if path.contains(point) { return part.muscle }
+                let box = path.boundingRect
+                let distance = hypot(max(box.minX - point.x, 0, point.x - box.maxX),
+                                     max(box.minY - point.y, 0, point.y - box.maxY))
+                if distance <= tapTolerance, distance < nearest?.distance ?? .infinity {
+                    nearest = (part.muscle, distance)
+                }
+            }
+        }
+        return nearest?.muscle
+    }
+
     private static let bodyPath = smoothPath(outline + mirror(outline).reversed())
     private static let headPath = Path(ellipseIn: CGRect(x: 40.5, y: 1.5, width: 19, height: 23))
 
     var body: some View {
         Canvas { context, size in
-            let scale = min(size.width / 100, size.height / 210)
-            let transform = CGAffineTransform(
-                a: scale, b: 0, c: 0, d: scale,
-                tx: (size.width - 100 * scale) / 2, ty: (size.height - 210 * scale) / 2
-            )
+            let transform = Self.transform(for: size)
             let untrained = Color(.systemGray2)
 
             // Separate fills: as one path, the head and neck overlap would cancel out.
@@ -158,6 +191,19 @@ struct BodyFigure: View {
             }
         }
         .aspectRatio(100.0 / 210.0, contentMode: .fit)
+        .overlay {
+            if let onTapMuscle {
+                GeometryReader { proxy in
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .onTapGesture { location in
+                            if let muscle = Self.muscle(at: location, in: proxy.size, side: side) {
+                                onTapMuscle(muscle)
+                            }
+                        }
+                }
+            }
+        }
         .accessibilityHidden(true)
     }
 }

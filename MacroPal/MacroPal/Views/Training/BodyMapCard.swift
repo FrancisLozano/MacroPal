@@ -7,14 +7,17 @@ import SwiftUI
 import SwiftData
 
 /// Front and back figures colored by how far each muscle has come — the volume it has moved
-/// over time against your bodyweight (see `MuscleLevelEngine`). The ⓘ explains the level colors and what it takes to move up.
+/// over time against your bodyweight (see `MuscleLevelEngine`). The ⓘ explains the level colors and what it takes to move up;
+/// tapping a muscle opens its detail — volume, the exercises behind it, the way to the next level.
 struct BodyMapCard: View {
     @Query private var sessions: [WorkoutSession]
     @Query(sort: \WeightEntry.date, order: .reverse) private var weightEntries: [WeightEntry]
     @Query private var profiles: [UserProfile]
     @State private var isShowingInfo = false
+    @State private var selectedMuscle: Muscle?
 
     private var bodyweightKg: Double? { weightEntries.first?.weightKg }
+    private var sex: Sex { profiles.first?.sex ?? .male }
 
     private var loggedSets: [LoggedSet] {
         sessions.flatMap { session in
@@ -32,13 +35,14 @@ struct BodyMapCard: View {
     }
 
     /// Each trained muscle's level color; untrained muscles are absent.
-    private var muscleColors: [Muscle: Color] {
-        MuscleLevelEngine.levels(sets: loggedSets, bodyweightKg: bodyweightKg, sex: profiles.first?.sex ?? .male)
+    private func muscleColors(for sets: [LoggedSet]) -> [Muscle: Color] {
+        MuscleLevelEngine.levels(sets: sets, bodyweightKg: bodyweightKg, sex: sex)
             .mapValues { LevelPalette.color(forLevel: $0) }
     }
 
     var body: some View {
-        let colors = muscleColors
+        let sets = loggedSets
+        let colors = muscleColors(for: sets)
 
         TrainingSection("Progress") {
             Button {
@@ -50,11 +54,18 @@ struct BodyMapCard: View {
         } content: {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 24) {
-                    BodyFigure(side: .front, colors: colors)
-                    BodyFigure(side: .back, colors: colors)
+                    BodyFigure(side: .front, colors: colors) { selectedMuscle = $0 }
+                    BodyFigure(side: .back, colors: colors) { selectedMuscle = $0 }
                 }
                 .frame(height: 200)
                 .frame(maxWidth: .infinity)
+                // The figures are drawings; VoiceOver gets one element that opens the detail,
+                // whose title menu picks the muscle.
+                .accessibilityElement()
+                .accessibilityLabel("Body map")
+                .accessibilityHint("Shows each muscle's volume and progress to its next level.")
+                .accessibilityAddTraits(.isButton)
+                .accessibilityAction { selectedMuscle = colors.keys.sorted { $0.displayName < $1.displayName }.first ?? .chest }
 
                 if let prompt = prompt(hasColors: !colors.isEmpty) {
                     Text(prompt)
@@ -66,6 +77,9 @@ struct BodyMapCard: View {
         }
         .sheet(isPresented: $isShowingInfo) {
             MuscleLevelInfoView()
+        }
+        .sheet(item: $selectedMuscle) { muscle in
+            MuscleDetailView(muscle: muscle, sets: sets, bodyweightKg: bodyweightKg, sex: sex)
         }
     }
 

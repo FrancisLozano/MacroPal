@@ -117,7 +117,7 @@ struct MuscleLevelInfoView: View {
     }
 
     private var footer: String {
-        var text = "Dumbbell lifts count both dumbbells; bodyweight moves like pull-ups count part of your bodyweight. A muscle keeps its level through a break."
+        var text = "Dumbbell lifts count both dumbbells; bodyweight moves like pull-ups count part of your bodyweight. A muscle keeps its level through a break. Tap a muscle on the map to see its volume and how far its next level is."
         if bodyweightKg == nil {
             text = "Log your weight to see these in \(unit.symbol). " + text
         }

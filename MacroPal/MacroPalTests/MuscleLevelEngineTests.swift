@@ -119,4 +119,72 @@ struct MuscleLevelEngineTests {
         let levels = MuscleLevelEngine.levels(sets: sets, bodyweightKg: nil, sex: .male, now: now)
         #expect(levels[.quads] == 1)
     }
+
+    // MARK: - One muscle's progress
+
+    @Test func progressListsWhereAMusclesVolumeCameFrom() {
+        let sets = [squat(daysAgo: 1, weightKg: 100), squat(daysAgo: 1, weightKg: 100),
+                    set("Dumbbell Curl", .biceps, daysAgo: 1, weightKg: 10)]
+        let quads = MuscleLevelEngine.progress(for: .quads, sets: sets, bodyweightKg: 80, sex: .male, now: now)
+        #expect(quads.contributions == [MuscleContribution(exerciseName: "Back Squat", volumeKg: 2_000)])
+        #expect(quads.volumeKg == MuscleLevelEngine.volumeKg(sets: sets, bodyweightKg: 80)[.quads])
+
+        let glutes = MuscleLevelEngine.progress(for: .glutes, sets: sets, bodyweightKg: 80, sex: .male, now: now)
+        #expect(glutes.volumeKg == 1_600)
+    }
+
+    @Test func progressMeasuresTheWayToTheNextLevel() {
+        // Novice after 3 weeks (7,200 kg = 90 × 80 kg); Intermediate needs 600 bodyweights.
+        let days: [Double] = [21, 18, 14, 11, 7, 4]
+        let sets = days.flatMap { day in (0..<3).map { _ in squat(daysAgo: day, weightKg: 40) } }
+        let progress = MuscleLevelEngine.progress(for: .quads, sets: sets, bodyweightKg: 80, sex: .male, now: now)
+        #expect(progress.level == 2)
+        #expect(progress.levelVolumeKg == 7_200)
+        #expect(progress.nextLevelVolumeKg == 48_000)
+        #expect(progress.fractionToNextLevel == 0)
+        // Intermediate also needs 3 months since the first squat, 21 days ago.
+        #expect(progress.nextLevelUnlocks == daysAgo(21).addingTimeInterval(3 * 30.44 * 86_400))
+    }
+
+    @Test func volumeCanBeReadyWhileTimeHoldsTheLevelBack() {
+        let sets = (0..<50).map { _ in squat(daysAgo: 0, weightKg: 100) }
+        let progress = MuscleLevelEngine.progress(for: .quads, sets: sets, bodyweightKg: 80, sex: .male, now: now)
+        #expect(progress.level == 1)
+        #expect(progress.fractionToNextLevel == 1)
+        #expect(progress.nextLevelUnlocks == now.addingTimeInterval(0.5 * 30.44 * 86_400))
+    }
+
+    @Test func progressHasNoNextLevelAtTheTopOrWithoutABodyweight() {
+        let volume = (0..<1_500).map { _ in squat(daysAgo: 2, weightKg: 100) }
+        let sets = [squat(daysAgo: 5 * 366, weightKg: 40)] + volume
+        let top = MuscleLevelEngine.progress(for: .quads, sets: sets, bodyweightKg: 80, sex: .male, now: now)
+        #expect(top.level == 6)
+        #expect(top.nextLevelVolumeKg == nil)
+        #expect(top.fractionToNextLevel == nil)
+
+        let noWeight = MuscleLevelEngine.progress(for: .quads, sets: sets, bodyweightKg: nil, sex: .male, now: now)
+        #expect(noWeight.level == 1)
+        #expect(noWeight.nextLevelVolumeKg == nil)
+    }
+
+    @Test func anUntrainedMuscleHasNoLevelOrNextStep() {
+        let progress = MuscleLevelEngine.progress(for: .biceps, sets: [squat(daysAgo: 1, weightKg: 100)], bodyweightKg: 80, sex: .male, now: now)
+        #expect(progress.level == 0)
+        #expect(progress.contributions.isEmpty)
+        #expect(progress.nextLevelVolumeKg == nil)
+    }
+
+    // MARK: - Tapping the body map
+
+    @Test func aTapPicksTheMuscleUnderOrNearIt() {
+        // Drawn at its own 100 × 210 size, so view points are figure points.
+        let size = CGSize(width: 100, height: 210)
+        #expect(BodyFigure.muscle(at: CGPoint(x: 40, y: 46), in: size, side: .front) == .chest)
+        // The mirrored right-hand copy.
+        #expect(BodyFigure.muscle(at: CGPoint(x: 60, y: 46), in: size, side: .front) == .chest)
+        #expect(BodyFigure.muscle(at: CGPoint(x: 39, y: 68), in: size, side: .back) == .lats)
+        // Just outside the forearm still picks it; far off the body picks nothing.
+        #expect(BodyFigure.muscle(at: CGPoint(x: 10, y: 82), in: size, side: .front) == .forearms)
+        #expect(BodyFigure.muscle(at: CGPoint(x: 2, y: 200), in: size, side: .front) == nil)
+    }
 }
