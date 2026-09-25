@@ -8,8 +8,9 @@
 **Where things stand.** Everything is committed and pushed to `origin/main` (last code
 commit `6f23b35`, then this doc); the working tree is clean. **Nothing is being built right now.** The app is
 **running on the user's iPhone** (installed from Xcode). The week of real use (Next tasks) runs
-2026-09-24 → 09-30; the first 9 entries from it are logged below (2 dislikes, 7 suggestions),
-not triaged yet.
+2026-09-24 → 09-30; the first 9 entries from it (2 dislikes, 7 suggestions) were triaged on
+2026-09-25 — 8 new Backlog rows, one No change needed, one Won't Fix (the last 10 Backlog rows).
+Next to build, by priority: reps-only bodyweight rows, and sets logging themselves.
 
 **2026-09-25:** four Daily Log changes, on request (details under **What changed on
 2026-09-25**): tap Protein / Carbs / Fat for that macro's foods; each meal heading shows its
@@ -724,10 +725,10 @@ actually improving or just accumulating complaints.
 | Likes | 1 |
 | Dislikes | 15 |
 | Suggestions | 28 |
-| Triaged (in Backlog) | 56 |
+| Triaged (in Backlog) | 66 |
 | Done | 55 |
-| No change needed | 1 |
-| Won't Fix | 0 |
+| No change needed | 2 |
+| Won't Fix | 1 |
 
 ## Backlog (triaged)
 
@@ -793,6 +794,16 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P2 | Daily Log: tap the calories bar for a pie chart of calories by meal, with total, goal and left (reference: MyFitnessPal's, without Snacks). Meal colors on the bar itself were tried and dropped as too busy | User request (direct, 2026-09-25, MyFitnessPal screenshot) | Done (f21152e) — checked in the simulator, light and dark |
 | P3 | Snack could be picked in Log Food but showed nowhere on the Daily Log — hidden from the picker | Found while building the row above (2026-09-25) | Done (6f23b35) — checked in the simulator |
 | P1 | Steps goal with a bar chart (whiteboard Goals card) — `StepEntry` (one total per day; logging a day again replaces it), `UserProfile.stepGoal` (default 10,000, migrates existing stores), Steps row on the Goals card, Steps screen with 7/30-day bars (green when the goal is met), dashed goal line, and average / goal-met counted over logged days; `StepsViewModelTests` | User request (direct, 2026-09-19, whiteboard sketch) | Done (a46cfe9) |
+| P1 | Bodyweight exercises ask for reps only — no lbs box on Floor Back Extension, Push-Up, Chest Dip, Pull-Up, Plank, Hanging Leg Raise (the six starters with "Bodyweight" equipment; Ab Wheel Rollout is listed under other equipment — check it when building). The volume math already credits a share of bodyweight for these (`bodyweight(…)` in `ExerciseMuscleData.swift`), so nothing changes there. No optional added-weight box (decided) | Dislikes → Training (2026-09-25, Floor Back Extension) | Triaged |
+| P1 | A set logs itself once both its boxes are filled, and focus moves to the next row — no Done tap. Today a set saves only when focus leaves its row (`ExerciseTrackView`, `onChange(of: focus)`) | Suggestions → Training (2026-09-25, "set should complete on its own") | Triaged |
+| P2 | The exercise completes itself when its last set logs (follows from the row above) — to decide when building: straight back to the day list, or a brief "Exercise complete" first | Suggestions → Training (2026-09-25, "exercise completes itself") | Triaged |
+| P2 | Automatic Rest Timer on by default (`WorkoutPreferences.autoRestTimerDefault`). The timer already starts after each set and after Complete Exercise when the setting is on; it was just off. Installs that never touched the setting switch to on too | Suggestions → Training (2026-09-25, "start the rest timer automatically") | Triaged |
+| P2 | Tap a body part on the body map for its volume and the exercises it came from, like tapping a macro on Nutrition; zoom on the map is the smaller half and can follow | Suggestions → Training (2026-09-25, body-part tap) | Triaged |
+| P2 | Progress bar toward each muscle's next level, in volume (the old 1RM "Novice → Intermediate" chips, measured the new way) — natural home: the body-part detail in the row above | Suggestions → Training (2026-09-25, progress bar) | Triaged |
+| P2 | Starting point for past training: enter roughly how many months you've trained, and each muscle is credited a starting volume from the current plan and bodyweight, so levels don't start at zero. Needs a stored start credit (optional field, no versioned schema) and a place to enter it | Suggestions → Training (2026-09-25, starting-point flow) + Dislikes → Training (2026-09-25, 3 weeks of missing lifts) | Triaged |
+| P2 | "Same as last time" on a meal: re-log the foods from the last day that meal (Breakfast / Lunch / Dinner) was logged | Suggestions → Training, Nutrition (2026-09-25, "Same as last time", meal half) | Triaged |
+| P3 | "Same as last time" on a workout | Suggestions → Training, Nutrition (2026-09-25, "Same as last time", workout half) | No change needed — the gray suggestions in each row are last session's numbers, and Complete Exercise logs any untouched rows at them (`ExerciseTrackView.complete()`), so one tap already does it |
+| P3 | Complete Exercise not tappable until every set is logged | Suggestions → Training (2026-09-25) | Won't Fix — decided 2026-09-25: Complete logging untouched rows at last session's numbers is the workout "Same as last time" above; disabling it would take that away. With sets logging themselves (P1 above) and the exercise completing on its last set, the button matters less anyway |
 
 Priority scale: **P1** (actively annoying, fix soon) / **P2** (worth doing, no rush) /
 **P3** (nice-to-have, may never happen). Status: `Triaged` → `In Progress` → `Done` (link the
