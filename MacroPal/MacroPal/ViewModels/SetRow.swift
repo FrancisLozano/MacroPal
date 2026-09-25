@@ -26,6 +26,8 @@ struct SetRow: Identifiable {
     var last: SetValues?
     /// What's in the store for this row, nil while it isn't logged.
     var saved: SetValues?
+    /// A bodyweight move: there's no weight box, so only the reps count.
+    var isBodyweight = false
 
     /// What to do to the store when the user leaves the row.
     enum SetChange: Equatable {
@@ -38,15 +40,19 @@ struct SetRow: Identifiable {
     var isLogged: Bool { saved != nil }
 
     private var isBlank: Bool {
-        weightText.trimmingCharacters(in: .whitespaces).isEmpty
+        (isBodyweight || weightText.trimmingCharacters(in: .whitespaces).isEmpty)
             && repsText.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
     /// Both boxes parsed, nil if either is empty or not a valid set (reps must be above 0;
-    /// a 0 weight is allowed for bodyweight moves).
+    /// a 0 weight is allowed). A bodyweight set only needs its reps, and keeps the weight it
+    /// was logged with before it had no weight box, so opening the screen doesn't rewrite it.
     var typedValues: SetValues? {
-        guard let weight = Double(weightText), weight >= 0,
-              let reps = Int(repsText), reps > 0 else { return nil }
+        guard let reps = Int(repsText), reps > 0 else { return nil }
+        if isBodyweight {
+            return SetValues(weight: saved?.weight ?? 0, reps: reps)
+        }
+        guard let weight = Double(weightText), weight >= 0 else { return nil }
         return SetValues(weight: weight, reps: reps)
     }
 

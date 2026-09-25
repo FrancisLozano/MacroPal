@@ -37,6 +37,40 @@ struct SetRowTests {
         #expect(edited.change == .update(SetValues(weight: 140, reps: 10)))
     }
 
+    @Test func aBodyweightSetNeedsOnlyItsReps() {
+        var pushUps = row(reps: "15", suggesting: ("0", "12"))
+        pushUps.isBodyweight = true
+        pushUps.completeFromPlaceholders()
+        #expect(pushUps.change == .insert(SetValues(weight: 0, reps: 15)))
+
+        var untouched = row(suggesting: ("0", "12"))
+        untouched.isBodyweight = true
+        untouched.completeFromPlaceholders()
+        #expect(untouched.change == .none)
+        #expect(untouched.wouldLogOnComplete)
+    }
+
+    @Test func aBodyweightSetLoggedWithAWeightKeepsIt() {
+        // Logged as 25 lb before bodyweight moves lost their weight box: opening the screen
+        // and leaving the row must not rewrite it to 0.
+        var backExtension = row(weight: "25", reps: "12", saved: SetValues(weight: 25, reps: 12))
+        backExtension.isBodyweight = true
+        backExtension.completeFromPlaceholders()
+        #expect(backExtension.change == .none)
+
+        backExtension.repsText = "14"
+        #expect(backExtension.change == .update(SetValues(weight: 25, reps: 14)))
+
+        backExtension.repsText = ""
+        #expect(backExtension.change == .delete)
+    }
+
+    @Test func onlyExercisesWithBodyweightEquipmentAreBodyweight() {
+        #expect(Exercise(name: "Floor Back Extension", muscleGroup: .back, equipment: "Bodyweight").isBodyweight)
+        #expect(Exercise(name: "Sissy Squat", muscleGroup: .legs, equipment: " bodyweight ").isBodyweight)
+        #expect(!Exercise(name: "Ab Wheel Rollout", muscleGroup: .core, equipment: "Ab wheel").isBodyweight)
+    }
+
     @Test func aLoggedSetThatDidNotChangeIsLeftAlone() {
         let same = row(weight: "135", reps: "10", saved: SetValues(weight: 135, reps: 10))
         #expect(same.change == .none)

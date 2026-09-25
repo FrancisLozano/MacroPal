@@ -102,7 +102,15 @@ struct ExerciseProgressTab: View {
         return percent >= 0 ? "+\(percent)%" : "−\(-percent)%"
     }
 
-    /// "Sep 20 · Legs & Abs", each set as "135 × 10" (as logged), and the day's volume.
+    private func setsLine(_ sets: [WorkoutSetEntry]) -> String {
+        if exercise.isBodyweight {
+            return sets.map { String($0.reps) }.joined(separator: ", ") + " reps"
+        }
+        return sets.map { "\(unit.formattedLift(fromKg: $0.weightKg)) × \($0.reps)" }.joined(separator: ", ")
+    }
+
+    /// "Sep 20 · Legs & Abs", each set as "135 × 10" (as logged; "12, 12, 10 reps" for a
+    /// bodyweight move), and the day's volume.
     private func historyRow(_ day: ExerciseHistoryDay) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .firstTextBaseline) {
@@ -119,7 +127,7 @@ struct ExerciseProgressTab: View {
                     .foregroundStyle(.secondary)
                     .accessibilityLabel("Volume \(unit.formattedLift(fromKg: day.volumeKg)) \(unit.symbol)")
             }
-            Text(day.sets.map { "\(unit.formattedLift(fromKg: $0.weightKg)) × \($0.reps)" }.joined(separator: ", "))
+            Text(setsLine(day.sets))
                 .font(.subheadline)
         }
         .padding(.vertical, 2)

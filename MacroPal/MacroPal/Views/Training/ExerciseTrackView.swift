@@ -8,8 +8,9 @@ import SwiftData
 
 /// Track one exercise's sets for a day (today, unless an unplanned workout is back-dated): the
 /// Workout tab of `ExerciseScreen`. Each row is a set with a weight box and a reps box, and
-/// "Last:" under each from the previous session. Sets save as you type — when you leave a row
-/// — so backing out midway loses nothing; Complete Exercise logs the untouched rows at their
+/// "Last:" under each from the previous session (a bodyweight move has just the reps box). A
+/// set saves on its own a moment after you stop typing, and when you leave its row, so
+/// backing out midway loses nothing; Complete Exercise logs the untouched rows at their
 /// suggested values and goes back. Clearing both boxes unlogs a set. Used from a plan day (with
 /// its sets × reps target) and from an unplanned workout (Profile → Workout's default sets).
 /// Column order, units and the rest timer follow Profile → Workout.
@@ -66,6 +67,22 @@ struct ExerciseTrackView: View {
             case .weight(let id), .reps(let id): id
             }
         }
+    }
+
+    /// How long typing has to pause before a filled-in set logs itself — long enough not to
+    /// log the "1" of "12".
+    private static let autoLogDelay: Duration = .seconds(1)
+
+    /// The focused row and what's typed in it; a change restarts the auto-log wait.
+    private struct Typing: Equatable {
+        let rowID: SetRow.ID
+        let weight: String
+        let reps: String
+    }
+
+    private var typing: Typing? {
+        guard let id = focus?.rowID, let row = rows.first(where: { $0.id == id }) else { return nil }
+        return Typing(rowID: id, weight: row.weightText, reps: row.repsText)
     }
 
     private var loggedCount: Int {
@@ -128,6 +145,13 @@ struct ExerciseTrackView: View {
             RestTimerBar()
         }
         .onAppear(perform: buildRows)
+        // Logs a filled-in set without leaving its row or pressing Done. Further typing updates
+        // it; an incomplete row waits for the usual commit on leaving it.
+        .task(id: typing) {
+            guard let typing, (try? await Task.sleep(for: Self.autoLogDelay)) != nil,
+                  rows.first(where: { $0.id == typing.rowID })?.typedValues != nil else { return }
+            commit(typing.rowID)
+        }
         .onChange(of: focus) { old, new in
             if let old, old.rowID != new?.rowID {
                 commit(old.rowID)
@@ -198,7 +222,10 @@ struct ExerciseTrackView: View {
             }
             .frame(width: 72, height: 36, alignment: .leading)
 
-            if weightFirst {
+            if row.wrappedValue.isBodyweight {
+                repsBox(row, id: id)
+                bodyweightLabel
+            } else if weightFirst {
                 weightBox(row, id: id)
                 repsBox(row, id: id)
             } else {
@@ -215,6 +242,14 @@ struct ExerciseTrackView: View {
             suffix: unit.symbol, last: row.wrappedValue.last.map { SetRow.format($0.weight) },
             keyboard: .decimalPad, field: .weight(id)
         )
+    }
+
+    /// Stands in for the weight box on a bodyweight move, so the reps box keeps its width.
+    private var bodyweightLabel: some View {
+        Text("Bodyweight")
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity, minHeight: 36)
     }
 
     private func repsBox(_ row: Binding<SetRow>, id: SetRow.ID) -> some View {
@@ -327,6 +362,7 @@ struct ExerciseTrackView: View {
 
         rows = (0..<count).map { index in
             var row = SetRow()
+            row.isBodyweight = exercise.isBodyweight
             if let last = WorkoutViewModel.lastValue(forSet: index, in: lastSets) {
                 row.last = values(of: last)
                 row.weightPlaceholder = SetRow.format(row.last!.weight)

@@ -48,3 +48,11 @@ final class Exercise {
         self.equipment = equipment
     }
 }
+
+extension Exercise {
+    /// Push-ups, pull-ups, planks…: sets are logged as reps only, and volume counts a share of
+    /// bodyweight (`ExerciseMuscleData`). Matches exercises you create with "Bodyweight" too.
+    var isBodyweight: Bool {
+        equipment.trimmingCharacters(in: .whitespaces).caseInsensitiveCompare("Bodyweight") == .orderedSame
+    }
+}
