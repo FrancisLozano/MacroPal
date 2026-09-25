@@ -82,8 +82,9 @@ movement family; the user does the one in front of the body, not overhead.
 **Simulator notes for the next session:**
 - iPhone 17 Pro, `A30B354E-BDCE-4007-B1A0-9F79091EE9E5`. The simulator tool's screenshot
   fails there, so use `xcrun simctl io … screenshot` instead.
-- A full `xcodebuild test` (with UI tests) shuts the simulator down. Run
-  `-only-testing:MacroPalTests`, or boot it again afterwards.
+- `xcodebuild test` shuts the simulator down — even with `-only-testing:MacroPalTests`
+  (seen 2026-09-25). Boot it again afterwards: `xcrun simctl boot
+  A30B354E-BDCE-4007-B1A0-9F79091EE9E5`, then `xcrun simctl bootstatus` with the same id.
 - Today's Cable Crunch sets in the simulator (3 × 30 lb: 8, 12, 12) are the user's own.
   Don't delete them while testing.
 - Its muscles all show Beginner: there isn't enough volume logged to reach Novice.
