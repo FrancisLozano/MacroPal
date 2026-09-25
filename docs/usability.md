@@ -12,9 +12,9 @@ commit `6f23b35`, then this doc); the working tree is clean. **Nothing is being 
 2026-09-25 — 8 new Backlog rows, one No change needed, one Won't Fix (the last 10 Backlog rows).
 Built from it so far: bodyweight exercises ask for reps only and a set logs itself a second
 after you stop typing (`0d97db9`); the exercise completes itself when its last set logs
-(`5eb658b`); Automatic Rest Timer is on by default (`4e05de9`). Left in the Backlog (P2): tap a
-body part on the body map, a progress bar to the next level, a starting point from months
-trained, and "Same as last time" on a meal.
+(`5eb658b`); Automatic Rest Timer is on by default (`4e05de9`); tapping a muscle on the body
+map opens its volume, the exercises behind it and a bar to its next level (`3059d43`). Left in
+the Backlog (P2): a starting point from months trained, and "Same as last time" on a meal.
 
 **2026-09-25:** four Daily Log changes, on request (details under **What changed on
 2026-09-25**): tap Protein / Carbs / Fat for that macro's foods; each meal heading shows its
@@ -149,6 +149,8 @@ built from those entries. This week is for collecting the next round.
 - The Current Plan card: is expanding the week in place better than a separate page, and is
   drag-to-reorder (⋯ → Reorder Workouts) easy to find?
 - Do you miss the Weekly body-map view (sets per muscle this week)?
+- New 2026-09-25: tapping a muscle on the body map — easy to hit on the phone, or does it
+  need zoom? Is "X of Y lb to go" a useful number?
 - Are the level targets fair — does a level come too easily or feel out of reach?
 - Does the rest timer get in the way? Does the "Rest over" banner / bottom card reach you
   at the right moment, and does the card stay long enough (4 s)?
@@ -420,6 +422,7 @@ the user logged the first Training suggestions and the layout ones were built.
 | `0d97db9` | Exercise screen: a set logs itself ~1 s after typing pauses; bodyweight exercises have a reps box only ("Bodyweight" in the lbs column), and their Progress history reads "12, 12, 10 reps". `SetRowTests` for both |
 | `5eb658b` | The exercise completes itself when its last set logs: "Exercise Complete ✓" in green for 1.5 s, then back; tapping a box stays. The unplanned workout's footer now reads "Sets save as you type them in." |
 | `4e05de9` | Automatic Rest Timer on by default (a stored choice is kept) |
+| `3059d43` | Body map: tap a muscle (or near it) → `MuscleDetailView` — level, "3,135 of 20,430 lb", a bar to the next level, when time unlocks it, and the exercises the volume came from; title menu to switch muscles. `MuscleLevelEngine.progress(for:)` + tests |
 
 All checked in the simulator (today: Apples 52 kcal breakfast, Pineapple Cake 457 lunch,
 Chicken breast bites 149 dinner → pie 8 / 69 / 23%, 658 of 2,000 kcal, 1,342 left; also in
@@ -736,7 +739,7 @@ actually improving or just accumulating complaints.
 | Dislikes | 15 |
 | Suggestions | 28 |
 | Triaged (in Backlog) | 66 |
-| Done | 59 |
+| Done | 61 |
 | No change needed | 2 |
 | Won't Fix | 1 |
 
@@ -808,8 +811,8 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P1 | A set logs itself about 1 s after typing pauses with both its boxes filled (just reps for a bodyweight move) — no Done tap. Decided with the user: log in place, keyboard and cursor stay (a pause can't be told from "1" on the way to "12", so the cursor never jumps rows); further typing updates the set. Clearing a box still unlogs only on leaving the row, so retyping doesn't unlog and re-log (and restart the rest timer). `ExerciseTrackView.autoLogDelay`, a `.task(id:)` on the focused row's text | Suggestions → Training (2026-09-25, "set should complete on its own") | Done (0d97db9) — checked in the simulator 2026-09-25 (Push-Up: typed 12, checkmark and "1 set done" appeared with the keyboard still up; Set 2 then suggested 12) |
 | P2 | The exercise completes itself when its last set logs. Decided with the user: a brief "Exercise Complete ✓" — the keyboard closes and the button turns green for 1.5 s, then back to the list; tapping a box in that time stays to fix a typo. Only the change to all-logged counts, so reopening or editing a finished exercise stays put. `ExerciseTrackView.autoFinishDelay`, `commitAndMaybeFinish` | Suggestions → Training (2026-09-25, "exercise completes itself") | Done (5eb658b) — checked in the simulator 2026-09-25 (unplanned Push-Up, 2 sets: green button, then back to the workout list; reopening stayed; test sets deleted afterwards) |
 | P2 | Automatic Rest Timer on by default (`WorkoutPreferences.autoRestTimerDefault`). The timer already starts after each set and after Complete Exercise when the setting is on; it was just off. Only installs that never touched the setting switch — a stored choice is kept. The simulator has `false` stored from the 2026-09-22 testing, so it stays off there; the iPhone too if the switch was ever flipped (Profile → Workout → Automatic Rest Timer) | Suggestions → Training (2026-09-25, "start the rest timer automatically") | Done (4e05de9) — the default only; the start-on-log behavior was checked in the simulator 2026-09-22 |
-| P2 | Tap a body part on the body map for its volume and the exercises it came from, like tapping a macro on Nutrition; zoom on the map is the smaller half and can follow | Suggestions → Training (2026-09-25, body-part tap) | Triaged |
-| P2 | Progress bar toward each muscle's next level, in volume (the old 1RM "Novice → Intermediate" chips, measured the new way) — natural home: the body-part detail in the row above | Suggestions → Training (2026-09-25, progress bar) | Triaged |
+| P2 | Tap a body part on the body map for its volume and the exercises it came from, like tapping a macro on Nutrition — `MuscleDetailView` (sheet, half height): level, lifetime volume, the exercises it came from with lb and %. Small muscles are a few points wide, so a tap within 5 figure units of one picks it (`BodyFigure.muscle(at:in:side:)`), and the title menu switches to any muscle. VoiceOver: the map is one button opening the detail. **Zoom not done** — the title menu covers the missed-tap case; revisit if tapping still feels fiddly on the phone | Suggestions → Training (2026-09-25, body-part tap) | Done (3059d43) — checked in the simulator 2026-09-25 (Abs: Cable Crunch 61%, Back Squat 39%; Traps from the back figure; Chest via the menu: "Not trained yet") |
+| P2 | Progress bar toward each muscle's next level, in volume — in the muscle detail above: "Beginner → Novice", "3,135 of 20,430 lb", "17,295 lb to go", a bar in the next level's color measured from the current level's start, and a line when time also holds it back ("Novice also needs training until Oct 8", or "Volume reached…" once the bar is full). `MuscleLevelEngine.progress(for:…)` / `MuscleProgress`, 5 new `MuscleLevelEngineTests` (incl. tap hit-testing) | Suggestions → Training (2026-09-25, progress bar) | Done (3059d43) — checked in the simulator 2026-09-25 |
 | P2 | Starting point for past training: enter roughly how many months you've trained, and each muscle is credited a starting volume from the current plan and bodyweight, so levels don't start at zero. Needs a stored start credit (optional field, no versioned schema) and a place to enter it | Suggestions → Training (2026-09-25, starting-point flow) + Dislikes → Training (2026-09-25, 3 weeks of missing lifts) | Triaged |
 | P2 | "Same as last time" on a meal: re-log the foods from the last day that meal (Breakfast / Lunch / Dinner) was logged | Suggestions → Training, Nutrition (2026-09-25, "Same as last time", meal half) | Triaged |
 | P3 | "Same as last time" on a workout | Suggestions → Training, Nutrition (2026-09-25, "Same as last time", workout half) | No change needed — the gray suggestions in each row are last session's numbers, and Complete Exercise logs any untouched rows at them (`ExerciseTrackView.complete()`), so one tap already does it |
