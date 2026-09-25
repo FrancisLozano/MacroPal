@@ -76,7 +76,7 @@ final class NutritionViewModel {
     /// included even when it's empty. Snacks aren't one of the Daily Log's meals, so they're
     /// left out of both the calories and the shares.
     func mealCalories(from entries: [FoodEntry]) -> [MealCalories] {
-        let meals: [MealType] = [.breakfast, .lunch, .dinner]
+        let meals = MealType.logged
         let calories = meals.map { meal in
             entries.filter { $0.mealType == meal }.reduce(0) { $0 + $1.caloriesKcal }
         }

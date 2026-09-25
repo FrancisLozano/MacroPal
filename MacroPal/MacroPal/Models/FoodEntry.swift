@@ -11,6 +11,10 @@ enum MealType: String, Codable, CaseIterable, Identifiable {
 
     var id: Self { self }
 
+    /// The meals food is logged under and the Daily Log shows. `snack` stays in the enum so
+    /// entries logged as snacks before it was hidden still decode.
+    static let logged: [MealType] = [.breakfast, .lunch, .dinner]
+
     var displayName: String {
         switch self {
         case .breakfast: "Breakfast"

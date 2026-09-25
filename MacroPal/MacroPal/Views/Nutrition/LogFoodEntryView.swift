@@ -296,7 +296,8 @@ struct LogFoodEntryView: View {
                 .foregroundStyle(.secondary)
         }
         Picker("Meal", selection: $mealType) {
-            ForEach(MealType.allCases) { type in
+            // Snack isn't offered any more; an entry already logged as one keeps it.
+            ForEach(MealType.logged + (mealType == .snack ? [.snack] : [])) { type in
                 Text(type.displayName).tag(type)
             }
         }

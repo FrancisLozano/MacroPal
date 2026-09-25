@@ -25,7 +25,7 @@ struct FoodHistoryView: View {
     @AppStorage("foodHistoryShowPercent") private var showPercent = false
 
     private let viewModel = NutritionViewModel()
-    private static let mealOrder: [MealType] = [.breakfast, .lunch, .dinner]
+    private static let mealOrder = MealType.logged
 
     init(date: Date) {
         _date = State(initialValue: date)
