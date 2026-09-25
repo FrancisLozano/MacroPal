@@ -208,6 +208,15 @@ struct FoodHistoryView: View {
                     HStack {
                         Text(meal.displayName)
                         Spacer()
+                        // The meal's macros as "26p · 18c · 4f". The rows below leave macros out (tap a
+                        // food for them), so this is the only macro line per meal.
+                        if !mealEntries.isEmpty {
+                            let mealTotals = viewModel.dailyTotals(for: mealEntries)
+                            Text("\(Int(mealTotals.proteinG.rounded()))p · \(Int(mealTotals.carbG.rounded()))c · \(Int(mealTotals.fatG.rounded()))f")
+                                .font(.subheadline)
+                                .monospacedDigit()
+                                .textCase(nil)
+                        }
                         Button {
                             mealTypeToLog = meal
                             isPresentingLogSheet = true
@@ -338,9 +347,6 @@ struct FoodHistoryView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(entry.nameSnapshot)
                 Text(sourceLabel(for: entry))
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                Text("\(Int(entry.proteinG.rounded()))p · \(Int(entry.carbG.rounded()))c · \(Int(entry.fatG.rounded()))f")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
