@@ -26,9 +26,10 @@ enum WorkoutPreferences {
     /// Rest choices offered in the picker, in seconds.
     static let restChoices = [30, 45, 60, 90, 120, 150, 180, 240, 300]
 
-    /// Start the rest countdown automatically when a set is checked off.
+    /// Start the rest countdown automatically when a set logs and when an exercise is
+    /// completed. On unless turned off (usability.md, 2026-09-25); a stored choice is kept.
     static let autoRestTimerKey = "workoutAutoRestTimer"
-    static let autoRestTimerDefault = false
+    static let autoRestTimerDefault = true
 
     /// "8–10" or "10".
     static func repsLabel(reps: Int, repsMax: Int) -> String {
