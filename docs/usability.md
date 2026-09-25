@@ -1,7 +1,7 @@
 # Usability Notes & Feedback Log
 
 **Status:** Living document — ongoing, not tied to a phase
-**Started:** 2026-09-06 · **Last updated:** 2026-09-23 (late night)
+**Started:** 2026-09-06 · **Last updated:** 2026-09-25
 
 ## Start here (as of 2026-09-23, late night)
 
@@ -764,6 +764,10 @@ commit) / `No change needed` (verified the behavior already exists — say how y
 
 *(newest first)*
 
+- 2026-09-25 (Training) — Floor Back Extension asks for lbs, which doesn't make sense for a
+  bodyweight exercise.
+- 2026-09-25 (Training) — About 3 weeks of lifts are missing because the app wasn't ready
+  before now, so the logged volume (and the body map's levels) start behind.
 - 2026-09-08 (Nutrition) — No brands or existing foods to search — every food has to be
   manually created before it can be chosen under "Choose Food." No lookup against a food
   database (barcode scanning aside, which only helps for items with a barcode).
@@ -794,6 +798,22 @@ commit) / `No change needed` (verified the behavior already exists — say how y
 
 *(newest first)*
 
+- 2026-09-25 (Training) — A starting-point flow for someone who has been training before they
+  started using the app: after a couple of months of progress, starting at zero feels like
+  restarting when you haven't. Let them place themselves at where they really are, so their
+  levels and volume reflect it from the start. (Addresses the 3-weeks-of-missing-lifts
+  dislike.)
+- 2026-09-25 (Training) — After finishing an exercise, start the rest timer automatically.
+- 2026-09-25 (Training) — After the last set is filled in, the exercise completes itself.
+- 2026-09-25 (Training) — Complete Exercise shouldn't be tappable until every set is logged.
+- 2026-09-25 (Training) — Once I've typed the reps and lbs, the set should complete on its own
+  instead of me having to press Done.
+- 2026-09-25 (Training) — Tap a body part on the body map to see its volume and which
+  exercises contributed to it (like tapping a macro on Nutrition). Also a way to zoom in on
+  the map.
+- 2026-09-25 (Training, Nutrition) — A "Same as last time" button: on a workout, fills in
+  last session's reps and lbs; on a meal, logs what I had for that meal last time.
+- 2026-09-25 (Training) — A progress bar showing how close each muscle is to its next level.
 - 2026-09-23 (Goals) — The Goals card has too much going on. Remove its History buttons and
   make Log just a + icon on the right, for both weight and steps.
 - 2026-09-23 (Goals) — Tapping the goal weight opens the weight history page; tapping today's
