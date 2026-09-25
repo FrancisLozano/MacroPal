@@ -10,8 +10,9 @@ import SwiftData
 /// Workout tab of `ExerciseScreen`. Each row is a set with a weight box and a reps box, and
 /// "Last:" under each from the previous session (a bodyweight move has just the reps box). A
 /// set saves on its own a moment after you stop typing, and when you leave its row, so
-/// backing out midway loses nothing; Complete Exercise logs the untouched rows at their
-/// suggested values and goes back. Clearing both boxes unlogs a set. Used from a plan day (with
+/// backing out midway loses nothing; when the last set logs, the exercise completes itself
+/// after a moment. Complete Exercise logs the untouched rows at their suggested values and
+/// goes back. Clearing both boxes unlogs a set. Used from a plan day (with
 /// its sets × reps target) and from an unplanned workout (Profile → Workout's default sets).
 /// Column order, units and the rest timer follow Profile → Workout.
 struct ExerciseTrackView: View {
@@ -52,6 +53,9 @@ struct ExerciseTrackView: View {
     /// The store's entry behind each logged row.
     @State private var entries: [SetRow.ID: WorkoutSetEntry] = [:]
     @State private var isShowingSetsInfo = false
+    /// The last set just logged: "Exercise Complete" shows, then the screen goes back unless
+    /// a box is tapped first.
+    @State private var isFinishing = false
     @FocusState private var focus: Field?
     /// The focused box's selection — all of it on focus, so typing replaces the number.
     @State private var selection: TextSelection?
@@ -72,6 +76,9 @@ struct ExerciseTrackView: View {
     /// How long typing has to pause before a filled-in set logs itself — long enough not to
     /// log the "1" of "12".
     private static let autoLogDelay: Duration = .seconds(1)
+    /// How long "Exercise Complete" shows after the last set logs before going back — time to
+    /// tap a box and fix a typo instead.
+    private static let autoFinishDelay: Duration = .seconds(1.5)
 
     /// The focused row and what's typed in it; a change restarts the auto-log wait.
     private struct Typing: Equatable {
@@ -87,6 +94,10 @@ struct ExerciseTrackView: View {
 
     private var loggedCount: Int {
         rows.filter(\.isLogged).count
+    }
+
+    private var allLogged: Bool {
+        !rows.isEmpty && rows.allSatisfy(\.isLogged)
     }
 
     private var canComplete: Bool {
@@ -116,12 +127,20 @@ struct ExerciseTrackView: View {
                 Button {
                     complete()
                 } label: {
-                    Text("Complete Exercise")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity, minHeight: 44)
+                    HStack(spacing: 6) {
+                        Text(isFinishing ? "Exercise Complete" : "Complete Exercise")
+                        if isFinishing {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                    .font(.headline)
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .contentTransition(.opacity)
                 }
                 .buttonStyle(.borderedProminent)
+                .tint(isFinishing ? .green : .accentColor)
                 .disabled(!canComplete)
+                .animation(.default, value: isFinishing)
             }
             .padding([.horizontal, .bottom])
             .padding(.top, 4)
@@ -150,13 +169,21 @@ struct ExerciseTrackView: View {
         .task(id: typing) {
             guard let typing, (try? await Task.sleep(for: Self.autoLogDelay)) != nil,
                   rows.first(where: { $0.id == typing.rowID })?.typedValues != nil else { return }
-            commit(typing.rowID)
+            commitAndMaybeFinish(typing.rowID)
         }
         .onChange(of: focus) { old, new in
             if let old, old.rowID != new?.rowID {
-                commit(old.rowID)
+                commitAndMaybeFinish(old.rowID)
             }
+            // Tapping a box while "Exercise Complete" shows keeps you here to fix it.
+            if new != nil { isFinishing = false }
             selectAll(in: new)
+        }
+        .task(id: isFinishing) {
+            guard isFinishing, (try? await Task.sleep(for: Self.autoFinishDelay)) != nil,
+                  isFinishing else { return }
+            // The last set's own log already started the rest timer.
+            dismiss()
         }
         // Backing out with a box still focused: save what's there.
         .onDisappear {
@@ -332,6 +359,17 @@ struct ExerciseTrackView: View {
                 modelContext.delete(entry)
             }
             rows[index].saved = nil
+        }
+    }
+
+    /// Commits a row; if that logged the last unlogged set, starts "Exercise Complete". Only
+    /// the change to all-logged counts, so reopening or editing a finished exercise stays put.
+    private func commitAndMaybeFinish(_ id: SetRow.ID) {
+        let wasAllLogged = allLogged
+        commit(id)
+        if !wasAllLogged && allLogged {
+            focus = nil
+            isFinishing = true
         }
     }
 

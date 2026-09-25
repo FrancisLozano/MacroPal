@@ -72,7 +72,7 @@ struct UnplannedWorkoutView: View {
                         Label("Add Exercise", systemImage: "plus")
                     }
                 } footer: {
-                    Text("Sets save as you check them off.")
+                    Text("Sets save as you type them in.")
                 }
             }
             .navigationTitle("Workout")
