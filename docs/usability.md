@@ -10,7 +10,9 @@ commit `6f23b35`, then this doc); the working tree is clean. **Nothing is being 
 **running on the user's iPhone** (installed from Xcode). The week of real use (Next tasks) runs
 2026-09-24 → 09-30; the first 9 entries from it (2 dislikes, 7 suggestions) were triaged on
 2026-09-25 — 8 new Backlog rows, one No change needed, one Won't Fix (the last 10 Backlog rows).
-Next to build, by priority: reps-only bodyweight rows, and sets logging themselves.
+The two P1s from it are built (`0d97db9`): bodyweight exercises ask for reps only, and a set
+logs itself a second after you stop typing. Next by priority: the P2s — the exercise completing
+on its last set, Automatic Rest Timer on by default, and the rest.
 
 **2026-09-25:** four Daily Log changes, on request (details under **What changed on
 2026-09-25**): tap Protein / Carbs / Fat for that macro's foods; each meal heading shows its
@@ -171,6 +173,7 @@ Values as of 2026-09-23. "In app" means you can change it yourself; the rest are
 | Goal weight | 154.3 lb | In app: Goals card → tap the goal weight → Goal Weight |
 | lb/kg, cm or ft/in | lb, cm | In app: Profile → Units & Measurements |
 | Default sets / reps for new exercises | 3 × 10 | In app: Profile → Workout |
+| How long typing pauses before a set logs itself | 1 s | `ExerciseTrackView.autoLogDelay` |
 | Rest time, auto-start rest timer | 120 s, off | In app: Profile → Workout |
 | Set rows reps-first or weight-first | reps-first | In app: Profile → Workout |
 | Volume per level (too easy / too hard) | 90 / 600 / 2,500 / 7,500 / 15,000 bodyweights | `MuscleLevelEngine.levelMinimumBodyweights` (the ⓘ sheet follows) |
@@ -410,6 +413,8 @@ the user logged the first Training suggestions and the layout ones were built.
 | `836ca50` | Daily Log: each meal heading shows its macros ("26p · 4c · 4f", hidden when empty); food rows drop their macro line |
 | `f21152e` | Daily Log: tap the calories bar → **Calories by Meal** (`MealCaloriesView`): Swift Charts pie in light / mid / dark blue with % on slices ≥ 8%, a legend "Lunch · 69% · 457 kcal", then Total Calories, Goal, Left (red "Over" past the goal). `NutritionViewModel.mealCalories` + `MealCaloriesTests`. The bar's own meal colors and heading dots were tried and removed before committing |
 | `6f23b35` | Snack hidden from the Log Food meal picker; `MealType.logged` shared by the picker, the Daily Log and `mealCalories` |
+| `2dbc957` | First week-of-use entries triaged into the Backlog |
+| `0d97db9` | Exercise screen: a set logs itself ~1 s after typing pauses; bodyweight exercises have a reps box only ("Bodyweight" in the lbs column), and their Progress history reads "12, 12, 10 reps". `SetRowTests` for both |
 
 All checked in the simulator (today: Apples 52 kcal breakfast, Pineapple Cake 457 lunch,
 Chicken breast bites 149 dinner → pie 8 / 69 / 23%, 658 of 2,000 kcal, 1,342 left; also in
@@ -726,7 +731,7 @@ actually improving or just accumulating complaints.
 | Dislikes | 15 |
 | Suggestions | 28 |
 | Triaged (in Backlog) | 66 |
-| Done | 55 |
+| Done | 57 |
 | No change needed | 2 |
 | Won't Fix | 1 |
 
@@ -794,8 +799,8 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P2 | Daily Log: tap the calories bar for a pie chart of calories by meal, with total, goal and left (reference: MyFitnessPal's, without Snacks). Meal colors on the bar itself were tried and dropped as too busy | User request (direct, 2026-09-25, MyFitnessPal screenshot) | Done (f21152e) — checked in the simulator, light and dark |
 | P3 | Snack could be picked in Log Food but showed nowhere on the Daily Log — hidden from the picker | Found while building the row above (2026-09-25) | Done (6f23b35) — checked in the simulator |
 | P1 | Steps goal with a bar chart (whiteboard Goals card) — `StepEntry` (one total per day; logging a day again replaces it), `UserProfile.stepGoal` (default 10,000, migrates existing stores), Steps row on the Goals card, Steps screen with 7/30-day bars (green when the goal is met), dashed goal line, and average / goal-met counted over logged days; `StepsViewModelTests` | User request (direct, 2026-09-19, whiteboard sketch) | Done (a46cfe9) |
-| P1 | Bodyweight exercises ask for reps only — no lbs box on Floor Back Extension, Push-Up, Chest Dip, Pull-Up, Plank, Hanging Leg Raise (the six starters with "Bodyweight" equipment; Ab Wheel Rollout is listed under other equipment — check it when building). The volume math already credits a share of bodyweight for these (`bodyweight(…)` in `ExerciseMuscleData.swift`), so nothing changes there. No optional added-weight box (decided) | Dislikes → Training (2026-09-25, Floor Back Extension) | Triaged |
-| P1 | A set logs itself once both its boxes are filled, and focus moves to the next row — no Done tap. Today a set saves only when focus leaves its row (`ExerciseTrackView`, `onChange(of: focus)`) | Suggestions → Training (2026-09-25, "set should complete on its own") | Triaged |
+| P1 | Bodyweight exercises ask for reps only — no lbs box on Floor Back Extension, Push-Up, Chest Dip, Pull-Up, Plank, Hanging Leg Raise (the six starters with "Bodyweight" equipment, plus any exercise you create with that equipment — `Exercise.isBodyweight`; Ab Wheel Rollout is "Ab wheel" and keeps its lbs box). "Bodyweight" stands where the lbs box was; a set logged with a weight before keeps it; Progress history reads "12, 12, 10 reps". The volume math already credited a share of bodyweight (`bodyweight(…)` in `ExerciseMuscleData.swift`), so nothing changed there. No optional added-weight box (decided) | Dislikes → Training (2026-09-25, Floor Back Extension) | Done (0d97db9) — checked in the simulator 2026-09-25 (Push-Up: reps box and "Bodyweight"; 12 reps → History "12 reps", 1,770.6 lb = 12 × 0.65 × 227 lb; test set unlogged afterwards) |
+| P1 | A set logs itself about 1 s after typing pauses with both its boxes filled (just reps for a bodyweight move) — no Done tap. Decided with the user: log in place, keyboard and cursor stay (a pause can't be told from "1" on the way to "12", so the cursor never jumps rows); further typing updates the set. Clearing a box still unlogs only on leaving the row, so retyping doesn't unlog and re-log (and restart the rest timer). `ExerciseTrackView.autoLogDelay`, a `.task(id:)` on the focused row's text | Suggestions → Training (2026-09-25, "set should complete on its own") | Done (0d97db9) — checked in the simulator 2026-09-25 (Push-Up: typed 12, checkmark and "1 set done" appeared with the keyboard still up; Set 2 then suggested 12) |
 | P2 | The exercise completes itself when its last set logs (follows from the row above) — to decide when building: straight back to the day list, or a brief "Exercise complete" first | Suggestions → Training (2026-09-25, "exercise completes itself") | Triaged |
 | P2 | Automatic Rest Timer on by default (`WorkoutPreferences.autoRestTimerDefault`). The timer already starts after each set and after Complete Exercise when the setting is on; it was just off. Installs that never touched the setting switch to on too | Suggestions → Training (2026-09-25, "start the rest timer automatically") | Triaged |
 | P2 | Tap a body part on the body map for its volume and the exercises it came from, like tapping a macro on Nutrition; zoom on the map is the smaller half and can follow | Suggestions → Training (2026-09-25, body-part tap) | Triaged |
