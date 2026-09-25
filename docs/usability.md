@@ -3,18 +3,39 @@
 **Status:** Living document — ongoing, not tied to a phase
 **Started:** 2026-09-06 · **Last updated:** 2026-09-25
 
-## Start here (as of 2026-09-25)
+## Start here (as of 2026-09-25, afternoon)
 
 **Where things stand.** Everything is committed and pushed to `origin/main` (last code
-commit `6f23b35`, then this doc); the working tree is clean. **Nothing is being built right now.** The app is
-**running on the user's iPhone** (installed from Xcode). The week of real use (Next tasks) runs
-2026-09-24 → 09-30; the first 9 entries from it (2 dislikes, 7 suggestions) were triaged on
-2026-09-25 — 8 new Backlog rows, one No change needed, one Won't Fix (the last 10 Backlog rows).
-Built from it so far: bodyweight exercises ask for reps only and a set logs itself a second
+commit `3059d43`, then this doc); the working tree is clean. **Nothing is being built right
+now.** The app runs on the user's iPhone (installed from Xcode) — **but the iPhone doesn't have
+today's Training changes yet**: install from Xcode again to try them. The week of real use
+(Next tasks) runs 2026-09-24 → 09-30; the first 9 entries from it (2 dislikes, 7 suggestions)
+were triaged on 2026-09-25 — 8 new Backlog rows, one No change needed, one Won't Fix (the last
+10 Backlog rows). Built from it so far: bodyweight exercises ask for reps only and a set logs itself a second
 after you stop typing (`0d97db9`); the exercise completes itself when its last set logs
 (`5eb658b`); Automatic Rest Timer is on by default (`4e05de9`); tapping a muscle on the body
 map opens its volume, the exercises behind it and a bar to its next level (`3059d43`). Left in
 the Backlog (P2): a starting point from months trained, and "Same as last time" on a meal.
+
+**Decided on 2026-09-25 (no need to re-ask):** a set logs itself *in place* after a 1 s pause
+(the cursor never jumps rows — a pause can't be told from "1" on the way to "12"); clearing a
+box still unlogs only on leaving the row. The exercise completes with a 1.5 s green "Exercise
+Complete ✓", cancelled by tapping a box. Bodyweight moves are reps only, no optional added
+weight. Complete Exercise stays tappable and logs untouched rows at last session's numbers —
+that *is* the workout "Same as last time". The starting point will be **months trained**
+(not a level per muscle, not back-filled sessions). Body-map zoom is not built; the title
+menu in the muscle detail covers missed taps.
+
+**Check on the iPhone after installing:**
+- **Automatic Rest Timer** — the new default (on) only applies if the switch was never
+  touched; a stored choice wins. If the timer doesn't start after a set, turn it on in
+  Profile → Workout.
+- **The next set's box with the keyboard up** — in the simulator, taps on the row just above
+  the keyboard landed on the keyboard's toolbar (Done bar) instead of the box. Not new, but it
+  matters more now that sets log themselves. If it happens on the phone, the fix offered is
+  to move focus to the next set when one logs.
+- Whether 1 s (auto-log) and 1.5 s (auto-complete) feel right — both are one constant each
+  (see the adjustments table).
 
 **2026-09-25:** four Daily Log changes, on request (details under **What changed on
 2026-09-25**): tap Protein / Carbs / Fat for that macro's foods; each meal heading shows its
@@ -86,13 +107,23 @@ movement family; the user does the one in front of the body, not overhead.
 
 **Simulator notes for the next session:**
 - iPhone 17 Pro, `A30B354E-BDCE-4007-B1A0-9F79091EE9E5`. The simulator tool's screenshot
-  fails there, so use `xcrun simctl io … screenshot` instead.
+  worked on 2026-09-25 but often shows the screen from *before* the last tap — take a second
+  one, or `sleep 1.5` then `xcrun simctl io … screenshot` (reliable) and Read the PNG.
+- Its tool `text` action types `\b` literally — to clear a box, tap the keyboard's delete key.
+  Tapping a box selects its text, so one delete clears it.
+- App preferences live in the app container, not `simctl spawn … defaults read` (that reads
+  the simulator's shared domain): `plutil -p "$(xcrun simctl get_app_container <id>
+  com.francislozano.MacroPal data)/Library/Preferences/com.francislozano.MacroPal.plist"`.
+  It has `workoutAutoRestTimer = false` stored (from 2026-09-22), so the new default doesn't
+  show there, and `workoutDefaultSets = 2`.
 - `xcodebuild test` shuts the simulator down — even with `-only-testing:MacroPalTests`
   (seen 2026-09-25). Boot it again afterwards: `xcrun simctl boot
   A30B354E-BDCE-4007-B1A0-9F79091EE9E5`, then `xcrun simctl bootstatus` with the same id.
 - Today's Cable Crunch sets in the simulator (3 × 30 lb: 8, 12, 12) are the user's own.
   Don't delete them while testing.
-- Its muscles all show Beginner: there isn't enough volume logged to reach Novice.
+- Its muscles all show Beginner: there isn't enough volume logged to reach Novice. Testing
+  sets are safest on an unplanned **Push-Up** (not in the plan, no history); delete them after
+  from its Progress tab (swipe the day). Pull day in the simulator's plan is empty.
 - The simulator has Apple Intelligence (through the Mac), so the "Describe it" field shows
   and works there. When testing Edit Routine, **Cancel** — Save rewrites the user's 5-day
   plan (Mon/Tue/Wed/Fri/Sat, Push/Pull/Legs & Abs/Upper/Lower).
@@ -105,7 +136,7 @@ movement family; the user does the one in front of the body, not overhead.
 - Model failures are logged: `xcrun simctl spawn booted log show --last 5m --predicate
   'subsystem == "com.francislozano.MacroPal" AND category == "RoutineAssistant"' --info`.
 
-## Next tasks (as of 2026-09-23, late night)
+## Next tasks (as of 2026-09-25)
 
 1. **Use the app for a week on the iPhone (2026-09-24 → 09-30)** and log what you notice — see
    **A week of real use** below. On 09-30, ask for "triage the week".
@@ -116,6 +147,11 @@ movement family; the user does the one in front of the body, not overhead.
 3. **Keep logging** Likes / Dislikes / Suggestions during the week of use below, then triage
    them at the end of the week — including how Edit Routine by message does with your own
    wording (note the exact message and what it filled in).
+4. **Remaining P2s from the 09-25 triage**, when wanted: a starting point from months trained
+   (needs a stored start credit — an optional field, no versioned schema — and a place to
+   enter it; the tenure cap still applies, so decide whether the months also count as time
+   trained), and "Same as last time" on a meal (re-log the foods from the last day that meal
+   was logged).
 
 **Small leftovers:**
 - Food logged as **Snack** before 2026-09-25 still exists (the case stays in `MealType` so it
