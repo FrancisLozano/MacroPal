@@ -1,14 +1,19 @@
 # Usability Notes & Feedback Log
 
 **Status:** Living document — ongoing, not tied to a phase
-**Started:** 2026-09-06 · **Last updated:** 2026-09-25
+**Started:** 2026-09-06 · **Last updated:** 2026-09-26
 
-## Start here (as of 2026-09-25, evening)
+## Start here (as of 2026-09-26)
 
 **Where things stand.** Everything is committed and pushed to `origin/main` (last code
-commit `3059d43`, then this doc); the working tree is clean. **Nothing is being built right
+commit `52bc9cb`, then this doc); the working tree is clean. **Nothing is being built right
 now.** The app runs on the user's iPhone (installed from Xcode) — **but the iPhone doesn't have
-today's Training changes yet**: install from Xcode again to try them. The week of real use
+the 09-25 Training changes or the new app icon yet**: install from Xcode again to get both.
+
+**2026-09-26: app icon.** MacroPal has its first app icon — "MacroPal" in bold white system
+font on dark navy (#10214D), no artwork (details under **What changed on 2026-09-26**). The
+user tried a photo first and dropped it (it was an unlicensed photo of a real athlete, never
+committed). Lighter blue (#006BF2) was also tried; the user asked for darker navy. The week of real use
 (Next tasks) runs 2026-09-24 → 09-30; the first 9 entries from it (2 dislikes, 7 suggestions)
 were triaged on 2026-09-25 — 8 new Backlog rows, one No change needed, one Won't Fix (the last
 10 Backlog rows). Built from it so far: bodyweight exercises ask for reps only and a set logs itself a second
@@ -459,6 +464,14 @@ user's whiteboard sketch — body map on top, Current Plan, Goals below. On 2026
 of that doc's success criteria were met, and in the evening the tab was restyled to match
 Nutrition. 2026-09-23 closed the last two P3s and the outstanding re-checks; in the afternoon
 the user logged the first Training suggestions and the layout ones were built.
+
+### What changed on 2026-09-26
+
+| Commit | What |
+|---|---|
+| `52bc9cb` | App icon: `AppIcon.png` (1024 × 1024, no alpha) in the main app's `AppIcon.appiconset`, default slot only — iOS derives the dark and tinted versions. Solid navy sRGB (0.06, 0.13, 0.30) with "MacroPal" centered in the system font, bold, 190 pt. Drawn by a small Core Graphics / Core Text Swift script (not in the repo; AppKit drawing crashed when run as a script) — to change the color or text, redraw the 1024 PNG and replace it. The widget's icon set is untouched (widgets don't show one) |
+
+Checked in the simulator's App Library.
 
 ### What changed on 2026-09-25
 
