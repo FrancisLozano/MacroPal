@@ -3,7 +3,7 @@
 **Status:** Living document — ongoing, not tied to a phase
 **Started:** 2026-09-06 · **Last updated:** 2026-09-25
 
-## Start here (as of 2026-09-25, afternoon)
+## Start here (as of 2026-09-25, evening)
 
 **Where things stand.** Everything is committed and pushed to `origin/main` (last code
 commit `3059d43`, then this doc); the working tree is clean. **Nothing is being built right
@@ -16,6 +16,21 @@ after you stop typing (`0d97db9`); the exercise completes itself when its last s
 (`5eb658b`); Automatic Rest Timer is on by default (`4e05de9`); tapping a muscle on the body
 map opens its volume, the exercises behind it and a bar to its next level (`3059d43`). Left in
 the Backlog (P2): a starting point from months trained, and "Same as last time" on a meal.
+
+**Logged 2026-09-25 evening, not yet built (7 entries, top of Dislikes / Suggestions).**
+Proposed, in this order, waiting on the user's go-ahead:
+1. **Obliques "Not trained yet" with 378 lb moved** — `MuscleLevelEngine.trainedInvolvement`
+   (0.5) gates "trained" while volume counts every credit; Cable Crunch gives obliques 0.4.
+   Drop the gate (any credited volume = trained), and in `MuscleDetailView` tag each
+   contribution **Primary / Secondary** with its share ("Cable Crunch · Secondary · 40%").
+   Secondary muscles already get only their share of volume (set volume × involvement).
+2. **Rest timer** — move Start Rest from the top-right toolbar into the bottom bar (one
+   hand); make the running bar a bigger card; after Complete Exercise with exercises left,
+   show "Rest — next up: <exercise>"; after the day's last exercise, no rest timer but a
+   "Workout complete" card (exercises, sets, volume).
+3. **Body-map colors light → dark** — recommended: one hue (accent) in 6 well-spaced steps
+   per level, gray untrained, dim → bright in dark mode; replaces the red→pink rainbow in
+   `LevelPalette`.
 
 **Decided on 2026-09-25 (no need to re-ask):** a set logs itself *in place* after a 1 s pause
 (the cursor never jumps rows — a pause can't be told from "1" on the way to "12"); clearing a
@@ -772,8 +787,8 @@ actually improving or just accumulating complaints.
 | Metric | Count |
 |---|---|
 | Likes | 1 |
-| Dislikes | 15 |
-| Suggestions | 28 |
+| Dislikes | 18 |
+| Suggestions | 32 |
 | Triaged (in Backlog) | 66 |
 | Done | 61 |
 | No change needed | 2 |
@@ -872,6 +887,12 @@ commit) / `No change needed` (verified the behavior already exists — say how y
 
 *(newest first)*
 
+- 2026-09-25 (Training) — Obliques' muscle detail says "Not trained yet" even though it shows
+  378 lb moved. (Cause: Cable Crunch credits obliques at 0.4, and only credits of 0.5+ count
+  as "trained", so the volume adds up but the level stays 0.)
+- 2026-09-25 (Training) — One-handed on the phone, the rest timer is too far away to reach
+  comfortably (Start Rest is in the top-right corner).
+- 2026-09-25 (Training) — The rest timer isn't prominent enough when it pops up.
 - 2026-09-25 (Training) — Floor Back Extension asks for lbs, which doesn't make sense for a
   bodyweight exercise.
 - 2026-09-25 (Training) — About 3 weeks of lifts are missing because the app wasn't ready
@@ -906,6 +927,15 @@ commit) / `No change needed` (verified the behavior already exists — say how y
 
 *(newest first)*
 
+- 2026-09-25 (Training) — Is the training credit accurate? When a muscle is only a secondary
+  mover, does it get the same volume, and does that show on the body map? Mark each
+  contribution as primary or secondary activation.
+- 2026-09-25 (Training) — When I press Complete Exercise and exercises remain, show a message:
+  rest until your next exercise.
+- 2026-09-25 (Training) — After the day's last exercise, don't start the rest timer; show a
+  "Good job" pop-up instead.
+- 2026-09-25 (Training) — Body-map colors could go light → dark with progress instead of
+  different colors per level (asked for an opinion).
 - 2026-09-25 (Training) — A starting-point flow for someone who has been training before they
   started using the app: after a couple of months of progress, starting at zero feels like
   restarting when you haven't. Let them place themselves at where they really are, so their
