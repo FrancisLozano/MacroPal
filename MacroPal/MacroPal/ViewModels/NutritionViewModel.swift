@@ -188,6 +188,57 @@ final class NutritionViewModel {
         }
     }
 
+    /// The foods logged under `meal` on the most recent day before `day` that has any, in
+    /// the order they were logged — what "Same as Last Time" offers to log again. Empty if
+    /// that meal was never logged before `day`.
+    func lastTimeEntries(for meal: MealType, before day: Date, in entries: [FoodEntry]) -> [FoodEntry] {
+        let calendar = Calendar.current
+        let dayStart = calendar.startOfDay(for: day)
+        let earlier = entries.filter { $0.mealType == meal && $0.date < dayStart }
+        guard let latest = earlier.max(by: { $0.date < $1.date }) else { return [] }
+        return earlier
+            .filter { calendar.isDate($0.date, inSameDayAs: latest.date) }
+            .sorted { $0.date < $1.date }
+    }
+
+    /// Logs a copy of each entry under `meal` on `day`, keeping each one's time of day so
+    /// they stay in their original order. Copies the entries' own snapshots — not their
+    /// `FoodItem`s — so the meal repeats exactly even if a food was edited or deleted since.
+    func logAgain(_ entries: [FoodEntry], as meal: MealType, on day: Date, context: ModelContext) {
+        let calendar = Calendar.current
+        let dayStart = calendar.startOfDay(for: day)
+        for source in entries {
+            let timeOfDay = source.date.timeIntervalSince(calendar.startOfDay(for: source.date))
+            let entry = FoodEntry(
+                date: dayStart.addingTimeInterval(timeOfDay),
+                mealType: meal,
+                servingSizeG: source.servingSizeG,
+                nameSnapshot: source.nameSnapshot,
+                brandSnapshot: source.brandSnapshot,
+                caloriesKcal: source.caloriesKcal,
+                proteinG: source.proteinG,
+                carbG: source.carbG,
+                fatG: source.fatG,
+                foodItem: source.foodItem,
+                ingredientSnapshots: source.ingredientSnapshots.map { ingredient in
+                    MealIngredient(
+                        nameSnapshot: ingredient.nameSnapshot,
+                        quantityG: ingredient.quantityG,
+                        brandSnapshot: ingredient.brandSnapshot,
+                        caloriesPer100gSnapshot: ingredient.caloriesPer100gSnapshot,
+                        proteinPer100gSnapshot: ingredient.proteinPer100gSnapshot,
+                        carbPer100gSnapshot: ingredient.carbPer100gSnapshot,
+                        fatPer100gSnapshot: ingredient.fatPer100gSnapshot
+                    )
+                }
+            )
+            context.insert(entry)
+            source.foodItem?.lastUsedAt = .now
+        }
+        try? context.save()
+        WidgetCenter.shared.reloadAllTimelines()
+    }
+
     /// Items picked or logged most recently first, for the food picker's "Recents" tab.
     func recentFoodItems(in context: ModelContext, limit: Int = 15) -> [FoodItem] {
         var descriptor = FetchDescriptor<FoodItem>(

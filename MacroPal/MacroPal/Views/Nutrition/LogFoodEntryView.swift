@@ -424,6 +424,7 @@ struct LogFoodEntryView: View {
 /// structure changes shape. A real push avoids it and gets a native back button for free.
 struct LogFoodFlowView: View {
     @Environment(\.dismiss) private var dismiss
+    @Query private var allEntries: [FoodEntry]
 
     let initialMealType: MealType
     let initialDate: Date
@@ -436,8 +437,14 @@ struct LogFoodFlowView: View {
         self.initialDate = initialDate
     }
 
+    private var lastTime: LastTimeMeal? {
+        let entries = NutritionViewModel().lastTimeEntries(for: initialMealType, before: initialDate, in: allEntries)
+        guard !entries.isEmpty else { return nil }
+        return LastTimeMeal(meal: initialMealType, day: initialDate, entries: entries)
+    }
+
     var body: some View {
-        FoodItemPickerView(dismissesAfterSelection: false) { item in
+        FoodItemPickerView(dismissesAfterSelection: false, lastTime: lastTime) { item in
             selectedFoodItem = item
             isShowingEntry = true
         }

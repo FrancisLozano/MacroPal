@@ -31,6 +31,16 @@ private enum PickerTab: Hashable {
     case myMeals
 }
 
+/// A meal's foods from the last day it was logged, and the meal and day to log them again
+/// under — see `FoodItemPickerView.lastTime`.
+struct LastTimeMeal {
+    let meal: MealType
+    let day: Date
+    let entries: [FoodEntry]
+
+    var loggedOn: Date { entries.first?.date ?? day }
+}
+
 /// Search an existing `FoodItem` catalog, search Open Food Facts by name, scan a barcode,
 /// or create a new one inline. Calls `onSelect` with the chosen/created item and dismisses
 /// itself.
@@ -44,6 +54,10 @@ struct FoodItemPickerView: View {
     /// entry flow, `LogFoodFlowView`), where calling `dismiss()` here would close the whole
     /// flow instead of handing off to what comes next.
     var dismissesAfterSelection: Bool = true
+    /// The foods from the last time this meal was logged, offered at the top of History to
+    /// log again in one tap — only when logging for a meal (`LogFoodFlowView`) and that meal
+    /// has been logged on an earlier day.
+    var lastTime: LastTimeMeal? = nil
     /// Declared after `dismissesAfterSelection` so it's the memberwise init's last parameter
     /// — callers pass it as a trailing closure (e.g. `FoodItemPickerView(dismissesAfterSelection: false) { item in ... }`),
     /// which only forward-matches (no deprecated backward-matching) when the closure param is last.
@@ -139,6 +153,11 @@ struct FoodItemPickerView: View {
                 } else {
                     switch selectedTab {
                     case .history:
+                        if let lastTime {
+                            Section("Same as Last Time") {
+                                lastTimeRow(lastTime)
+                            }
+                        }
                         Section("Recents") {
                             if recentItems.isEmpty {
                                 Text("Foods you search for or log will show up here.")
@@ -335,6 +354,31 @@ struct FoodItemPickerView: View {
                     .foregroundStyle(.secondary)
             }
         }
+    }
+
+    /// "Breakfast · Thu, Sep 25" over the foods logged then and their calories; tapping logs
+    /// all of them again for this meal and day, and closes the sheet.
+    private func lastTimeRow(_ lastTime: LastTimeMeal) -> some View {
+        Button {
+            viewModel.logAgain(lastTime.entries, as: lastTime.meal, on: lastTime.day, context: modelContext)
+            dismiss()
+        } label: {
+            HStack {
+                VStack(alignment: .leading) {
+                    Text("\(lastTime.meal.displayName) · \(lastTime.loggedOn.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day()))")
+                        .foregroundStyle(Color.primary)
+                    Text(lastTime.entries.map(\.nameSnapshot).joined(separator: ", "))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+                Spacer()
+                Text("\(Int(lastTime.entries.reduce(0) { $0 + $1.caloriesKcal }.rounded())) kcal")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .accessibilityHint("Logs these foods again")
     }
 
     /// `item.name` with the first case-insensitive occurrence of `query` bolded — e.g.
