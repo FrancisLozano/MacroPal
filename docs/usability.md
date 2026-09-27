@@ -483,7 +483,7 @@ Checked in the simulator on a temporary Pull day (Barbell Curl + Hammer Curl, re
 
 | Commit | What |
 |---|---|
-| `99aea1e` | Level colors: `LevelPalette` is now one hue in six steps instead of red / orange / green / blue / purple / pink — first blue (0.595), then **red (0.01) at the user's request (`533eb13`)**, matching the thumbnails' red. Light mode goes pale pink → deep maroon; dark mode goes dim → bright, with Beginner kept brighter than the untrained gray (`systemGray2`) so a trained muscle never looks like less than an untrained one. The steps are HSB pairs in `lightSteps` / `darkSteps` in `BodyFigure.swift`. Legend, muscle detail dot and bar follow automatically. `ExerciseThumbnail` keeps its red, now as its own constant (it used to borrow Beginner's color) |
+| `99aea1e` | Level colors: `LevelPalette` is now one hue in six steps instead of red / orange / green / blue / purple / pink — first blue (0.595), then **red (0.01) at the user's request (`533eb13`)**, matching the thumbnails' red. Light mode goes light red → deep maroon (Beginner and Novice made redder, less pink, on request); dark mode goes dim → bright, with Beginner kept brighter than the untrained gray (`systemGray2`) so a trained muscle never looks like less than an untrained one. The steps are HSB pairs in `lightSteps` / `darkSteps` in `BodyFigure.swift`. Legend, muscle detail dot and bar follow automatically. `ExerciseThumbnail` keeps its red, now as its own constant (it used to borrow Beginner's color) |
 
 Checked in the simulator in both appearances: the map (all Beginner there) and the ⓘ legend with all six steps.
 

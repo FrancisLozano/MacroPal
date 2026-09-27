@@ -18,7 +18,7 @@ enum LevelPalette {
     /// Hue, saturation, brightness per level, for each appearance.
     private static let hue = 0.01
     private static let lightSteps: [(saturation: Double, brightness: Double)] = [
-        (0.24, 1.00), (0.42, 0.98), (0.62, 0.95), (0.80, 0.88), (0.88, 0.68), (0.92, 0.46),
+        (0.42, 1.00), (0.57, 0.97), (0.72, 0.93), (0.86, 0.85), (0.90, 0.66), (0.93, 0.45),
     ]
     private static let darkSteps: [(saturation: Double, brightness: Double)] = [
         (0.72, 0.58), (0.72, 0.69), (0.70, 0.80), (0.62, 0.90), (0.44, 0.97), (0.24, 1.00),
