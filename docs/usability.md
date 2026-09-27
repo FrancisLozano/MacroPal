@@ -801,7 +801,7 @@ actually improving or just accumulating complaints.
 |---|---|
 | Likes | 1 |
 | Dislikes | 18 |
-| Suggestions | 32 |
+| Suggestions | 34 |
 | Triaged (in Backlog) | 66 |
 | Done | 61 |
 | No change needed | 2 |
@@ -940,6 +940,10 @@ commit) / `No change needed` (verified the behavior already exists — say how y
 
 *(newest first)*
 
+- 2026-09-27 (General UI) — Reminder notifications for steps, food, weight and water. (The
+  app doesn't track water yet, so that one needs water logging first.)
+- 2026-09-27 (Goals) — A swipeable steps history like the Health app's: swipe between days /
+  weeks / months, with a bar chart and the total for the period in view.
 - 2026-09-25 (Training) — Is the training credit accurate? When a muscle is only a secondary
   mover, does it get the same volume, and does that show on the body map? Mark each
   contribution as primary or secondary activation.
