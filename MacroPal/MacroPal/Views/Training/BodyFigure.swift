@@ -9,19 +9,19 @@ enum BodySide {
     case front, back
 }
 
-/// Colors for the six levels, Beginner → World Class, matching the legend: one hue (the
-/// accent blue) in six well-spaced steps, so progress reads as "more" rather than as a new
+/// Colors for the six levels, Beginner → World Class, matching the legend: one hue (red, as
+/// on the exercise thumbnails) in six well-spaced steps, so progress reads as "more" rather than as a new
 /// color to learn. Light → dark in light mode; dim → bright in dark mode, where the brightest
 /// stands out most — even the dimmest is brighter than the gray of untrained muscles
 /// (`BodyFigure`), so training never looks like less than none.
 enum LevelPalette {
     /// Hue, saturation, brightness per level, for each appearance.
-    private static let hue = 0.595
+    private static let hue = 0.01
     private static let lightSteps: [(saturation: Double, brightness: Double)] = [
-        (0.28, 1.00), (0.46, 0.98), (0.66, 0.95), (0.86, 0.90), (0.92, 0.70), (0.95, 0.48),
+        (0.24, 1.00), (0.42, 0.98), (0.62, 0.95), (0.80, 0.88), (0.88, 0.68), (0.92, 0.46),
     ]
     private static let darkSteps: [(saturation: Double, brightness: Double)] = [
-        (0.70, 0.56), (0.72, 0.67), (0.72, 0.78), (0.64, 0.89), (0.46, 0.97), (0.24, 1.00),
+        (0.72, 0.58), (0.72, 0.69), (0.70, 0.80), (0.62, 0.90), (0.44, 0.97), (0.24, 1.00),
     ]
 
     static let colors: [Color] = zip(lightSteps, darkSteps).map { light, dark in
