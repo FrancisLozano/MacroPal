@@ -3,7 +3,7 @@
 **Status:** Living document — ongoing, not tied to a phase
 **Started:** 2026-09-06 · **Last updated:** 2026-09-27
 
-## Start here (as of 2026-09-26)
+## Start here (as of 2026-09-27)
 
 **Where things stand.** Everything is committed and pushed to `origin/main` (last code
 commit `52bc9cb`, then this doc); the working tree is clean. **Nothing is being built right
@@ -22,8 +22,9 @@ after you stop typing (`0d97db9`); the exercise completes itself when its last s
 map opens its volume, the exercises behind it and a bar to its next level (`3059d43`). Left in
 the Backlog (P2): a starting point from months trained, and "Same as last time" on a meal.
 
-**Logged 2026-09-25 evening, not yet built (7 entries, top of Dislikes / Suggestions).**
-Proposed, in this order, waiting on the user's go-ahead:
+**Logged 2026-09-25 evening (7 entries, top of Dislikes / Suggestions) — all three fixes
+built 2026-09-27.** Install on the iPhone again to get them (plus the 09-25 Training changes
+and the app icon):
 1. ~~**Obliques "Not trained yet" with 378 lb moved**~~ — **done 2026-09-27 (`e0ed1ca`)**, see
    **What changed on 2026-09-27**. Was: `MuscleLevelEngine.trainedInvolvement`
    (0.5) gates "trained" while volume counts every credit; Cable Crunch gives obliques 0.4.
