@@ -1,7 +1,7 @@
 # Usability Notes & Feedback Log
 
 **Status:** Living document — ongoing, not tied to a phase
-**Started:** 2026-09-06 · **Last updated:** 2026-09-26
+**Started:** 2026-09-06 · **Last updated:** 2026-09-27
 
 ## Start here (as of 2026-09-26)
 
@@ -24,7 +24,8 @@ the Backlog (P2): a starting point from months trained, and "Same as last time" 
 
 **Logged 2026-09-25 evening, not yet built (7 entries, top of Dislikes / Suggestions).**
 Proposed, in this order, waiting on the user's go-ahead:
-1. **Obliques "Not trained yet" with 378 lb moved** — `MuscleLevelEngine.trainedInvolvement`
+1. ~~**Obliques "Not trained yet" with 378 lb moved**~~ — **done 2026-09-27 (`e0ed1ca`)**, see
+   **What changed on 2026-09-27**. Was: `MuscleLevelEngine.trainedInvolvement`
    (0.5) gates "trained" while volume counts every credit; Cable Crunch gives obliques 0.4.
    Drop the gate (any credited volume = trained), and in `MuscleDetailView` tag each
    contribution **Primary / Secondary** with its share ("Cable Crunch · Secondary · 40%").
@@ -464,6 +465,14 @@ user's whiteboard sketch — body map on top, Current Plan, Goals below. On 2026
 of that doc's success criteria were met, and in the evening the tab was restyled to match
 Nutrition. 2026-09-23 closed the last two P3s and the outstanding re-checks; in the afternoon
 the user logged the first Training suggestions and the layout ones were built.
+
+### What changed on 2026-09-27
+
+| Commit | What |
+|---|---|
+| `e0ed1ca` | `MuscleLevelEngine.trainedInvolvement` (0.5) removed: any set that credits a muscle (involvement > 0, reps > 0) now counts as training it, so assists like obliques on Cable Crunch (0.4) or abs on squats (0.3) reach Beginner and color the body map. Volume math unchanged. `MuscleContribution` gained `isPrimary` (from `ExerciseProfile.primaryMuscles`, same as the Overview) and `involvement`; `MuscleDetailView` rows read "Primary", or "Secondary · 40% of each set". Two new tests |
+
+Checked in the simulator: Obliques → Beginner, 768 lb from Cable Crunch · Secondary · 40%; Abs lists Cable Crunch · Primary and Back Squat · Secondary · 30%. **Side effect to watch:** more muscles are now colored after a single session, since every assist counts.
 
 ### What changed on 2026-09-26
 
