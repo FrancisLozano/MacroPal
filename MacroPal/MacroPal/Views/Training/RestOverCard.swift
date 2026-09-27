@@ -36,7 +36,7 @@ struct RestOverCard: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Rest over")
                     .font(.headline)
-                Text("Time for your next set.")
+                Text(RestNotifications.body(nextUp: restTimer.nextUp))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }

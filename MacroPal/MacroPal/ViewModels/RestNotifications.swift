@@ -10,8 +10,9 @@ import UserNotifications
 /// without touching the real notification center.
 @MainActor
 protocol RestNotificationScheduling {
-    /// Replaces any pending rest notification with one at `date`.
-    func schedule(at date: Date)
+    /// Replaces any pending rest notification with one at `date`, naming the next exercise
+    /// when there is one.
+    func schedule(at date: Date, nextUp: String?)
     func cancel()
 }
 
@@ -26,7 +27,7 @@ final class RestNotifications: RestNotificationScheduling {
     /// quick −15s / +15s taps could otherwise land out of order.
     private var latestDate: Date?
 
-    func schedule(at date: Date) {
+    func schedule(at date: Date, nextUp: String?) {
         latestDate = date
         Task {
             guard (try? await center.requestAuthorization(options: [.alert, .sound])) == true,
@@ -36,12 +37,18 @@ final class RestNotifications: RestNotificationScheduling {
 
             let content = UNMutableNotificationContent()
             content.title = "Rest over"
-            content.body = "Time for your next set."
+            content.body = RestNotifications.body(nextUp: nextUp)
             content.sound = .default
             let trigger = UNTimeIntervalNotificationTrigger(timeInterval: interval, repeats: false)
             // The same identifier replaces the earlier request instead of adding a second one.
             try? await center.add(UNNotificationRequest(identifier: Self.identifier, content: content, trigger: trigger))
         }
+    }
+
+    /// "Time for your next set.", or "Next up: Bench Press." between exercises. Shared with the
+    /// in-app card.
+    static func body(nextUp: String?) -> String {
+        nextUp.map { "Next up: \($0)." } ?? "Time for your next set."
     }
 
     func cancel() {

@@ -50,6 +50,25 @@ struct PlanDayTests {
         #expect(names(day) == ["Bench", "Press", "Dips"])
     }
 
+    @Test func exercisesLeftStartAfterTheCurrentOneAndWrap() {
+        let day = pushDay()
+        let (bench, press, dips) = (day.sortedExercises[0], day.sortedExercises[1], day.sortedExercises[2])
+        let noneLogged = day.exercisesLeft(after: press) { _ in 0 }
+        #expect(noneLogged.map { $0.exercise?.name } == ["Dips", "Bench"])
+
+        // Dips already done (3 of 3): Bench is next.
+        let dipsDone = day.exercisesLeft(after: press) { $0 === dips ? 3 : 0 }
+        #expect(dipsDone.first === bench)
+    }
+
+    @Test func noExercisesLeftAfterTheLastUnfinishedOne() {
+        let day = pushDay()
+        let dips = day.sortedExercises[2]
+        // Bench and Press have their 3 sets; finishing Dips ends the workout.
+        let left = day.exercisesLeft(after: dips) { $0 === dips ? 0 : 3 }
+        #expect(left.isEmpty)
+    }
+
     @Test func repsLabelShowsARangeOnlyWhenItIsOne() {
         let exercise = PlanExercise(order: 0, exercise: Exercise(name: "Bench", muscleGroup: .chest, equipment: ""), targetReps: 8)
         #expect(exercise.repsLabel == "8")

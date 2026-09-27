@@ -14,7 +14,10 @@ import SwiftData
 /// after a moment. Complete Exercise logs the untouched rows at their suggested values and
 /// goes back. Clearing both boxes unlogs a set. Used from a plan day (with
 /// its sets × reps target) and from an unplanned workout (Profile → Workout's default sets).
-/// Column order, units and the rest timer follow Profile → Workout.
+/// Column order, units and the rest timer follow Profile → Workout. Start Rest sits at the
+/// bottom, where the running rest card replaces it. Finishing an exercise from a plan day rests
+/// toward the day's next unfinished exercise ("Next up"), or after the last one, doesn't —
+/// the day's list shows Workout Complete instead.
 struct ExerciseTrackView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -28,6 +31,8 @@ struct ExerciseTrackView: View {
     @Query(sort: \WorkoutSession.date, order: .reverse) private var sessions: [WorkoutSession]
 
     let exercise: Exercise?
+    /// The plan day's slot this was opened from; nil for an unplanned workout.
+    let planExercise: PlanExercise?
     /// The plan's sets × reps (`reps` is the suggestion with no history — the bottom of a
     /// range; `repsLabel` is "10" or "8–10"), or nil for an unplanned workout.
     let target: (sets: Int, reps: Int, repsLabel: String)?
@@ -37,6 +42,7 @@ struct ExerciseTrackView: View {
 
     init(planExercise: PlanExercise) {
         exercise = planExercise.exercise
+        self.planExercise = planExercise
         target = (planExercise.targetSets, planExercise.targetReps, planExercise.repsLabel)
         date = .now
         planDayName = planExercise.day?.name
@@ -44,6 +50,7 @@ struct ExerciseTrackView: View {
 
     init(exercise: Exercise, date: Date) {
         self.exercise = exercise
+        planExercise = nil
         target = nil
         self.date = date
         planDayName = nil
@@ -147,21 +154,17 @@ struct ExerciseTrackView: View {
         }
         .scrollDismissesKeyboard(.interactively)
         .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    restTimer.start(seconds: restSeconds)
-                } label: {
-                    Label("Start Rest", systemImage: "timer")
-                }
-                .disabled(restTimer.timer != nil)
-            }
             ToolbarItemGroup(placement: .keyboard) {
                 Spacer()
                 Button("Done") { focus = nil }
             }
         }
         .safeAreaInset(edge: .bottom) {
-            RestTimerBar()
+            if restTimer.timer != nil {
+                RestTimerBar(compact: focus != nil)
+            } else if focus == nil {
+                startRestButton
+            }
         }
         .onAppear(perform: buildRows)
         // Logs a filled-in set without leaving its row or pressing Done. Further typing updates
@@ -182,7 +185,6 @@ struct ExerciseTrackView: View {
         .task(id: isFinishing) {
             guard isFinishing, (try? await Task.sleep(for: Self.autoFinishDelay)) != nil,
                   isFinishing else { return }
-            // The last set's own log already started the rest timer.
             dismiss()
         }
         // Backing out with a box still focused: save what's there.
@@ -224,6 +226,20 @@ struct ExerciseTrackView: View {
             }
         }
         .padding(.horizontal, 4)
+    }
+
+    /// Starts a rest by hand, within thumb reach; hidden while typing.
+    private var startRestButton: some View {
+        Button {
+            restTimer.start(seconds: restSeconds)
+        } label: {
+            Label("Start Rest · \(WorkoutPreferences.restLabel(seconds: restSeconds))", systemImage: "timer")
+                .font(.headline)
+                .frame(maxWidth: .infinity, minHeight: 44)
+        }
+        .buttonStyle(.glass)
+        .padding(.horizontal)
+        .padding(.bottom, 8)
     }
 
     private var setsInfo: String {
@@ -370,6 +386,7 @@ struct ExerciseTrackView: View {
         if !wasAllLogged && allLogged {
             focus = nil
             isFinishing = true
+            restAfterExercise()
         }
     }
 
@@ -381,10 +398,29 @@ struct ExerciseTrackView: View {
             rows[index].fillEmptyFromPlaceholders()
             commit(rows[index].id, startsRest: false)
         }
-        if autoRestTimer {
-            restTimer.start(seconds: restSeconds)
-        }
+        restAfterExercise()
         dismiss()
+    }
+
+    /// The rest once this exercise is done: toward the day's next unfinished exercise, none after
+    /// the day's last (any running rest stops), and a plain one on an unplanned workout. Replaces
+    /// the rest the last set's log may have just started.
+    private func restAfterExercise() {
+        var nextUp: String?
+        if let planExercise, let day = planExercise.day {
+            let todaysSets = sessions.first { Calendar.current.isDate($0.date, inSameDayAs: date) }?.setEntries ?? []
+            let left = day.exercisesLeft(after: planExercise) { other in
+                todaysSets.filter { $0.exercise == other.exercise }.count
+            }
+            guard let next = left.first else {
+                restTimer.stop()
+                return
+            }
+            nextUp = next.exercise?.name
+        }
+        if autoRestTimer {
+            restTimer.start(seconds: restSeconds, nextUp: nextUp)
+        }
     }
 
     /// The day's logged sets first, then empty rows up to the plan's (or the default) number of

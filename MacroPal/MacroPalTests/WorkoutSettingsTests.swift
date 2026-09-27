@@ -43,7 +43,11 @@ struct WorkoutSettingsTests {
     @MainActor
     final class FakeNotifications: RestNotificationScheduling {
         var scheduled: Date?
-        func schedule(at date: Date) { scheduled = date }
+        var nextUp: String?
+        func schedule(at date: Date, nextUp: String?) {
+            scheduled = date
+            self.nextUp = nextUp
+        }
         func cancel() { scheduled = nil }
     }
 
@@ -76,6 +80,20 @@ struct WorkoutSettingsTests {
 
         model.dismissFinished()
         #expect(model.finishedAt == nil)
+    }
+
+    @MainActor @Test func restBetweenExercisesNamesTheNextOne() {
+        let notifications = FakeNotifications()
+        let model = RestTimerModel(notifications: notifications)
+        model.start(seconds: 90, nextUp: "Incline Press")
+        #expect(model.nextUp == "Incline Press")
+        #expect(notifications.nextUp == "Incline Press")
+        #expect(RestNotifications.body(nextUp: "Incline Press") == "Next up: Incline Press.")
+
+        // A plain rest between sets clears it.
+        model.start(seconds: 90)
+        #expect(model.nextUp == nil)
+        #expect(RestNotifications.body(nextUp: nil) == "Time for your next set.")
     }
 
     @MainActor @Test func restMissedInTheBackgroundSkipsTheCard() {

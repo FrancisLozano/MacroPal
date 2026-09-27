@@ -69,6 +69,16 @@ final class PlanDay {
             exercise.order = order
         }
     }
+
+    /// The day's exercises still short of their target sets, not counting `current`, in the
+    /// order they come after it (wrapping round to the top) — so the first is what's next.
+    /// `setsLogged` is how many sets an exercise has today. Empty once `current` is the last.
+    func exercisesLeft(after current: PlanExercise, setsLogged: (PlanExercise) -> Int) -> [PlanExercise] {
+        let ordered = sortedExercises
+        let rotated = ordered.firstIndex { $0 === current }
+            .map { Array(ordered[($0 + 1)...] + ordered[..<$0]) } ?? ordered
+        return rotated.filter { $0 !== current && $0.exercise != nil && setsLogged($0) < $0.targetSets }
+    }
 }
 
 /// An exercise slotted into a plan day, with its target sets × reps.
