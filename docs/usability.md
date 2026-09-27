@@ -109,7 +109,7 @@ movement family; the user does the one in front of the body, not overhead.
   expand the week in place; ⋯ → drag to reorder or Edit Routine — weekdays, a split menu
   (Recommended / Upper/Lower / PPL / PPL + U/L / Full Body) and, with Apple Intelligence, a "Describe it"
   field that fills both in), Goals card (weight + steps,
-  each with a + to log; tap the value for its history and chart), Log an Unplanned Workout.
+  each with a + to log; tap the value for its history — steps swipe by day / week / month), Log an Unplanned Workout.
   No all-workouts history (removed on request); past sets live in each exercise's Progress.
 - **Exercise screen** — *Workout*: a start → end drawing of the exercise (42 starters), a row per set (reps and lb boxes, "Last:" from the
   previous session), boxes start empty with the suggestion in gray, sets save when you leave
@@ -169,8 +169,8 @@ movement family; the user does the one in front of the body, not overhead.
 3. **Keep logging** Likes / Dislikes / Suggestions during the week of use below, then triage
    them at the end of the week — including how Edit Routine by message does with your own
    wording (note the exact message and what it filled in).
-4. **Remaining P2s**, when wanted: reminder notifications (steps / food / weight) and a
-   Health-style swipeable steps history (both from 09-27); a starting point from months trained
+4. **Remaining P2s**, when wanted: reminder notifications (steps / food / weight)
+   (from 09-27); a starting point from months trained
    (needs a stored start credit — an optional field, no versioned schema — and a place to
    enter it; the tenure cap still applies, so decide whether the months also count as time
    trained). "Same as last time" on a meal was built 2026-09-27.
@@ -468,6 +468,16 @@ Nutrition. 2026-09-23 closed the last two P3s and the outstanding re-checks; in 
 the user logged the first Training suggestions and the layout ones were built.
 
 ### What changed on 2026-09-27
+
+**Steps by day / week / month.** The Steps screen (tap the steps value on the Goals card) has
+**D / W / M** in place of 7 Days / 30 Days. Below it, a strip of calendar periods you swipe
+through like Health — back to the one holding your first entry, opening on the current one.
+Each page: **Total** steps, the dates ("Sep 20 – 26, 2026", "September 2026", "Sat, Sep 26,
+2026"), then for W / M a bar per day against the goal line with average per logged day and
+goal met (or "Nothing logged this week."), and for D a goal bar ("78% of your 10,000 goal").
+Weeks start on Sunday (the phone's first weekday), like the Nutrition week strip.
+`StepsViewModel.periods(_:from:through:calendar:)` and `summary(of:_:goal:calendar:)`, five
+new tests. Checked in the simulator (last week: 19,500, 9,750 average, goal met 1 of 2 days).
 
 **Same as last time on a meal.** Choose Food (the + on Nutrition or a meal's ⊕ in the Daily
 Log) opens with a **Same as Last Time** section at the top of History when that meal was
@@ -836,7 +846,7 @@ actually improving or just accumulating complaints.
 | Dislikes | 18 |
 | Suggestions | 34 |
 | Triaged (in Backlog) | 69 |
-| Done | 62 |
+| Done | 63 |
 | No change needed | 2 |
 | Won't Fix | 1 |
 
@@ -914,7 +924,7 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P2 | "Same as last time" on a meal: re-log the foods from the last day that meal (Breakfast / Lunch / Dinner) was logged | Suggestions → Training, Nutrition (2026-09-25, "Same as last time", meal half) | Done 2026-09-27 — a **Same as Last Time** row at the top of Choose Food → History (see What changed on 2026-09-27) |
 | P2 | Reminder notifications for steps, food and weight (a daily nudge at a time you pick, skipped if you already logged) | Suggestions → General UI (2026-09-27) | Triaged |
 | P3 | Water tracking, then a water reminder — the app has no water logging yet, so the reminder waits on it | Suggestions → General UI (2026-09-27, water half) | Triaged |
-| P2 | Swipeable steps history like Health's: Day / Week / Month, swipe between periods, bar chart and the period's total. Today tapping the steps value opens a history + chart, so this reworks that screen | Suggestions → Goals (2026-09-27) | Triaged |
+| P2 | Swipeable steps history like Health's: Day / Week / Month, swipe between periods, bar chart and the period's total. Today tapping the steps value opens a history + chart, so this reworks that screen | Suggestions → Goals (2026-09-27) | Done 2026-09-27 — D / W / M on the Steps screen (see What changed on 2026-09-27) |
 | P3 | "Same as last time" on a workout | Suggestions → Training, Nutrition (2026-09-25, "Same as last time", workout half) | No change needed — the gray suggestions in each row are last session's numbers, and Complete Exercise logs any untouched rows at them (`ExerciseTrackView.complete()`), so one tap already does it |
 | P3 | Complete Exercise not tappable until every set is logged | Suggestions → Training (2026-09-25) | Won't Fix — decided 2026-09-25: Complete logging untouched rows at last session's numbers is the workout "Same as last time" above; disabling it would take that away. With sets logging themselves (P1 above) and the exercise completing on its last set, the button matters less anyway |
 
