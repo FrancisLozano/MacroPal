@@ -30,7 +30,7 @@ Proposed, in this order, waiting on the user's go-ahead:
    Drop the gate (any credited volume = trained), and in `MuscleDetailView` tag each
    contribution **Primary / Secondary** with its share ("Cable Crunch · Secondary · 40%").
    Secondary muscles already get only their share of volume (set volume × involvement).
-2. **Rest timer** — move Start Rest from the top-right toolbar into the bottom bar (one
+2. ~~**Rest timer**~~ — **done 2026-09-27 (`3a7552e`)**, see **What changed on 2026-09-27**. Was: move Start Rest from the top-right toolbar into the bottom bar (one
    hand); make the running bar a bigger card; after Complete Exercise with exercises left,
    show "Rest — next up: <exercise>"; after the day's last exercise, no rest timer but a
    "Workout complete" card (exercises, sets, volume).
@@ -473,6 +473,12 @@ the user logged the first Training suggestions and the layout ones were built.
 | `e0ed1ca` | `MuscleLevelEngine.trainedInvolvement` (0.5) removed: any set that credits a muscle (involvement > 0, reps > 0) now counts as training it, so assists like obliques on Cable Crunch (0.4) or abs on squats (0.3) reach Beginner and color the body map. Volume math unchanged. `MuscleContribution` gained `isPrimary` (from `ExerciseProfile.primaryMuscles`, same as the Overview) and `involvement`; `MuscleDetailView` rows read "Primary", or "Secondary · 40% of each set". Two new tests |
 
 Checked in the simulator: Obliques → Beginner, 768 lb from Cable Crunch · Secondary · 40%; Abs lists Cable Crunch · Primary and Back Squat · Secondary · 30%. **Side effect to watch:** more muscles are now colored after a single session, since every assist counts.
+
+| Commit | What |
+|---|---|
+| `3a7552e` | Rest timer. **Start Rest** left the top-right toolbar for a full-width button at the bottom of the exercise screen ("Start Rest · 2 min"), hidden while typing. The running rest is a bigger card (`RestTimerBar`): 52 pt countdown, bar, full-width −15s / +15s / Skip; with the keyboard up it shrinks to the old one-line bar. **Between exercises:** finishing an exercise from a plan day (Complete Exercise or the last set logging) starts the rest with **"Next up: <exercise>"** — on the card, the Rest over card and the notification. Next = the day's first exercise after this one (wrapping) still short of its target sets: `PlanDay.exercisesLeft(after:setsLogged:)`. **After the day's last exercise:** no rest (a running one stops); the day's list shows **Workout Complete** (`WorkoutCompleteCard`) with exercises, sets and volume, counted as the Progress tab counts it (both dumbbells etc.), until Done. It shows only on the change to complete, not when reopening a finished day. Unplanned workouts keep a plain rest. Four new tests |
+
+Checked in the simulator on a temporary Pull day (Barbell Curl + Hammer Curl, removed after, sets deleted): bottom Start Rest, the big card, "Next up: Hammer Curl" after Complete Exercise, and Workout Complete (2 exercises, 4 sets) with no rest after the last one. **Rests between exercises follow Automatic Rest Timer** — with it off (the simulator stores off; so may the iPhone) no rest starts, so no "Next up"; Workout Complete shows either way. **Watch on the phone:** the big card covers Complete Exercise until you scroll a little.
 
 ### What changed on 2026-09-26
 
