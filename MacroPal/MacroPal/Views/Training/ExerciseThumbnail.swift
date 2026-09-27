@@ -10,7 +10,9 @@ import SwiftUI
 struct ExerciseThumbnail: View {
     let exercise: Exercise?
 
-    private static let highlight = LevelPalette.color(forLevel: 1)
+    /// Its own red, not a level color: the levels are shades of blue, the palest too faint
+    /// for a 64-point figure.
+    private static let highlight = Color(red: 0.90, green: 0.32, blue: 0.27)
 
     private var colors: [Muscle: Color] {
         guard let exercise else { return [:] }

@@ -9,16 +9,27 @@ enum BodySide {
     case front, back
 }
 
-/// Colors for the six levels, Beginner → World Class, matching the legend.
+/// Colors for the six levels, Beginner → World Class, matching the legend: one hue (the
+/// accent blue) in six well-spaced steps, so progress reads as "more" rather than as a new
+/// color to learn. Light → dark in light mode; dim → bright in dark mode, where the brightest
+/// stands out most — even the dimmest is brighter than the gray of untrained muscles
+/// (`BodyFigure`), so training never looks like less than none.
 enum LevelPalette {
-    static let colors: [Color] = [
-        Color(red: 0.90, green: 0.32, blue: 0.27), // Beginner
-        Color(red: 0.96, green: 0.60, blue: 0.20), // Novice
-        Color(red: 0.36, green: 0.73, blue: 0.36), // Intermediate
-        Color(red: 0.25, green: 0.52, blue: 0.93), // Advanced
-        Color(red: 0.60, green: 0.36, blue: 0.85), // Elite
-        Color(red: 0.93, green: 0.36, blue: 0.68), // World Class
+    /// Hue, saturation, brightness per level, for each appearance.
+    private static let hue = 0.595
+    private static let lightSteps: [(saturation: Double, brightness: Double)] = [
+        (0.28, 1.00), (0.46, 0.98), (0.66, 0.95), (0.86, 0.90), (0.92, 0.70), (0.95, 0.48),
     ]
+    private static let darkSteps: [(saturation: Double, brightness: Double)] = [
+        (0.70, 0.56), (0.72, 0.67), (0.72, 0.78), (0.64, 0.89), (0.46, 0.97), (0.24, 1.00),
+    ]
+
+    static let colors: [Color] = zip(lightSteps, darkSteps).map { light, dark in
+        Color(UIColor { traits in
+            let step = traits.userInterfaceStyle == .dark ? dark : light
+            return UIColor(hue: hue, saturation: step.saturation, brightness: step.brightness, alpha: 1)
+        })
+    }
 
     /// `level` is 1…6 (0 = untrained, which isn't a palette color).
     static func color(forLevel level: Int) -> Color {
