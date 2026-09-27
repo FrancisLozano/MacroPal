@@ -34,7 +34,7 @@ Proposed, in this order, waiting on the user's go-ahead:
    hand); make the running bar a bigger card; after Complete Exercise with exercises left,
    show "Rest — next up: <exercise>"; after the day's last exercise, no rest timer but a
    "Workout complete" card (exercises, sets, volume).
-3. **Body-map colors light → dark** — recommended: one hue (accent) in 6 well-spaced steps
+3. ~~**Body-map colors light → dark**~~ — **done 2026-09-27 (`99aea1e`)**, see **What changed on 2026-09-27**. Was: recommended: one hue (accent) in 6 well-spaced steps
    per level, gray untrained, dim → bright in dark mode; replaces the red→pink rainbow in
    `LevelPalette`.
 
@@ -479,6 +479,12 @@ Checked in the simulator: Obliques → Beginner, 768 lb from Cable Crunch · Sec
 | `3a7552e` | Rest timer. **Start Rest** left the top-right toolbar for a full-width button at the bottom of the exercise screen ("Start Rest · 2 min"), hidden while typing. The running rest is a bigger card (`RestTimerBar`): 52 pt countdown, bar, full-width −15s / +15s / Skip; with the keyboard up it shrinks to the old one-line bar. **Between exercises:** finishing an exercise from a plan day (Complete Exercise or the last set logging) starts the rest with **"Next up: <exercise>"** — on the card, the Rest over card and the notification. Next = the day's first exercise after this one (wrapping) still short of its target sets: `PlanDay.exercisesLeft(after:setsLogged:)`. **After the day's last exercise:** no rest (a running one stops); the day's list shows **Workout Complete** (`WorkoutCompleteCard`) with exercises, sets and volume, counted as the Progress tab counts it (both dumbbells etc.), until Done. It shows only on the change to complete, not when reopening a finished day. Unplanned workouts keep a plain rest. Four new tests |
 
 Checked in the simulator on a temporary Pull day (Barbell Curl + Hammer Curl, removed after, sets deleted): bottom Start Rest, the big card, "Next up: Hammer Curl" after Complete Exercise, and Workout Complete (2 exercises, 4 sets) with no rest after the last one. **Rests between exercises follow Automatic Rest Timer** — with it off (the simulator stores off; so may the iPhone) no rest starts, so no "Next up"; Workout Complete shows either way. **Watch on the phone:** the big card covers Complete Exercise until you scroll a little.
+
+| Commit | What |
+|---|---|
+| `99aea1e` | Level colors: `LevelPalette` is now one hue (0.595, the accent blue) in six steps instead of red / orange / green / blue / purple / pink. Light mode goes pale → deep navy; dark mode goes dim → bright, with Beginner kept brighter than the untrained gray (`systemGray2`) so a trained muscle never looks like less than an untrained one. The steps are HSB pairs in `lightSteps` / `darkSteps` in `BodyFigure.swift`. Legend, muscle detail dot and bar follow automatically. `ExerciseThumbnail` keeps its red, now as its own constant (it used to borrow Beginner's color) |
+
+Checked in the simulator in both appearances: the map (all Beginner there) and the ⓘ legend with all six steps.
 
 ### What changed on 2026-09-26
 
