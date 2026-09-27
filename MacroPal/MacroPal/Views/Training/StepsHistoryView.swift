@@ -7,31 +7,33 @@ import SwiftUI
 import SwiftData
 import Charts
 
-/// Daily step bars against the goal, over the last week or month, plus the logged days.
+/// Steps a day, week or month at a time, like the Health app: swipe back through past
+/// periods, each with its total and (for weeks and months) a bar per day against the goal.
+/// The logged days are listed below.
 struct StepsHistoryView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \StepEntry.day, order: .reverse) private var entries: [StepEntry]
     @Query private var profiles: [UserProfile]
 
-    @State private var range: Range = .week
+    @State private var kind: StepsPeriod = .week
+    /// The start of the period on screen; `nil` until the pager settles, which shows the
+    /// latest one.
+    @State private var visiblePeriodStart: Date?
     @State private var isPresentingLogSheet = false
     @State private var isPresentingGoalSheet = false
 
-    private let viewModel = StepsViewModel()
-
-    enum Range: Int, CaseIterable, Identifiable {
-        case week = 7
-        case month = 30
-
-        var id: Int { rawValue }
-        var label: String { self == .week ? "7 Days" : "30 Days" }
-    }
+    /// A day has no chart, just its total and a goal bar, so its pages are shorter.
+    private var pageHeight: CGFloat { kind == .day ? 150 : 340 }
+    /// Same as the List's own row margin, restored by hand since the pager's row insets are
+    /// zeroed (see `pager`).
+    private static let rowInset: CGFloat = 16
 
     private var profile: UserProfile? { profiles.first }
     private var goal: Int { profile?.stepGoal ?? 10_000 }
 
-    private var days: [DailySteps] {
-        viewModel.dailyTotals(entries, days: range.rawValue)
+    private var periods: [DateInterval] {
+        guard let earliest = entries.last?.day else { return [] }
+        return StepsViewModel.periods(kind, from: earliest, through: .now, calendar: .current)
     }
 
     var body: some View {
@@ -45,14 +47,14 @@ struct StepsHistoryView: View {
             } else {
                 List {
                     Section {
-                        Picker("Range", selection: $range) {
-                            ForEach(Range.allCases) { range in
-                                Text(range.label).tag(range)
+                        Picker("Period", selection: $kind) {
+                            ForEach(StepsPeriod.allCases) { kind in
+                                Text(kind.shortLabel).tag(kind)
                             }
                         }
                         .pickerStyle(.segmented)
-                        chart
-                        summary
+                        pager
+                            .listRowInsets(EdgeInsets())
                     }
                     Section {
                         Button {
@@ -115,9 +117,83 @@ struct StepsHistoryView: View {
         }
     }
 
-    private var chart: some View {
+    /// One page per period, oldest on the left, opening on the current one. A paged
+    /// horizontal `ScrollView` like the Nutrition meal carousel, with its row insets zeroed so
+    /// the List's row gestures don't swallow the swipe. Re-created per `kind` so switching
+    /// D / W / M lands on the latest period again.
+    private var pager: some View {
+        ScrollView(.horizontal) {
+            LazyHStack(spacing: 0) {
+                ForEach(periods, id: \.start) { period in
+                    page(StepsViewModel.summary(of: period, entries.map { (day: $0.day, steps: $0.steps) }, goal: goal, calendar: .current))
+                        .padding(.horizontal, Self.rowInset)
+                        .containerRelativeFrame(.horizontal)
+                }
+            }
+            .scrollTargetLayout()
+        }
+        .scrollTargetBehavior(.paging)
+        .scrollPosition(id: $visiblePeriodStart)
+        .defaultScrollAnchor(.trailing)
+        .scrollIndicators(.hidden)
+        .frame(height: pageHeight)
+        .id(kind)
+    }
+
+    private func page(_ summary: StepsPeriodSummary) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Total")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .textCase(.uppercase)
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    Text(summary.total, format: .number)
+                        .font(.title.bold())
+                    Text("steps")
+                        .foregroundStyle(.secondary)
+                }
+                Text(rangeText(summary.period))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            if kind == .day {
+                dayProgress(steps: summary.total)
+            } else {
+                chart(summary)
+                stats(summary)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.vertical, 12)
+    }
+
+    /// "Sun, Sep 27, 2026" / "Sep 21 – 27, 2026" / "September 2026".
+    private func rangeText(_ period: DateInterval) -> String {
+        switch kind {
+        case .day:
+            period.start.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day().year())
+        case .week:
+            (period.start..<period.end.addingTimeInterval(-1)).formatted(.interval.month(.abbreviated).day().year())
+        case .month:
+            period.start.formatted(.dateTime.month(.wide).year())
+        }
+    }
+
+    private func dayProgress(steps: Int) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            ProgressView(value: Double(min(steps, goal)), total: Double(max(goal, 1)))
+                .tint(steps >= goal ? .green : .blue)
+            Text(steps >= goal ? "Goal met" : "\(Int((Double(steps) / Double(max(goal, 1)) * 100).rounded()))% of your \(goal.formatted()) goal")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.top, 8)
+    }
+
+    private func chart(_ summary: StepsPeriodSummary) -> some View {
         Chart {
-            ForEach(days) { day in
+            ForEach(summary.days) { day in
                 BarMark(x: .value("Day", day.day, unit: .day), y: .value("Steps", day.steps))
                     .foregroundStyle(day.steps >= goal ? Color.green : Color.blue)
                     .cornerRadius(3)
@@ -131,45 +207,51 @@ struct StepsHistoryView: View {
                         .foregroundStyle(Color.gray)
                 }
         }
+        .chartXScale(domain: summary.period.start...summary.period.end)
         .chartXAxis {
-            if range == .week {
+            if kind == .week {
                 AxisMarks(values: .stride(by: .day)) { _ in
                     AxisValueLabel(format: .dateTime.weekday(.narrow), centered: true)
                 }
             } else {
-                // Weekly marks from the first day, stopping short of the trailing edge so the
-                // last label isn't clipped against the y-axis.
-                AxisMarks(values: stride(from: 0, to: days.count - 3, by: 7).map { days[$0].day }) { _ in
+                AxisMarks(values: .stride(by: .day, count: 7)) { _ in
                     AxisGridLine()
-                    AxisValueLabel(format: .dateTime.month(.abbreviated).day())
+                    AxisValueLabel(format: .dateTime.day())
                 }
             }
         }
-        .frame(height: 200)
-        .padding(.vertical, 4)
+        .frame(height: 180)
     }
 
     /// Both numbers count only the days something was logged — with manual entry, a blank
     /// day usually means "didn't log", not "didn't walk".
-    private var summary: some View {
-        let logged = days.filter { $0.steps > 0 }
-        let average = logged.isEmpty ? 0 : logged.map(\.steps).reduce(0, +) / logged.count
-        let hit = logged.filter { $0.steps >= goal }.count
-        return HStack {
+    @ViewBuilder
+    private func stats(_ summary: StepsPeriodSummary) -> some View {
+        if summary.loggedDays == 0 {
+            Text("Nothing logged this \(kind == .week ? "week" : "month").")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        } else {
+            loggedStats(summary)
+        }
+    }
+
+    private func loggedStats(_ summary: StepsPeriodSummary) -> some View {
+        HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Average per logged day")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Text(average, format: .number)
-                    .font(.title3.bold())
+                Text(summary.averagePerLoggedDay, format: .number)
+                    .font(.headline)
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
                 Text("Goal met")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Text("\(hit) of \(logged.count) \(logged.count == 1 ? "day" : "days")")
-                    .font(.title3.bold())
+                Text("\(summary.daysGoalMet) of \(summary.loggedDays) \(summary.loggedDays == 1 ? "day" : "days")")
+                    .font(.headline)
             }
         }
     }
