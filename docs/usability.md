@@ -169,11 +169,11 @@ movement family; the user does the one in front of the body, not overhead.
 3. **Keep logging** Likes / Dislikes / Suggestions during the week of use below, then triage
    them at the end of the week — including how Edit Routine by message does with your own
    wording (note the exact message and what it filled in).
-4. **Remaining P2s from the 09-25 triage**, when wanted: a starting point from months trained
+4. **Remaining P2s**, when wanted: reminder notifications (steps / food / weight) and a
+   Health-style swipeable steps history (both from 09-27); a starting point from months trained
    (needs a stored start credit — an optional field, no versioned schema — and a place to
    enter it; the tenure cap still applies, so decide whether the months also count as time
-   trained), and "Same as last time" on a meal (re-log the foods from the last day that meal
-   was logged).
+   trained). "Same as last time" on a meal was built 2026-09-27.
 
 **Small leftovers:**
 - Food logged as **Snack** before 2026-09-25 still exists (the case stays in `MealType` so it
@@ -468,6 +468,17 @@ Nutrition. 2026-09-23 closed the last two P3s and the outstanding re-checks; in 
 the user logged the first Training suggestions and the layout ones were built.
 
 ### What changed on 2026-09-27
+
+**Same as last time on a meal.** Choose Food (the + on Nutrition or a meal's ⊕ in the Daily
+Log) opens with a **Same as Last Time** section at the top of History when that meal was
+logged on an earlier day: "Lunch · Fri, Sep 25", the foods, their total kcal. One tap logs
+all of them for the meal and day being logged and closes the sheet (swipe any away in the
+Daily Log). Copies are made from the logged entries' snapshots — serving, macros, brand,
+meal ingredients — not from the foods, so the meal repeats exactly even if a food was edited
+or deleted since; each keeps its time of day so the order holds.
+`NutritionViewModel.lastTimeEntries(for:before:in:)` and `logAgain(_:as:on:context:)`,
+three new tests (`SameAsLastTimeTests`). Checked in the simulator (Lunch → Pineapple Cake,
+457 kcal, then deleted).
 
 | Commit | What |
 |---|---|
@@ -824,8 +835,8 @@ actually improving or just accumulating complaints.
 | Likes | 1 |
 | Dislikes | 18 |
 | Suggestions | 34 |
-| Triaged (in Backlog) | 66 |
-| Done | 61 |
+| Triaged (in Backlog) | 69 |
+| Done | 62 |
 | No change needed | 2 |
 | Won't Fix | 1 |
 
@@ -900,7 +911,10 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P2 | Tap a body part on the body map for its volume and the exercises it came from, like tapping a macro on Nutrition — `MuscleDetailView` (sheet, half height): level, lifetime volume, the exercises it came from with lb and %. Small muscles are a few points wide, so a tap within 5 figure units of one picks it (`BodyFigure.muscle(at:in:side:)`), and the title menu switches to any muscle. VoiceOver: the map is one button opening the detail. **Zoom not done** — the title menu covers the missed-tap case; revisit if tapping still feels fiddly on the phone | Suggestions → Training (2026-09-25, body-part tap) | Done (3059d43) — checked in the simulator 2026-09-25 (Abs: Cable Crunch 61%, Back Squat 39%; Traps from the back figure; Chest via the menu: "Not trained yet") |
 | P2 | Progress bar toward each muscle's next level, in volume — in the muscle detail above: "Beginner → Novice", "3,135 of 20,430 lb", "17,295 lb to go", a bar in the next level's color measured from the current level's start, and a line when time also holds it back ("Novice also needs training until Oct 8", or "Volume reached…" once the bar is full). `MuscleLevelEngine.progress(for:…)` / `MuscleProgress`, 5 new `MuscleLevelEngineTests` (incl. tap hit-testing) | Suggestions → Training (2026-09-25, progress bar) | Done (3059d43) — checked in the simulator 2026-09-25 |
 | P2 | Starting point for past training: enter roughly how many months you've trained, and each muscle is credited a starting volume from the current plan and bodyweight, so levels don't start at zero. Needs a stored start credit (optional field, no versioned schema) and a place to enter it | Suggestions → Training (2026-09-25, starting-point flow) + Dislikes → Training (2026-09-25, 3 weeks of missing lifts) | Triaged |
-| P2 | "Same as last time" on a meal: re-log the foods from the last day that meal (Breakfast / Lunch / Dinner) was logged | Suggestions → Training, Nutrition (2026-09-25, "Same as last time", meal half) | Triaged |
+| P2 | "Same as last time" on a meal: re-log the foods from the last day that meal (Breakfast / Lunch / Dinner) was logged | Suggestions → Training, Nutrition (2026-09-25, "Same as last time", meal half) | Done 2026-09-27 — a **Same as Last Time** row at the top of Choose Food → History (see What changed on 2026-09-27) |
+| P2 | Reminder notifications for steps, food and weight (a daily nudge at a time you pick, skipped if you already logged) | Suggestions → General UI (2026-09-27) | Triaged |
+| P3 | Water tracking, then a water reminder — the app has no water logging yet, so the reminder waits on it | Suggestions → General UI (2026-09-27, water half) | Triaged |
+| P2 | Swipeable steps history like Health's: Day / Week / Month, swipe between periods, bar chart and the period's total. Today tapping the steps value opens a history + chart, so this reworks that screen | Suggestions → Goals (2026-09-27) | Triaged |
 | P3 | "Same as last time" on a workout | Suggestions → Training, Nutrition (2026-09-25, "Same as last time", workout half) | No change needed — the gray suggestions in each row are last session's numbers, and Complete Exercise logs any untouched rows at them (`ExerciseTrackView.complete()`), so one tap already does it |
 | P3 | Complete Exercise not tappable until every set is logged | Suggestions → Training (2026-09-25) | Won't Fix — decided 2026-09-25: Complete logging untouched rows at last session's numbers is the workout "Same as last time" above; disabling it would take that away. With sets logging themselves (P1 above) and the exercise completing on its last set, the button matters less anyway |
 
