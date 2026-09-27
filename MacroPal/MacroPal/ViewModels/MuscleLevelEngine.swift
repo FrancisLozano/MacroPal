@@ -18,6 +18,10 @@ struct LoggedSet {
 struct MuscleContribution: Equatable {
     let exerciseName: String
     let volumeKg: Double
+    /// Whether the muscle is one of the exercise's main movers, as on its Overview.
+    let isPrimary: Bool
+    /// The share of each set's volume the muscle gets, 0…1.
+    let involvement: Double
 }
 
 /// Where one muscle stands: its level, what it has moved, and what the next level asks for.
@@ -64,8 +68,6 @@ enum MuscleLevelEngine {
 
     /// Women move less relative to bodyweight; their volume is divided by this.
     static let femaleFactor = 0.65
-    /// Minimum involvement for a set to count as training a muscle at all.
-    private static let trainedInvolvement = 0.5
 
     /// Each muscle's volume in kg, credited by involvement. Bodyweight movements need
     /// `bodyweightKg` for their load; without it only their added weight counts.
@@ -89,13 +91,13 @@ enum MuscleLevelEngine {
         return max(0, set.weightKg) * profile.loadScale + bodyweightPart
     }
 
-    /// When each muscle was first worked hard enough to count as trained — where its time
-    /// on the tenure cap starts.
+    /// When each muscle was first worked, as a main mover or an assist — where its time on
+    /// the tenure cap starts. Any set that credits a muscle counts as training it.
     private static func firstTrained(sets: [LoggedSet]) -> [Muscle: Date] {
         var firstTrained: [Muscle: Date] = [:]
-        for set in sets {
+        for set in sets where set.reps > 0 {
             let profile = ExerciseMuscleData.profile(forName: set.exerciseName, group: set.muscleGroup)
-            for (muscle, involvement) in profile.muscles where involvement >= trainedInvolvement {
+            for (muscle, involvement) in profile.muscles where involvement > 0 {
                 firstTrained[muscle] = min(firstTrained[muscle] ?? set.date, set.date)
             }
         }
@@ -121,15 +123,19 @@ enum MuscleLevelEngine {
     /// `muscle`'s level, volume and the exercises it came from, and how far it is from the
     /// next level — the same numbers `levels` uses.
     static func progress(for muscle: Muscle, sets: [LoggedSet], bodyweightKg: Double?, sex: Sex, now: Date = .now) -> MuscleProgress {
-        var byExercise: [String: Double] = [:]
+        var byExercise: [String: MuscleContribution] = [:]
         for set in sets where set.reps > 0 {
             let profile = ExerciseMuscleData.profile(forName: set.exerciseName, group: set.muscleGroup)
             guard let involvement = profile.muscles[muscle] else { continue }
             let credited = load(of: set, profile: profile, bodyweightKg: bodyweightKg) * Double(set.reps) * involvement
-            if credited > 0 { byExercise[set.exerciseName, default: 0] += credited }
+            guard credited > 0 else { continue }
+            let soFar = byExercise[set.exerciseName]?.volumeKg ?? 0
+            byExercise[set.exerciseName] = MuscleContribution(
+                exerciseName: set.exerciseName, volumeKg: soFar + credited,
+                isPrimary: profile.primaryMuscles.contains(muscle), involvement: involvement
+            )
         }
-        let contributions = byExercise
-            .map { MuscleContribution(exerciseName: $0.key, volumeKg: $0.value) }
+        let contributions = byExercise.values
             .sorted { $0.volumeKg != $1.volumeKg ? $0.volumeKg > $1.volumeKg : $0.exerciseName < $1.exerciseName }
         let volumeKg = contributions.reduce(0) { $0 + $1.volumeKg }
         let level = levels(sets: sets, bodyweightKg: bodyweightKg, sex: sex, now: now)[muscle] ?? 0

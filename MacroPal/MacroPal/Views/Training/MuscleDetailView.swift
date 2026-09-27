@@ -46,7 +46,7 @@ struct MuscleDetailView: View {
                     } header: {
                         Text("Where it came from")
                     } footer: {
-                        Text("A set counts fully toward the muscle it mainly works and partly toward the ones that help.")
+                        Text("A set counts fully toward the muscle it mainly works and partly toward the ones that help. Any share at all counts as training the muscle.")
                     }
                 }
             }
@@ -153,7 +153,12 @@ struct MuscleDetailView: View {
 
     private func row(_ contribution: MuscleContribution, total: Double) -> some View {
         HStack(alignment: .firstTextBaseline) {
-            Text(contribution.exerciseName)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(contribution.exerciseName)
+                Text(role(contribution))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
                 Text("\(amount(contribution.volumeKg)) \(unit.symbol)")
@@ -165,6 +170,13 @@ struct MuscleDetailView: View {
         }
         .padding(.vertical, 2)
         .accessibilityElement(children: .combine)
+    }
+
+    /// "Primary", or "Secondary · 40% of each set" for an assist.
+    private func role(_ contribution: MuscleContribution) -> String {
+        if contribution.isPrimary && contribution.involvement >= 1 { return "Primary" }
+        let share = "\(Int((contribution.involvement * 100).rounded()))% of each set"
+        return "\(contribution.isPrimary ? "Primary" : "Secondary") · \(share)"
     }
 
     private func levelName(_ level: Int) -> String {

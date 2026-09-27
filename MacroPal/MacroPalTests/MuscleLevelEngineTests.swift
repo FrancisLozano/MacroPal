@@ -60,12 +60,19 @@ struct MuscleLevelEngineTests {
         #expect(MuscleLevelEngine.volumeKg(sets: [pullUps], bodyweightKg: nil)[.lats] == nil)
     }
 
-    @Test func untrainedAndBarelyAssistingMusclesAreAbsent() {
+    @Test func untrainedMusclesAreAbsentButAssistingOnesCount() {
         let levels = MuscleLevelEngine.levels(sets: [squat(daysAgo: 1, weightKg: 100)], bodyweightKg: 80, sex: .male, now: now)
         #expect(levels[.quads] != nil)
         #expect(levels[.biceps] == nil)
-        // Abs assist the squat at 0.3 — credited volume, but not "trained".
-        #expect(levels[.abs] == nil)
+        // Abs assist the squat at 0.3: credited volume, so trained.
+        #expect(levels[.abs] == 1)
+    }
+
+    @Test func aSecondaryOnlyMuscleIsTrained() {
+        // Cable Crunch works the obliques at 0.4 — the only thing that trains them here.
+        let crunch = set("Cable Crunch", .core, daysAgo: 1, weightKg: 30)
+        let levels = MuscleLevelEngine.levels(sets: [crunch], bodyweightKg: 80, sex: .male, now: now)
+        #expect(levels[.obliques] == 1)
     }
 
     @Test func threeWeeksOfSquatsReachNovice() {
@@ -126,11 +133,21 @@ struct MuscleLevelEngineTests {
         let sets = [squat(daysAgo: 1, weightKg: 100), squat(daysAgo: 1, weightKg: 100),
                     set("Dumbbell Curl", .biceps, daysAgo: 1, weightKg: 10)]
         let quads = MuscleLevelEngine.progress(for: .quads, sets: sets, bodyweightKg: 80, sex: .male, now: now)
-        #expect(quads.contributions == [MuscleContribution(exerciseName: "Back Squat", volumeKg: 2_000)])
+        #expect(quads.contributions == [MuscleContribution(exerciseName: "Back Squat", volumeKg: 2_000, isPrimary: true, involvement: 1)])
         #expect(quads.volumeKg == MuscleLevelEngine.volumeKg(sets: sets, bodyweightKg: 80)[.quads])
 
         let glutes = MuscleLevelEngine.progress(for: .glutes, sets: sets, bodyweightKg: 80, sex: .male, now: now)
         #expect(glutes.volumeKg == 1_600)
+    }
+
+    @Test func progressTagsEachContributionPrimaryOrSecondary() {
+        let crunch = set("Cable Crunch", .core, daysAgo: 1, weightKg: 30)
+        let obliques = MuscleLevelEngine.progress(for: .obliques, sets: [crunch], bodyweightKg: 80, sex: .male, now: now)
+        #expect(obliques.level == 1)
+        #expect(obliques.contributions.map(\.isPrimary) == [false])
+        #expect(obliques.contributions.map(\.involvement) == [0.4])
+        let abs = MuscleLevelEngine.progress(for: .abs, sets: [crunch], bodyweightKg: 80, sex: .male, now: now)
+        #expect(abs.contributions.map(\.isPrimary) == [true])
     }
 
     @Test func progressMeasuresTheWayToTheNextLevel() {
