@@ -18,6 +18,7 @@ struct DailySummaryView: View {
     @State private var mealScrollPosition: MealType?
     @State private var isPresentingMealInfo = false
     @State private var selectedDate = Calendar.current.startOfDay(for: .now)
+    @ScaledMetric(relativeTo: .subheadline) private var scaledDayCircleDiameter: CGFloat = 32
     @State private var isPresentingCalendar = false
     @State private var weekSlideForward = true
 
@@ -162,7 +163,7 @@ struct DailySummaryView: View {
     /// circle's own `Button` action fires, while a drag past the minimum distance also fires
     /// this one independently.
     private var weekStrip: some View {
-        HStack {
+        HStack(spacing: 4) {
             ForEach(visibleWeekDays, id: \.self) { day in
                 weekDayCircle(day)
             }
@@ -213,6 +214,13 @@ struct DailySummaryView: View {
         return result
     }
 
+    /// Grows with the text size so the day number fits inside the circle — at a fixed 32
+    /// the larger accessibility sizes turned every date into "…". Capped at 44 so seven
+    /// circles still fit across an iPhone; the number shrinks a little past that instead.
+    private var dayCircleDiameter: CGFloat {
+        min(scaledDayCircleDiameter, 44)
+    }
+
     private func weekDayCircle(_ day: Date) -> some View {
         let calendar = Calendar.current
         let isSelected = calendar.isDate(day, inSameDayAs: selectedDate)
@@ -228,7 +236,9 @@ struct DailySummaryView: View {
                 Text(day.formatted(.dateTime.day()))
                     .font(.subheadline)
                     .fontWeight(isSelected ? .bold : .regular)
-                    .frame(width: 32, height: 32)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .frame(width: dayCircleDiameter, height: dayCircleDiameter)
                     .background(isSelected ? Color.accentColor.opacity(0.15) : .clear, in: Circle())
                 // Sized up from the original 4x4 — big enough on its own to fill the space
                 // below it, rather than needing a second small tick mark underneath that ended

@@ -466,6 +466,14 @@ the user logged the first Training suggestions and the layout ones were built.
 
 ### What changed on 2026-09-27
 
+**Week strip readable at large text sizes.** On the Nutrition screen, the day circles were a
+fixed 32 pt, so at accessibility text sizes every date became "…". The circle now grows with
+the text size (`@ScaledMetric`, `dayCircleDiameter`) up to 44 pt — about as wide as seven
+columns allow — and past that the number shrinks slightly to fit. A 48 pt cap was tried and
+dropped: the dates ran together ("282930"). Checked in the simulator at the default size (no
+change), accessibility large, and the largest size (all dates readable; the selected day is a
+little wider than its highlight).
+
 **Room to scroll the meal card clear of the +.** With all macros on, the Nutrition screen is
 full and the floating + sat on the Dinner card's time and kcal. The list now has empty space
 under its last row the size of the + and its margin (`logButtonClearance`), so a small scroll
