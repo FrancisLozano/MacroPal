@@ -16,25 +16,27 @@ struct TrainingView: View {
 
     var body: some View {
         // Title laid out like Nutrition's (see `DailySummaryView.header`): an empty inline
-        // navigation title and our own large title pinned above the scroll view, so it sits at
-        // the same height on both tabs and no small "Training" appears in the bar on scroll.
-        VStack(alignment: .leading, spacing: 0) {
+        // navigation title and our own large title pinned above the cards, so it sits at the
+        // same height on both tabs and no small "Training" appears in the bar on scroll. It's a
+        // safe-area bar rather than a stack sibling, so cards scroll under it with the system's
+        // soft edge instead of being cut off in a hard line below the title.
+        ScrollView {
+            VStack(spacing: 20) {
+                BodyMapCard()
+                CurrentPlanCard()
+                GoalsCard()
+                unplannedWorkoutCard
+            }
+            .padding(.vertical)
+        }
+        .scrollIndicators(.hidden)
+        .safeAreaBar(edge: .top) {
             Text("Training")
                 .font(.largeTitle)
                 .fontWeight(.bold)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal)
                 .padding(.top, 8)
-
-            ScrollView {
-                VStack(spacing: 20) {
-                    BodyMapCard()
-                    CurrentPlanCard()
-                    GoalsCard()
-                    unplannedWorkoutCard
-                }
-                .padding(.vertical)
-            }
-            .scrollIndicators(.hidden)
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle("")

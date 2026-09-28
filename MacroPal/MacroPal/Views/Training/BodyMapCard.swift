@@ -20,15 +20,10 @@ struct BodyMapCard: View {
     private var sex: Sex { profiles.first?.sex ?? .male }
     private var prior: PriorTraining? { profiles.first?.priorTraining }
 
-    /// Each trained muscle's level color; untrained muscles are absent.
-    private func muscleColors(for sets: [LoggedSet]) -> [Muscle: Color] {
-        MuscleLevelEngine.levels(sets: sets, bodyweightKg: bodyweightKg, sex: sex, prior: prior)
-            .mapValues { LevelPalette.color(forLevel: $0) }
-    }
-
     var body: some View {
         let sets = LoggedSet.all(in: sessions)
-        let colors = muscleColors(for: sets)
+        let levels = MuscleLevelEngine.levels(sets: sets, bodyweightKg: bodyweightKg, sex: sex, prior: prior)
+        let colors = levels.mapValues { LevelPalette.color(forLevel: $0) }
 
         TrainingSection("Progress") {
             Button {
@@ -45,10 +40,11 @@ struct BodyMapCard: View {
                 }
                 .frame(height: 200)
                 .frame(maxWidth: .infinity)
-                // The figures are drawings; VoiceOver gets one element that opens the detail,
-                // whose title menu picks the muscle.
+                // The figures are drawings; VoiceOver gets one element that reads every level
+                // and opens the detail, whose title menu picks the muscle.
                 .accessibilityElement()
                 .accessibilityLabel("Body map")
+                .accessibilityValue(Self.spokenLevels(levels))
                 .accessibilityHint("Shows each muscle's volume and progress to its next level.")
                 .accessibilityAddTraits(.isButton)
                 .accessibilityAction { selectedMuscle = colors.keys.sorted { $0.displayName < $1.displayName }.first ?? .chest }
@@ -57,6 +53,14 @@ struct BodyMapCard: View {
                     Text(prompt)
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                } else if let summary = Self.summary(levels) {
+                    // The colors in words, so the map doesn't depend on the ⓘ legend.
+                    Text(summary)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity)
+                        .multilineTextAlignment(.center)
+                        .accessibilityHidden(true)
                 }
             }
             .padding()
@@ -67,6 +71,42 @@ struct BodyMapCard: View {
         .sheet(item: $selectedMuscle) { muscle in
             MuscleDetailView(muscle: muscle, sets: sets, bodyweightKg: bodyweightKg, sex: sex, prior: prior)
         }
+    }
+
+    /// The highest level reached and which muscles hold it: "Novice: Chest, Quads, +2 more",
+    /// or "All 13 trained muscles are Beginner" when they're level.
+    static func summary(_ levels: [Muscle: Int]) -> String? {
+        guard let top = levels.values.max() else { return nil }
+        let name = MuscleLevelEngine.levelNames[top - 1]
+        if levels.values.allSatisfy({ $0 == top }) {
+            return levels.count == 1
+                ? "\(levels.keys.first!.displayName) is \(name)"
+                : "All \(levels.count) trained muscles are \(name)"
+        }
+        let leaders = muscles(at: top, in: levels)
+        let shown = leaders.prefix(3).map(\.displayName).joined(separator: ", ")
+        let more = leaders.count > 3 ? ", +\(leaders.count - 3) more" : ""
+        return "\(name): \(shown)\(more)"
+    }
+
+    /// Every level for VoiceOver, highest first: "Novice: Chest, Quads. Beginner: Abs, Biceps.
+    /// Not trained: Calves."
+    static func spokenLevels(_ levels: [Muscle: Int]) -> String {
+        guard !levels.isEmpty else { return "No muscles trained yet" }
+        var parts = Set(levels.values).sorted(by: >).map { level in
+            let names = muscles(at: level, in: levels).map(\.displayName).joined(separator: ", ")
+            return "\(MuscleLevelEngine.levelNames[level - 1]): \(names)"
+        }
+        let untrained = Muscle.allCases.filter { levels[$0] == nil }
+        if !untrained.isEmpty {
+            parts.append("Not trained: " + untrained.map(\.displayName).joined(separator: ", "))
+        }
+        return parts.joined(separator: ". ")
+    }
+
+    /// Muscles at `level`, head to toe (the enum's order).
+    private static func muscles(at level: Int, in levels: [Muscle: Int]) -> [Muscle] {
+        Muscle.allCases.filter { levels[$0] == level }
     }
 
     /// Only shown when something's missing that the figures can't make obvious on their own.

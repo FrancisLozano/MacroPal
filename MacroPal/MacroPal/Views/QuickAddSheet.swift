@@ -9,11 +9,12 @@ import SwiftUI
 enum QuickAddChoice {
     case logFood
     case logWorkout(PlanDay)
+    case logUnplannedWorkout
 }
 
 /// The short sheet the + beside the tab bar opens: log food (today's Daily Log) or log today's
-/// planned workout. Both rows look the same whatever the day; on a rest day (or with no plan
-/// yet) the workout row explains itself in an alert instead of opening anything.
+/// planned workout. Both rows look the same whatever the day; on a rest day the workout row
+/// opens an unplanned workout, and with no plan yet it explains itself in an alert.
 struct QuickAddSheet: View {
     /// Today's planned workout, or `nil` on a rest day or without a plan.
     let workout: PlanDay?
@@ -33,6 +34,8 @@ struct QuickAddSheet: View {
             Button {
                 if let workout {
                     onChoose(.logWorkout(workout))
+                } else if hasPlan {
+                    onChoose(.logUnplannedWorkout)
                 } else {
                     isShowingNoWorkout = true
                 }
@@ -42,12 +45,10 @@ struct QuickAddSheet: View {
         }
         // Plain black rows, like a menu, rather than the List's blue button tint.
         .tint(.primary)
-        .alert(hasPlan ? "No Workout Today" : "No Training Plan", isPresented: $isShowingNoWorkout) {
+        .alert("No Training Plan", isPresented: $isShowingNoWorkout) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text(hasPlan
-                 ? "Today is a rest day in your plan, so there are no exercises scheduled."
-                 : "Create a plan on the Training tab to log a workout from here.")
+            Text("Create a plan on the Training tab to log a workout from here.")
         }
         .listStyle(.insetGrouped)
         .scrollDisabled(true)
@@ -57,7 +58,7 @@ struct QuickAddSheet: View {
 
     private var workoutDetail: String {
         if let workout { return workout.name }
-        return hasPlan ? "Today is a rest day" : "No training plan yet"
+        return hasPlan ? "Rest day · log an unplanned workout" : "No training plan yet"
     }
 
     private func row(title: String, detail: String, systemImage: String) -> some View {

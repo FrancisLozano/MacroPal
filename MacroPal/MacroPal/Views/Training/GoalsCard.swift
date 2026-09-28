@@ -35,27 +35,7 @@ struct GoalsCard: View {
         // lb/kg lives in Profile → Units & Measurements.
         TrainingSection("Goals") {
             VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Goal weight")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        NavigationLink {
-                            WeightHistoryView()
-                        } label: {
-                            HStack(alignment: .firstTextBaseline, spacing: 4) {
-                                Text(goalText)
-                                    .font(.title3.bold())
-                                Text(unit.symbol)
-                                    .foregroundStyle(.secondary)
-                            }
-                            .foregroundStyle(Color.primary)
-                        }
-                        .accessibilityLabel("Goal weight \(goalText) \(unit.symbol). Weight history")
-                    }
-                    Spacer()
-                    logButton("Log weight") { isPresentingLogWeightSheet = true }
-                }
+                weightRow
 
                 ForEach(weightFindings) { finding in
                     InsightCallout(finding: finding)
@@ -76,6 +56,35 @@ struct GoalsCard: View {
             NavigationStack {
                 LogStepsView()
             }
+        }
+    }
+
+    /// The latest weigh-in against the goal weight ("227 → 154.3 lb"), read like the steps row;
+    /// just the goal before the first weigh-in. Tapping the numbers opens the weight history.
+    private var weightRow: some View {
+        let latest = weightEntries.max { $0.date < $1.date }
+        let current = latest.map { unit.formatted(fromKg: $0.weightKg) }
+        return HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(current == nil ? "Goal weight" : "Weight")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                NavigationLink {
+                    WeightHistoryView()
+                } label: {
+                    HStack(alignment: .firstTextBaseline, spacing: 4) {
+                        Text(current ?? goalText)
+                            .font(.title3.bold())
+                        Text(current == nil ? unit.symbol : "→ \(goalText) \(unit.symbol)")
+                            .foregroundStyle(.secondary)
+                    }
+                    .foregroundStyle(Color.primary)
+                }
+                .accessibilityLabel(current.map { "Weight \($0) \(unit.symbol), goal \(goalText). Weight history" }
+                    ?? "Goal weight \(goalText) \(unit.symbol). Weight history")
+            }
+            Spacer()
+            logButton("Log weight") { isPresentingLogWeightSheet = true }
         }
     }
 

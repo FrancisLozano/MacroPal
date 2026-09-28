@@ -12,9 +12,11 @@ import SwiftData
 /// right here in the card (saved or cancelled from the card) or opens the routine editor.
 struct CurrentPlanCard: View {
     @Query private var plans: [WorkoutPlan]
+    @Query(sort: \WorkoutSession.date, order: .reverse) private var sessions: [WorkoutSession]
 
     @AppStorage("trainingShowWeek") private var showWeek = false
     @State private var isPresentingRoutineEditor = false
+    @State private var isPresentingUnplannedWorkout = false
     /// The workouts in their new order while reordering; `nil` when not reordering.
     @State private var reorderDraft: [PlanDay]?
 
@@ -81,6 +83,9 @@ struct CurrentPlanCard: View {
             // Taller than .medium so a 6-day week fits under the message field.
             .presentationDetents([.fraction(0.62), .large])
         }
+        .sheet(isPresented: $isPresentingUnplannedWorkout) {
+            UnplannedWorkoutView()
+        }
     }
 
     private func summary(plan: WorkoutPlan) -> some View {
@@ -95,39 +100,98 @@ struct CurrentPlanCard: View {
         .contentShape(Rectangle())
     }
 
-    /// "Today: Legs & Abs", spaced like a line of the week and opening that day the same way.
+    /// Today's workout, the card's main action: "Today: Push" over how far it has got ("5
+    /// exercises", "2 of 5 exercises done", "Done · 15 sets"), opening the day. On a rest day
+    /// it opens an unplanned workout instead. No chevron, like the rest of the card.
     @ViewBuilder
     private var todayRow: some View {
         separator
             .padding(.vertical, 14)
         if let today {
-            dayLink(today, title: "Today: \(today.name)")
+            let progress = DayProgress(day: today, session: todaysSession)
+            NavigationLink {
+                PlanDayDetailView(day: today)
+            } label: {
+                todayLabel(title: "Today: \(today.name)", status: status(of: progress), isDone: progress.isComplete)
+            }
+            .buttonStyle(.plain)
         } else {
-            Text("Today: Rest day")
-                .font(.subheadline)
+            Button {
+                isPresentingUnplannedWorkout = true
+            } label: {
+                todayLabel(title: "Today: Rest day", status: "Log an unplanned workout", isDone: false)
+            }
+            .buttonStyle(.plain)
         }
     }
 
-    /// Every workout of the week under the summary, one line each ("Monday: Push"); tapping one
-    /// opens its exercises.
+    private func todayLabel(title: String, status: String, isDone: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.body.weight(.semibold))
+            HStack(spacing: 4) {
+                if isDone {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                }
+                Text(status)
+                    .foregroundStyle(.secondary)
+            }
+            .font(.subheadline)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+    }
+
+    private var todaysSession: WorkoutSession? {
+        sessions.first { Calendar.current.isDateInToday($0.date) }
+    }
+
+    private func status(of progress: DayProgress) -> String {
+        if progress.exercises == 0 { return "No exercises yet" }
+        if progress.isComplete {
+            return progress.setsLogged == 1 ? "Done · 1 set" : "Done · \(progress.setsLogged) sets"
+        }
+        if progress.setsLogged > 0 {
+            return "\(progress.exercisesDone) of \(progress.exercises) exercises done"
+        }
+        return progress.exercises == 1 ? "1 exercise" : "\(progress.exercises) exercises"
+    }
+
+    /// Every workout of the week under the summary, one line each ("Monday: Push"), today's in
+    /// semibold with "Today" at its end; tapping one opens its exercises.
     private func week(plan: WorkoutPlan) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
+        let todayWeekday = Calendar.current.component(.weekday, from: .now)
+        return VStack(alignment: .leading, spacing: 0) {
             ForEach(plan.sortedDays) { day in
                 separator
                     .padding(.vertical, 14)
-                dayLink(day, title: "\(Calendar.current.weekdaySymbols[day.weekday - 1]): \(day.name)")
+                dayLink(
+                    day,
+                    title: "\(Calendar.current.weekdaySymbols[day.weekday - 1]): \(day.name)",
+                    isToday: day.weekday == todayWeekday
+                )
             }
         }
     }
 
-    private func dayLink(_ day: PlanDay, title: String) -> some View {
+    private func dayLink(_ day: PlanDay, title: String, isToday: Bool) -> some View {
         NavigationLink {
             PlanDayDetailView(day: day)
         } label: {
-            Text(title)
-                .font(.subheadline)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .contentShape(Rectangle())
+            HStack {
+                Text(title)
+                    .fontWeight(isToday ? .semibold : .regular)
+                Spacer()
+                if isToday {
+                    Text("Today")
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .font(.subheadline)
+            .contentShape(Rectangle())
+            .accessibilityElement(children: .combine)
         }
         .buttonStyle(.plain)
     }

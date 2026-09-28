@@ -44,8 +44,7 @@ struct PlanDayDetailView: View {
 
     /// Every exercise on the day has its target sets logged today.
     private var isWorkoutComplete: Bool {
-        let planned = day.exercises.filter { $0.exercise != nil }
-        return !planned.isEmpty && planned.allSatisfy { setsLoggedToday(for: $0) >= $0.targetSets }
+        DayProgress(day: day, session: todaysSession).isComplete
     }
 
     var body: some View {

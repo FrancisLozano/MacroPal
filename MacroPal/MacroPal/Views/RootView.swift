@@ -29,6 +29,7 @@ struct RootView: View {
     /// Held until the sheet has finished closing: pushing while it closes (and while a tab
     /// shows for the first time) drew the pushed page's large title over its content.
     @State private var pendingQuickAdd: QuickAddChoice?
+    @State private var isPresentingUnplannedWorkout = false
 
     /// Blue with a white +, like the floating button it replaced. A tab bar draws its icons as
     /// templates in one flat color, so the icon is drawn as a picture and marked
@@ -117,6 +118,9 @@ struct RootView: View {
                 isPresentingQuickAdd = false
             }
         }
+        .sheet(isPresented: $isPresentingUnplannedWorkout) {
+            UnplannedWorkoutView()
+        }
         // One rest timer for the whole app, so it survives moving between workout screens.
         .environment(restTimer)
         // Here, not in the card: there's one card per tab (and one in the unplanned-workout
@@ -144,6 +148,9 @@ struct RootView: View {
             DispatchQueue.main.async {
                 trainingPath = NavigationPath([day])
             }
+        case .logUnplannedWorkout:
+            selectedTab = .training
+            isPresentingUnplannedWorkout = true
         }
     }
 }

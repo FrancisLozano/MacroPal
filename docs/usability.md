@@ -1,9 +1,15 @@
 # Usability Notes & Feedback Log
 
 **Status:** Living document — ongoing, not tied to a phase
-**Started:** 2026-09-06 · **Last updated:** 2026-09-27
+**Started:** 2026-09-06 · **Last updated:** 2026-09-28
 
 ## Start here (as of 2026-09-27)
+
+**2026-09-28: Training tab design critique and fixes.** An Impeccable critique of the Training
+tab scored 26/40; the user picked "today as the main action", a stronger today row only (no
+reordering of the page) and all five issues. All five are built — see **What changed on
+2026-09-28**. Not seen live yet: the rest-day today row, the + sheet on a rest day, and the
+"Done · N sets" state (unit-tested; today in the simulator is Push with no sets).
 
 **Where things stand.** Everything is committed and pushed to `origin/main` (last code
 commit `52bc9cb`, then this doc); the working tree is clean. **Nothing is being built right
@@ -463,6 +469,38 @@ user's whiteboard sketch — body map on top, Current Plan, Goals below. On 2026
 of that doc's success criteria were met, and in the evening the tab was restyled to match
 Nutrition. 2026-09-23 closed the last two P3s and the outstanding re-checks; in the afternoon
 the user logged the first Training suggestions and the layout ones were built.
+
+### What changed on 2026-09-28
+
+From an Impeccable design critique of the Training tab (26/40, snapshot in
+`.impeccable/critique/`, not in the repo). The user chose the order and scope.
+
+- **Today's workout is the plan card's main row.** "Today: Push" is `.body` semibold with a
+  status line under it: "2 exercises" → "1 of 2 exercises done" (once any set is logged) →
+  green ✓ "Done · 6 sets". Still no chevron (user, 2026-09-23: no arrows on this card). On a
+  rest day the row reads "Today: Rest day · Log an unplanned workout" and opens
+  `UnplannedWorkoutView`. "Done" is `DayProgress` (new, shared with `PlanDayDetailView`'s
+  Workout Complete check), four tests in `DayProgressTests`.
+- **The + sheet on a rest day** opens an unplanned workout (`QuickAddChoice.logUnplannedWorkout`,
+  presented from `RootView` on the Training tab) instead of the "No Workout Today" alert; the
+  row's detail reads "Rest day · log an unplanned workout". The alert remains only with no plan.
+- **Body map levels in words.** A caption under the figures names the highest level and its
+  muscles ("Novice: Chest, Shoulders, Biceps, +6 more", or "All 13 trained muscles are
+  Beginner"); it gives way to the existing log-weight / log-a-workout prompts. VoiceOver reads
+  every level, highest first, then the untrained muscles, instead of just "Body map".
+  `BodyMapCard.summary` / `spokenLevels`, four tests in `BodyMapSummaryTests`.
+- **Weight row shows current → goal** ("227.0 → 154.3 lb", caption "Weight"), read like the
+  steps row; before the first weigh-in it's the goal alone, as before.
+- **Title edge.** The pinned "Training" title is now a `safeAreaBar(edge: .top)` over the
+  scroll view, so cards fade under it with the system's soft edge instead of being cut in a
+  hard line. Same position as Nutrition's title.
+- **The expanded week marks today** — its line in semibold with "Today" at the end (the code
+  comment claimed this already happened; it didn't).
+
+Checked in the simulator: light, dark, the expanded week and accessibility-extra-large text.
+Also noticed by the critique, not done: the set input boxes on the exercise screen are 36 pt
+tall (under 44), the rest timer's 52 pt countdown doesn't scale with text size, and
+`ExerciseThumbnail`'s red has no dark-mode variant.
 
 ### What changed on 2026-09-27
 
