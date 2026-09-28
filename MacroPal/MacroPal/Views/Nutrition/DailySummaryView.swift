@@ -119,6 +119,7 @@ struct DailySummaryView: View {
             } label: {
                 Image(systemName: "chevron.left")
             }
+            .accessibilityLabel("Previous day")
 
             Spacer()
 
@@ -134,6 +135,7 @@ struct DailySummaryView: View {
                 }
             }
             .buttonStyle(.plain)
+            .accessibilityHint("Opens a calendar to jump to any day")
 
             Spacer()
 
@@ -142,6 +144,7 @@ struct DailySummaryView: View {
             } label: {
                 Image(systemName: "chevron.right")
             }
+            .accessibilityLabel("Next day")
         }
         .padding(.horizontal)
     }
@@ -256,6 +259,11 @@ struct DailySummaryView: View {
             .frame(maxWidth: .infinity)
         }
         .buttonStyle(.plain)
+        // Read as "Friday, September 25, Food logged" rather than the letter and number
+        // ("F, 25"); the logged-day dot and the selection circle are otherwise visual only.
+        .accessibilityLabel(day.formatted(.dateTime.weekday(.wide).month(.wide).day()))
+        .accessibilityValue(hasEntries ? "Food logged" : "")
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
     private func changeDay(by delta: Int) {
@@ -402,6 +410,8 @@ struct DailySummaryView: View {
                     .frame(width: 6, height: 6)
             }
         }
+        // Decoration for sighted swiping; VoiceOver reads each meal card itself.
+        .accessibilityHidden(true)
     }
 
     /// One swipeable page: meal name/icon + suggested time window on top, with a food
@@ -441,6 +451,18 @@ struct DailySummaryView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .frame(height: Self.mealCardHeight)
         .contentShape(Rectangle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(meal.displayName)
+        .accessibilityValue(mealCardValue(entries))
+        .accessibilityHint("Opens the Daily Log")
+    }
+
+    /// "149 calories, Logged Chicken breast bites" — the card's numbers without "kcal", which
+    /// VoiceOver reads letter by letter.
+    private func mealCardValue(_ entries: [FoodEntry]) -> String {
+        guard !entries.isEmpty else { return foodSummary(for: entries) }
+        let calories = Int(entries.reduce(0) { $0 + $1.caloriesKcal }.rounded())
+        return "\(calories) calories, \(foodSummary(for: entries))"
     }
 
     /// "Nothing logged yet" (today) or "Nothing logged" (another day) when empty, the food's name for a single entry, or the first
@@ -552,10 +574,15 @@ struct DailySummaryView: View {
                 .font(.system(size: 44, weight: .bold))
                 .minimumScaleFactor(0.6)
                 .lineLimit(1)
+                // The number and its caption as one element; the red "over" caption is color
+                // only, so the value says it in words.
+                .accessibilityLabel("Calories")
+                .accessibilityValue(readoutValue(value: value, eatenCalories: eatenCalories, target: target, isOver: isOver))
             HStack(spacing: 5) {
                 Text(caption)
                     .font(.subheadline)
                     .foregroundStyle(isOver ? Color.red : Color.secondary)
+                    .accessibilityHidden(true)
                 Button {
                     showTotalCalories.toggle()
                 } label: {
@@ -566,6 +593,14 @@ struct DailySummaryView: View {
                 .accessibilityLabel(showTotalCalories ? "Show calories eaten" : "Show total daily calories")
             }
         }
+    }
+
+    private func readoutValue(value: Int, eatenCalories: Double, target: Double, isOver: Bool) -> String {
+        if showTotalCalories {
+            return "\(value) per day goal"
+        }
+        guard isOver else { return "\(value) eaten" }
+        return "\(value) eaten, \(Int((eatenCalories - target).rounded())) over goal"
     }
 
     /// Draws each macro segment as its own trimmed arc within the top half of the circle
@@ -623,6 +658,13 @@ struct DailySummaryView: View {
                 .font(.caption2)
                 .foregroundStyle(remaining >= 0 ? Color.secondary : Color.red)
         }
+        // "32 of 150 grams, 118 grams remaining" instead of "32 slash 150 g".
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(name)
+        .accessibilityValue(
+            "\(Int(eaten.rounded())) of \(Int(target.rounded())) grams, "
+                + (remaining >= 0 ? "\(Int(remaining.rounded())) grams remaining" : "\(Int(-remaining.rounded())) grams over")
+        )
     }
 }
 

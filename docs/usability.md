@@ -466,6 +466,17 @@ the user logged the first Training suggestions and the layout ones were built.
 
 ### What changed on 2026-09-27
 
+**VoiceOver on the Nutrition screen.** The chevrons read "Previous day" / "Next day" (were icon
+names) and the date button hints that it opens a calendar. Week-strip days read "Friday,
+September 25" with a "Food logged" value and the Selected trait (were "F, 25", with the dot and
+circle visual only). The calorie number reads "Calories, 658 eaten" — "…, 158 over goal" when
+over, since the red caption is color only — or "2,000 per day goal" after the ⟳ toggle. Macro
+rows read "Protein, 32 of 150 grams, 118 grams remaining" (was "32 slash 150 g"); meal cards
+read "Dinner, 149 calories, Logged Chicken breast bites" with the hint "Opens the Daily Log"
+(no letter-by-letter "kcal"); the page dots are hidden. Checked with a throwaway UI test that
+dumped the accessibility tree on today and Sep 25 (labels, values and the Selected trait
+present); what VoiceOver skips still wants a pass with VoiceOver on the iPhone.
+
 **The + moved next to the tab bar and opens Log Food / Log Workout.** The floating + on
 Nutrition (and its scroll room, added earlier the same day) is gone. A solid blue + now sits in
 its own circle to the right of the tab bar, on every tab — the iOS 26 spot Apple uses for
