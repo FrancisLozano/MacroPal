@@ -172,9 +172,9 @@ The week of real use and the threshold tuning were closed on 2026-09-27 at the u
 2. ~~**Primary muscle's level on the exercise Progress tab**~~ — **built 2026-09-27**, see
    **What changed on 2026-09-27**. A Muscle Level section per primary muscle, tap for the
    muscle detail.
-3. **Starting point from months trained** (P2), when wanted: needs a stored start credit (an
-   optional field, no versioned schema) and a place to enter it; the tenure cap still applies,
-   so decide first whether the months also count as time trained.
+3. ~~**Starting point from months trained**~~ — **built 2026-09-27**, see **What changed on
+   2026-09-27**. Profile → Past Training; the user decided the months **count as time
+   trained**, and anyone can pick Start Over instead.
 
 **Small leftovers:**
 - Food logged as **Snack** before 2026-09-25 still exists (the case stays in `MealType` so it
@@ -461,6 +461,29 @@ the user logged the first Training suggestions and the layout ones were built.
 
 ### What changed on 2026-09-27
 
+**Past training.** Profile → Workout → **Past Training** (summary "Start over", "1 year",
+"2 years 3 months") offers **Start Over** — levels come only from sets logged in MacroPal, the
+default — or **Count Past Training**, with years and months steppers (defaults to 1 year).
+Decided with the user: the months **count as time trained** (the tenure cap), since someone
+who trained before, or used the app before, may already be past Beginner; and they choose
+whether to start there or over. The months also credit **volume**: what the levels' own
+pacing puts at that many months — each level's minimum bodyweights at its minimum months,
+straight lines between (3 months → 600 bodyweights, 12 → 2,500, 5 years on → 15,000;
+`MuscleLevelEngine.bodyweights(afterMonths:)`). It goes to the muscles the **current plan**
+works, snapshotted when saved (so later plan edits don't move it): a muscle the plan works
+fully gets it all and starts at the level the time allows (1 year → Advanced), an assist gets
+its share of the volume but the full time. The months end on the day they're entered, so
+time keeps counting from there. The muscle detail lists it as **Before MacroPal · Past
+training · 12 months**. Stored on `UserProfile` as three defaulted fields
+(`priorTrainingMonths`, `priorTrainingEnteredOn`, `priorTrainingInvolvement`) — no versioned
+schema; the existing simulator store migrated. Reading them (`priorTraining`,
+`setPriorTraining`) lives in MuscleLevelEngine.swift, since the widget also compiles
+UserProfile.swift but not the engine. `PriorTraining`, `PastTrainingView`; eight new tests
+(`PastTrainingTests`). Big amounts in the level summary now shorten ("567.5K of 1.702M lb"),
+and an unlock date in another year shows the year. Checked in the simulator: 1 year → the
+body map darkens; Chest → Advanced → Elite, 567.5K lb, "Elite also needs training until Sep
+27, 2028", Before MacroPal 100%; then set back to Start Over.
+
 **Primary muscle's level on Progress.** An exercise's **Progress** tab has a **Muscle Level**
 section under the total volume — one row per primary muscle (Muscle Levels when there are
 several), each with the same summary the body map's muscle detail shows: "● Beginner →
@@ -726,13 +749,15 @@ The body map's levels are a judgement call, so they're documented rather than bu
 - Level = the muscle's **lifetime volume ÷ bodyweight** (volume divided by 0.65 for women)
   against `MuscleLevelEngine.levelMinimumBodyweights` — a first guess, not from a source;
   expect to tune it after real use. Assisting muscles get credit in proportion to their
-  involvement, but only muscles worked at 0.5 or more count as "trained" (colored at all).
+  involvement, and any share at all counts as training the muscle (since `e0ed1ca`).
 - A **tenure cap** stops a burst of volume from skipping the years: 2 weeks for Novice, 3
   months Intermediate, a year Advanced, 3 years Elite, 5 years World Class.
 - Dumbbell lifts count both dumbbells; leg press and calf raise are scaled down. Bodyweight
   moves use a share of bodyweight per rep (plank assumes reps are logged as seconds).
 - Volume never goes down, so levels never drop after a break.
 - With no weight logged, every trained muscle just shows Beginner.
+- **Past training** (Profile → Past Training, off by default) counts as both time trained and
+  volume for the muscles the plan worked when it was saved; see What changed on 2026-09-27.
 
 ### Verified vs. not yet verified in the simulator
 
@@ -868,7 +893,7 @@ actually improving or just accumulating complaints.
 | Dislikes | 18 |
 | Suggestions | 34 |
 | Triaged (in Backlog) | 70 |
-| Done | 65 |
+| Done | 66 |
 | No change needed | 2 |
 | Won't Fix | 2 |
 
@@ -942,7 +967,7 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P2 | Automatic Rest Timer on by default (`WorkoutPreferences.autoRestTimerDefault`). The timer already starts after each set and after Complete Exercise when the setting is on; it was just off. Only installs that never touched the setting switch — a stored choice is kept. The simulator has `false` stored from the 2026-09-22 testing, so it stays off there; the iPhone too if the switch was ever flipped (Profile → Workout → Automatic Rest Timer) | Suggestions → Training (2026-09-25, "start the rest timer automatically") | Done (4e05de9) — the default only; the start-on-log behavior was checked in the simulator 2026-09-22 |
 | P2 | Tap a body part on the body map for its volume and the exercises it came from, like tapping a macro on Nutrition — `MuscleDetailView` (sheet, half height): level, lifetime volume, the exercises it came from with lb and %. Small muscles are a few points wide, so a tap within 5 figure units of one picks it (`BodyFigure.muscle(at:in:side:)`), and the title menu switches to any muscle. VoiceOver: the map is one button opening the detail. **Zoom not done** — the title menu covers the missed-tap case; revisit if tapping still feels fiddly on the phone | Suggestions → Training (2026-09-25, body-part tap) | Done (3059d43) — checked in the simulator 2026-09-25 (Abs: Cable Crunch 61%, Back Squat 39%; Traps from the back figure; Chest via the menu: "Not trained yet") |
 | P2 | Progress bar toward each muscle's next level, in volume — in the muscle detail above: "Beginner → Novice", "3,135 of 20,430 lb", "17,295 lb to go", a bar in the next level's color measured from the current level's start, and a line when time also holds it back ("Novice also needs training until Oct 8", or "Volume reached…" once the bar is full). `MuscleLevelEngine.progress(for:…)` / `MuscleProgress`, 5 new `MuscleLevelEngineTests` (incl. tap hit-testing) | Suggestions → Training (2026-09-25, progress bar) | Done (3059d43) — checked in the simulator 2026-09-25 |
-| P2 | Starting point for past training: enter roughly how many months you've trained, and each muscle is credited a starting volume from the current plan and bodyweight, so levels don't start at zero. Needs a stored start credit (optional field, no versioned schema) and a place to enter it | Suggestions → Training (2026-09-25, starting-point flow) + Dislikes → Training (2026-09-25, 3 weeks of missing lifts) | Triaged |
+| P2 | Starting point for past training: enter roughly how many months you've trained, and each muscle is credited a starting volume from the current plan and bodyweight, so levels don't start at zero. Needs a stored start credit (optional field, no versioned schema) and a place to enter it | Suggestions → Training (2026-09-25, starting-point flow) + Dislikes → Training (2026-09-25, 3 weeks of missing lifts) | Done 2026-09-27 — Profile → Past Training; the months count as time trained, Start Over is the default (see What changed on 2026-09-27) |
 | P2 | "Same as last time" on a meal: re-log the foods from the last day that meal (Breakfast / Lunch / Dinner) was logged | Suggestions → Training, Nutrition (2026-09-25, "Same as last time", meal half) | Done 2026-09-27 — a **Same as Last Time** row at the top of Choose Food → History (see What changed on 2026-09-27) |
 | P2 | Reminder notifications for steps, food and weight (a daily nudge at a time you pick, skipped if you already logged). Steps and weight default to 9 PM, food to the end of each meal's time frame | Suggestions → General UI (2026-09-27) | Done 2026-09-27 — Profile → Reminders (see What changed on 2026-09-27) |
 | P2 | The primary muscle's level (Beginner → Novice → …) on each exercise's Progress tab | Parked follow-ups (per-lift goal), clarified 2026-09-27 | Done 2026-09-27 — a Muscle Level section on Progress (see What changed on 2026-09-27) |
