@@ -19,21 +19,6 @@ struct BodyMapCard: View {
     private var bodyweightKg: Double? { weightEntries.first?.weightKg }
     private var sex: Sex { profiles.first?.sex ?? .male }
 
-    private var loggedSets: [LoggedSet] {
-        sessions.flatMap { session in
-            session.setEntries.compactMap { entry -> LoggedSet? in
-                guard let exercise = entry.exercise else { return nil }
-                return LoggedSet(
-                    date: session.date,
-                    exerciseName: exercise.name,
-                    muscleGroup: exercise.muscleGroup,
-                    weightKg: entry.weightKg,
-                    reps: entry.reps
-                )
-            }
-        }
-    }
-
     /// Each trained muscle's level color; untrained muscles are absent.
     private func muscleColors(for sets: [LoggedSet]) -> [Muscle: Color] {
         MuscleLevelEngine.levels(sets: sets, bodyweightKg: bodyweightKg, sex: sex)
@@ -41,7 +26,7 @@ struct BodyMapCard: View {
     }
 
     var body: some View {
-        let sets = loggedSets
+        let sets = LoggedSet.all(in: sessions)
         let colors = muscleColors(for: sets)
 
         TrainingSection("Progress") {

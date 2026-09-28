@@ -14,6 +14,25 @@ struct LoggedSet {
     let reps: Int
 }
 
+extension LoggedSet {
+    /// Every set in `sessions` whose exercise still exists — what the body map and each
+    /// exercise's muscle levels are worked out from.
+    static func all(in sessions: [WorkoutSession]) -> [LoggedSet] {
+        sessions.flatMap { session in
+            session.setEntries.compactMap { entry -> LoggedSet? in
+                guard let exercise = entry.exercise else { return nil }
+                return LoggedSet(
+                    date: session.date,
+                    exerciseName: exercise.name,
+                    muscleGroup: exercise.muscleGroup,
+                    weightKg: entry.weightKg,
+                    reps: entry.reps
+                )
+            }
+        }
+    }
+}
+
 /// One exercise's part of a muscle's volume, credited by how much it works the muscle.
 struct MuscleContribution: Equatable {
     let exerciseName: String

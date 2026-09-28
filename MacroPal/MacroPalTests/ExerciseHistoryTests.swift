@@ -75,4 +75,21 @@ struct ExerciseHistoryTests {
         #expect(viewModel.history(for: curl, in: [today], bodyweightKg: 80).first?.volumeKg == 200)
         #expect(viewModel.history(for: pullUp, in: [today], bodyweightKg: 80).first?.volumeKg == 850)
     }
+
+    @Test func loggedSetsCoverEveryExerciseAndSkipDeletedOnes() {
+        let squat = Exercise(name: "Back Squat", muscleGroup: .legs, equipment: "")
+        let curl = Exercise(name: "Barbell Curl", muscleGroup: .biceps, equipment: "")
+        container.mainContext.insert(squat)
+        container.mainContext.insert(curl)
+        let workout = session(daysAgo: 2, [(squat, 100, 5, nil), (curl, 20, 10, nil)])
+        let orphan = WorkoutSetEntry(setNumber: 3, weightKg: 50, reps: 8)
+        orphan.session = workout
+        container.mainContext.insert(orphan)
+
+        let sets = LoggedSet.all(in: [workout])
+        #expect(sets.map(\.exerciseName).sorted() == ["Back Squat", "Barbell Curl"])
+        #expect(sets.allSatisfy { $0.date == workout.date })
+        #expect(sets.first { $0.exerciseName == "Back Squat" }?.weightKg == 100)
+        #expect(sets.first { $0.exerciseName == "Barbell Curl" }?.muscleGroup == .biceps)
+    }
 }
