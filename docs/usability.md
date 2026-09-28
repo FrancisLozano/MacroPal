@@ -466,6 +466,14 @@ the user logged the first Training suggestions and the layout ones were built.
 
 ### What changed on 2026-09-27
 
+**Room to scroll the meal card clear of the +.** With all macros on, the Nutrition screen is
+full and the floating + sat on the Dinner card's time and kcal. The list now has empty space
+under its last row the size of the + and its margin (`logButtonClearance`), so a small scroll
+lifts the card above it. At rest the + still overlaps the card's right edge on a full screen —
+chosen over moving the + to the top bar (out of thumb reach) or shrinking it beside the tab bar.
+Checked in the simulator on Sep 25 with all macros on: at rest as before, scrolled to the end
+the card sits fully above the +.
+
 **Red lap past the calorie goal.** On the Nutrition ring, calories past the goal are drawn as a
 red second lap from the ring's left end (like an Activity ring), capped at double the goal;
 before, the ring just stopped at full and only the "kcal eaten" caption turned red. Everything

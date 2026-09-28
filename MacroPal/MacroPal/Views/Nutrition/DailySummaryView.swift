@@ -261,14 +261,20 @@ struct DailySummaryView: View {
             Image(systemName: "plus")
                 .font(.title2.weight(.semibold))
                 .foregroundStyle(.white)
-                .frame(width: 56, height: 56)
+                .frame(width: Self.logButtonSize, height: Self.logButtonSize)
                 .background(Color.accentColor, in: Circle())
                 .shadow(color: .black.opacity(0.25), radius: 6, y: 3)
         }
         .accessibilityLabel("Log Food")
-        .padding(.trailing, 20)
-        .padding(.bottom, 20)
+        .padding(.trailing, Self.logButtonInset)
+        .padding(.bottom, Self.logButtonInset)
     }
+
+    private static let logButtonSize: CGFloat = 56
+    private static let logButtonInset: CGFloat = 20
+    /// Empty space under the List's last row, so scrolling to the end lifts the meal card
+    /// clear of the floating + instead of leaving its time and kcal underneath it.
+    private static let logButtonClearance = logButtonSize + logButtonInset + 8
 
     /// The calorie ring plus the macro breakdown and the rest of the screen, all one plain
     /// `List` now, so the ring scrolls away with everything else instead of sitting pinned
@@ -346,6 +352,7 @@ struct DailySummaryView: View {
             }
         }
         .contentMargins(.top, Self.ringTopSpacing, for: .scrollContent)
+        .contentMargins(.bottom, Self.logButtonClearance, for: .scrollContent)
         .scrollIndicators(.hidden)
     }
 
