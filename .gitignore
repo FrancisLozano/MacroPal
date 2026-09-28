@@ -19,3 +19,6 @@ build/
 Secrets.swift
 *.xcconfig
 !Base.xcconfig
+
+# Impeccable design plugin: local critique snapshots and settings
+.impeccable/
