@@ -41,6 +41,17 @@ final class ProfileViewModel {
         return [order, target, rest].joined(separator: " · ")
     }
 
+    /// Past Training: "Start over", or the time — "8 months", "1 year", "2 years 3 months".
+    func pastTrainingSummary(months: Int) -> String {
+        guard months > 0 else { return "Start over" }
+        let (years, rest) = (months / 12, months % 12)
+        let parts = [
+            years > 0 ? "\(years) \(years == 1 ? "year" : "years")" : nil,
+            rest > 0 ? "\(rest) \(rest == 1 ? "month" : "months")" : nil,
+        ]
+        return parts.compactMap { $0 }.joined(separator: " ")
+    }
+
     /// The Reminders row's summary: "Off", or the reminders that are on — "Steps, Weight,
     /// Dinner".
     func remindersSummary(enabled: [Reminder]) -> String {

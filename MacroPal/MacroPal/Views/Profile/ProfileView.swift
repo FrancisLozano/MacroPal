@@ -82,6 +82,15 @@ private struct ProfileOverview: View {
                         )
                     )
                 }
+                NavigationLink {
+                    PastTrainingView(profile: profile)
+                } label: {
+                    summaryRow(
+                        "Past Training",
+                        systemImage: "clock.arrow.circlepath",
+                        detail: viewModel.pastTrainingSummary(months: profile.priorTrainingMonths)
+                    )
+                }
             }
 
             Section("Reminders") {

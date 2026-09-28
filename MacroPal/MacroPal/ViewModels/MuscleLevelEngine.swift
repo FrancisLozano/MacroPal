@@ -43,6 +43,65 @@ struct MuscleContribution: Equatable {
     let involvement: Double
 }
 
+/// Training done before MacroPal, entered in Profile → Past Training: counted as that many
+/// months of time trained and as the volume the engine's own pacing puts at that many months,
+/// for each muscle the plan worked when it was entered (`involvement`, 0…1, the most any plan
+/// exercise works it). A secondary muscle gets its share of the volume but the full time.
+struct PriorTraining: Equatable {
+    let months: Int
+    /// When the months were entered; they end here, so time keeps counting from it.
+    let enteredOn: Date
+    let involvement: [Muscle: Double]
+
+    /// When the past training is taken to have started.
+    var startDate: Date {
+        enteredOn.addingTimeInterval(-Double(months) * MuscleLevelEngine.secondsPerMonth)
+    }
+
+    /// Each muscle `plan` works, with the most any of its exercises works it.
+    static func involvement(of plan: WorkoutPlan?) -> [Muscle: Double] {
+        var involvement: [Muscle: Double] = [:]
+        for day in plan?.days ?? [] {
+            for exercise in day.exercises.compactMap(\.exercise) {
+                let profile = ExerciseMuscleData.profile(forName: exercise.name, group: exercise.muscleGroup)
+                for (muscle, share) in profile.muscles where share > 0 {
+                    involvement[muscle] = max(involvement[muscle] ?? 0, share)
+                }
+            }
+        }
+        return involvement
+    }
+
+    /// The bodyweights moved credited to `muscle`.
+    func bodyweights(for muscle: Muscle) -> Double {
+        MuscleLevelEngine.bodyweights(afterMonths: Double(months)) * (involvement[muscle] ?? 0)
+    }
+}
+
+extension UserProfile {
+    /// The past training the level engine counts, or nil when starting over.
+    var priorTraining: PriorTraining? {
+        guard priorTrainingMonths > 0, let priorTrainingEnteredOn else { return nil }
+        let involvement = Dictionary(uniqueKeysWithValues: priorTrainingInvolvement.compactMap { key, value in
+            Muscle(rawValue: key).map { ($0, value) }
+        })
+        return PriorTraining(months: priorTrainingMonths, enteredOn: priorTrainingEnteredOn, involvement: involvement)
+    }
+
+    /// Counts `months` of past training for the muscles `plan` works, as of `now`; 0 starts over.
+    func setPriorTraining(months: Int, plan: WorkoutPlan?, now: Date = .now) {
+        guard months > 0 else {
+            priorTrainingMonths = 0
+            priorTrainingEnteredOn = nil
+            priorTrainingInvolvement = [:]
+            return
+        }
+        priorTrainingMonths = months
+        priorTrainingEnteredOn = now
+        priorTrainingInvolvement = Dictionary(uniqueKeysWithValues: PriorTraining.involvement(of: plan).map { ($0.key.rawValue, $0.value) })
+    }
+}
+
 /// Where one muscle stands: its level, what it has moved, and what the next level asks for.
 /// The body map's muscle detail shows it.
 struct MuscleProgress: Equatable {
@@ -51,6 +110,9 @@ struct MuscleProgress: Equatable {
     let volumeKg: Double
     /// Biggest first.
     let contributions: [MuscleContribution]
+    /// The part of `volumeKg` credited from past training (0 without it, or without a
+    /// bodyweight to turn it into kg).
+    var priorVolumeKg: Double = 0
     /// The volume the current level started at, and the one the next level needs — nil at
     /// World Class, before the muscle is trained, or without a bodyweight to measure against.
     let levelVolumeKg: Double?
@@ -88,6 +150,21 @@ enum MuscleLevelEngine {
     /// Women move less relative to bodyweight; their volume is divided by this.
     static let femaleFactor = 0.65
 
+    static let secondsPerMonth = 30.44 * 86_400
+
+    /// The bodyweights moved a muscle trained steadily for `months` reaches, following the
+    /// levels' own pacing: each level's minimum volume lands at its minimum months, straight
+    /// lines between, and World Class's minimum from 5 years on. Past training is credited this.
+    static func bodyweights(afterMonths months: Double) -> Double {
+        guard months > 0 else { return 0 }
+        for index in 1..<levelMinimumMonths.count where months < levelMinimumMonths[index] {
+            let (startMonths, endMonths) = (levelMinimumMonths[index - 1], levelMinimumMonths[index])
+            let (start, end) = (levelMinimumBodyweights[index - 1], levelMinimumBodyweights[index])
+            return start + (end - start) * (months - startMonths) / (endMonths - startMonths)
+        }
+        return levelMinimumBodyweights[levelMinimumBodyweights.count - 1]
+    }
+
     /// Each muscle's volume in kg, credited by involvement. Bodyweight movements need
     /// `bodyweightKg` for their load; without it only their added weight counts.
     static func volumeKg(sets: [LoggedSet], bodyweightKg: Double?) -> [Muscle: Double] {
@@ -111,9 +188,15 @@ enum MuscleLevelEngine {
     }
 
     /// When each muscle was first worked, as a main mover or an assist — where its time on
-    /// the tenure cap starts. Any set that credits a muscle counts as training it.
-    private static func firstTrained(sets: [LoggedSet]) -> [Muscle: Date] {
+    /// the tenure cap starts. Any set that credits a muscle counts as training it, and so does
+    /// past training.
+    private static func firstTrained(sets: [LoggedSet], prior: PriorTraining?) -> [Muscle: Date] {
         var firstTrained: [Muscle: Date] = [:]
+        if let prior, prior.months > 0 {
+            for (muscle, involvement) in prior.involvement where involvement > 0 {
+                firstTrained[muscle] = prior.startDate
+            }
+        }
         for set in sets where set.reps > 0 {
             let profile = ExerciseMuscleData.profile(forName: set.exerciseName, group: set.muscleGroup)
             for (muscle, involvement) in profile.muscles where involvement > 0 {
@@ -123,15 +206,16 @@ enum MuscleLevelEngine {
         return firstTrained
     }
 
-    static func levels(sets: [LoggedSet], bodyweightKg: Double?, sex: Sex, now: Date = .now) -> [Muscle: Int] {
-        let firstTrained = firstTrained(sets: sets)
+    static func levels(sets: [LoggedSet], bodyweightKg: Double?, sex: Sex, prior: PriorTraining? = nil, now: Date = .now) -> [Muscle: Int] {
+        let firstTrained = firstTrained(sets: sets, prior: prior)
         let volume = volumeKg(sets: sets, bodyweightKg: bodyweightKg)
         var result: [Muscle: Int] = [:]
         for (muscle, start) in firstTrained {
             var level = 1
             if let bodyweightKg, bodyweightKg > 0 {
                 let moved = bodyweightsMoved(volumeKg: volume[muscle] ?? 0, bodyweightKg: bodyweightKg, sex: sex)
-                let months = now.timeIntervalSince(start) / (30.44 * 86_400)
+                    + (prior?.bodyweights(for: muscle) ?? 0)
+                let months = now.timeIntervalSince(start) / secondsPerMonth
                 level = max(1, min(self.level(forBodyweights: moved), tenureCap(months: months)))
             }
             result[muscle] = level
@@ -141,7 +225,7 @@ enum MuscleLevelEngine {
 
     /// `muscle`'s level, volume and the exercises it came from, and how far it is from the
     /// next level — the same numbers `levels` uses.
-    static func progress(for muscle: Muscle, sets: [LoggedSet], bodyweightKg: Double?, sex: Sex, now: Date = .now) -> MuscleProgress {
+    static func progress(for muscle: Muscle, sets: [LoggedSet], bodyweightKg: Double?, sex: Sex, prior: PriorTraining? = nil, now: Date = .now) -> MuscleProgress {
         var byExercise: [String: MuscleContribution] = [:]
         for set in sets where set.reps > 0 {
             let profile = ExerciseMuscleData.profile(forName: set.exerciseName, group: set.muscleGroup)
@@ -156,8 +240,13 @@ enum MuscleLevelEngine {
         }
         let contributions = byExercise.values
             .sorted { $0.volumeKg != $1.volumeKg ? $0.volumeKg > $1.volumeKg : $0.exerciseName < $1.exerciseName }
-        let volumeKg = contributions.reduce(0) { $0 + $1.volumeKg }
-        let level = levels(sets: sets, bodyweightKg: bodyweightKg, sex: sex, now: now)[muscle] ?? 0
+        // Past training in kg: its bodyweights × your bodyweight (fewer for women), as below.
+        var priorVolumeKg = 0.0
+        if let prior, let bodyweightKg, bodyweightKg > 0 {
+            priorVolumeKg = prior.bodyweights(for: muscle) * bodyweightKg * (sex == .female ? femaleFactor : 1)
+        }
+        let volumeKg = contributions.reduce(priorVolumeKg) { $0 + $1.volumeKg }
+        let level = levels(sets: sets, bodyweightKg: bodyweightKg, sex: sex, prior: prior, now: now)[muscle] ?? 0
 
         var levelVolumeKg: Double?
         var nextLevelVolumeKg: Double?
@@ -167,13 +256,13 @@ enum MuscleLevelEngine {
             let kgPerBodyweight = bodyweightKg * (sex == .female ? femaleFactor : 1)
             levelVolumeKg = levelMinimumBodyweights[level - 1] * kgPerBodyweight
             nextLevelVolumeKg = levelMinimumBodyweights[level] * kgPerBodyweight
-            if let start = firstTrained(sets: sets)[muscle] {
-                let unlocks = start.addingTimeInterval(levelMinimumMonths[level] * 30.44 * 86_400)
+            if let start = firstTrained(sets: sets, prior: prior)[muscle] {
+                let unlocks = start.addingTimeInterval(levelMinimumMonths[level] * secondsPerMonth)
                 nextLevelUnlocks = unlocks > now ? unlocks : nil
             }
         }
         return MuscleProgress(
-            level: level, volumeKg: volumeKg, contributions: contributions,
+            level: level, volumeKg: volumeKg, contributions: contributions, priorVolumeKg: priorVolumeKg,
             levelVolumeKg: levelVolumeKg, nextLevelVolumeKg: nextLevelVolumeKg, nextLevelUnlocks: nextLevelUnlocks
         )
     }
@@ -185,6 +274,12 @@ enum MuscleLevelEngine {
     /// How many level minimums `bodyweights` has reached (1…6 once trained at all).
     static func level(forBodyweights bodyweights: Double) -> Int {
         levelMinimumBodyweights.filter { bodyweights >= $0 }.count
+    }
+
+    /// The level a muscle worked fully (a main mover) starts at after `months` of past
+    /// training: 1…6, Beginner…World Class.
+    static func startingLevel(afterMonths months: Double) -> Int {
+        max(1, min(level(forBodyweights: bodyweights(afterMonths: months)), tenureCap(months: months)))
     }
 
     /// Highest level allowed for a muscle trained for `months`.

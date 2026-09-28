@@ -18,10 +18,11 @@ struct BodyMapCard: View {
 
     private var bodyweightKg: Double? { weightEntries.first?.weightKg }
     private var sex: Sex { profiles.first?.sex ?? .male }
+    private var prior: PriorTraining? { profiles.first?.priorTraining }
 
     /// Each trained muscle's level color; untrained muscles are absent.
     private func muscleColors(for sets: [LoggedSet]) -> [Muscle: Color] {
-        MuscleLevelEngine.levels(sets: sets, bodyweightKg: bodyweightKg, sex: sex)
+        MuscleLevelEngine.levels(sets: sets, bodyweightKg: bodyweightKg, sex: sex, prior: prior)
             .mapValues { LevelPalette.color(forLevel: $0) }
     }
 
@@ -64,7 +65,7 @@ struct BodyMapCard: View {
             MuscleLevelInfoView()
         }
         .sheet(item: $selectedMuscle) { muscle in
-            MuscleDetailView(muscle: muscle, sets: sets, bodyweightKg: bodyweightKg, sex: sex)
+            MuscleDetailView(muscle: muscle, sets: sets, bodyweightKg: bodyweightKg, sex: sex, prior: prior)
         }
     }
 

@@ -65,6 +65,15 @@ final class UserProfile {
     /// Daily steps target. Defaulted at the declaration so stores created before it existed
     /// migrate automatically.
     var stepGoal: Int = 10_000
+    /// Months trained before MacroPal (Profile → Past Training); 0 = start over, levels from
+    /// logged sets only. Defaulted, like `stepGoal`, so older stores migrate.
+    var priorTrainingMonths: Int = 0
+    /// When the months were entered — they're counted as ending here.
+    var priorTrainingEnteredOn: Date?
+    /// How much the plan worked each muscle (`Muscle` raw value → 0…1) when the months were
+    /// entered, kept so later plan changes don't move the credit. Read through
+    /// `priorTraining` (in MuscleLevelEngine.swift, outside the widget's files).
+    var priorTrainingInvolvement: [String: Double] = [:]
 
     init(
         heightCm: Double = 170,

@@ -22,6 +22,7 @@ struct MuscleLevelSummary: View {
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text(amount(progress.volumeKg))
                     .font(.title.bold())
+                    .lineLimit(1)
                 if let next = progress.nextLevelVolumeKg {
                     Text("of \(amount(next)) \(unit.symbol)")
                         .foregroundStyle(.secondary)
@@ -78,7 +79,11 @@ struct MuscleLevelSummary: View {
 
     /// What else the next level needs, or why there's no bar.
     private var note: String? {
-        let date = progress.nextLevelUnlocks?.formatted(.dateTime.month(.abbreviated).day())
+        let date = progress.nextLevelUnlocks.map { unlocks in
+            Calendar.current.isDate(unlocks, equalTo: .now, toGranularity: .year)
+                ? unlocks.formatted(.dateTime.month(.abbreviated).day())
+                : unlocks.formatted(.dateTime.month(.abbreviated).day().year())
+        }
         if progress.fractionToNextLevel != nil {
             let next = levelName(progress.level + 1)
             switch (progress.fractionToNextLevel == 1, date) {
@@ -97,8 +102,13 @@ struct MuscleLevelSummary: View {
         MuscleLevelEngine.levelNames[level - 1]
     }
 
-    /// Whole pounds or kilograms, "12,480".
+    /// Whole pounds or kilograms, "12,480"; "567.5K" from 100,000 up (past training reaches
+    /// millions), so the line stays on one row.
     private func amount(_ kg: Double) -> String {
-        unit.fromKg(kg).formatted(.number.precision(.fractionLength(0)))
+        let value = unit.fromKg(kg)
+        if value >= 100_000 {
+            return value.formatted(.number.notation(.compactName).precision(.significantDigits(1...4)))
+        }
+        return value.formatted(.number.precision(.fractionLength(0)))
     }
 }

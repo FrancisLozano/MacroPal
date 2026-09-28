@@ -16,16 +16,18 @@ struct MuscleDetailView: View {
     let sets: [LoggedSet]
     let bodyweightKg: Double?
     let sex: Sex
+    let prior: PriorTraining?
 
-    init(muscle: Muscle, sets: [LoggedSet], bodyweightKg: Double?, sex: Sex) {
+    init(muscle: Muscle, sets: [LoggedSet], bodyweightKg: Double?, sex: Sex, prior: PriorTraining? = nil) {
         _muscle = State(initialValue: muscle)
         self.sets = sets
         self.bodyweightKg = bodyweightKg
         self.sex = sex
+        self.prior = prior
     }
 
     var body: some View {
-        let progress = MuscleLevelEngine.progress(for: muscle, sets: sets, bodyweightKg: bodyweightKg, sex: sex)
+        let progress = MuscleLevelEngine.progress(for: muscle, sets: sets, bodyweightKg: bodyweightKg, sex: sex, prior: prior)
 
         NavigationStack {
             List {
@@ -34,13 +36,16 @@ struct MuscleDetailView: View {
                         .padding(.vertical, 4)
                 }
 
-                if progress.contributions.isEmpty {
+                if progress.contributions.isEmpty && progress.priorVolumeKg == 0 {
                     Section {
                         Text("No sets have worked your \(muscle.displayName.lowercased()) yet.")
                             .foregroundStyle(.secondary)
                     }
                 } else {
                     Section {
+                        if let prior, progress.priorVolumeKg > 0 {
+                            priorRow(prior, volumeKg: progress.priorVolumeKg, total: progress.volumeKg)
+                        }
                         ForEach(progress.contributions, id: \.exerciseName) { contribution in
                             row(contribution, total: progress.volumeKg)
                         }
@@ -84,6 +89,28 @@ struct MuscleDetailView: View {
                 Text("\(amount(contribution.volumeKg)) \(unit.symbol)")
                     .fontWeight(.semibold)
                 Text("\(Int((contribution.volumeKg / total * 100).rounded()))%")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.vertical, 2)
+        .accessibilityElement(children: .combine)
+    }
+
+    /// Past training, credited as a lump: "Before MacroPal · 18 months".
+    private func priorRow(_ prior: PriorTraining, volumeKg: Double, total: Double) -> some View {
+        HStack(alignment: .firstTextBaseline) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Before MacroPal")
+                Text("Past training · \(prior.months) \(prior.months == 1 ? "month" : "months")")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("\(amount(volumeKg)) \(unit.symbol)")
+                    .fontWeight(.semibold)
+                Text("\(Int((volumeKg / total * 100).rounded()))%")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

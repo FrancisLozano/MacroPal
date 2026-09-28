@@ -26,6 +26,7 @@ struct ExerciseProgressTab: View {
 
     private var bodyweightKg: Double? { weightEntries.first?.weightKg }
     private var sex: Sex { profiles.first?.sex ?? .male }
+    private var prior: PriorTraining? { profiles.first?.priorTraining }
 
     var body: some View {
         let history = viewModel.history(for: exercise, in: sessions, bodyweightKg: bodyweightKg)
@@ -71,7 +72,7 @@ struct ExerciseProgressTab: View {
             }
         }
         .sheet(item: $selectedMuscle) { muscle in
-            MuscleDetailView(muscle: muscle, sets: sets, bodyweightKg: bodyweightKg, sex: sex)
+            MuscleDetailView(muscle: muscle, sets: sets, bodyweightKg: bodyweightKg, sex: sex, prior: prior)
         }
     }
 
@@ -85,7 +86,7 @@ struct ExerciseProgressTab: View {
                     Button {
                         selectedMuscle = muscle
                     } label: {
-                        muscleRow(muscle, progress: MuscleLevelEngine.progress(for: muscle, sets: sets, bodyweightKg: bodyweightKg, sex: sex))
+                        muscleRow(muscle, progress: MuscleLevelEngine.progress(for: muscle, sets: sets, bodyweightKg: bodyweightKg, sex: sex, prior: prior))
                     }
                     .foregroundStyle(.primary)
                 }
