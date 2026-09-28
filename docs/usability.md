@@ -466,6 +466,24 @@ the user logged the first Training suggestions and the layout ones were built.
 
 ### What changed on 2026-09-27
 
+**The + moved next to the tab bar and opens Log Food / Log Workout.** The floating + on
+Nutrition (and its scroll room, added earlier the same day) is gone. A solid blue + now sits in
+its own circle to the right of the tab bar, on every tab — the iOS 26 spot Apple uses for
+Search (`Tab(role: .search)`; choosing it never selects it, it opens `QuickAddSheet`). The
+sheet has two plain black rows: **Log Food** ("Today's Daily Log") switches to Nutrition and
+opens today's Daily Log, and **Log Workout** (today's workout name, filled dumbbell like the
+Training tab) switches to Training and opens that day's exercises. On a rest day the workout
+row looks the same and says "Today is a rest day"; tapping it shows a "No Workout Today"
+alert (or "No Training Plan" without a plan). Food always goes to today now, so the old +
+back-dating to a browsed past day is gone; logging a meal is one tap more (+ → Log Food → the
+meal's +). The page opens only after the sheet has closed — pushing during the dismissal drew
+Push's large title over its cards. The tab bar flattens icon colors, and a palette SF Symbol
+came out green, so the blue circle is drawn by hand (`RootView.addIcon`, 64 pt so it covers the
+system's glass ring). `RootView` moved to the `Tab` API with navigation paths for Nutrition
+and Training. Checked in the simulator: the button in light and dark, Log Food from Nutrition
+(and back), Log Workout from Profile (temporarily pointed at the plan's first day), and the
+rest-day alert.
+
 **Past days no longer say "today"; Today button.** On the Nutrition screen the meals header
 reads "Logged Today" only on today and the weekday otherwise ("Logged Saturday", matching the
 day name above the week strip); an empty meal card says "Nothing logged yet" on today and

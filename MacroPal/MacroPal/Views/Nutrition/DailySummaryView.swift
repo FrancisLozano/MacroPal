@@ -11,7 +11,6 @@ struct DailySummaryView: View {
     @Query(sort: \FoodEntry.date, order: .reverse) private var allEntries: [FoodEntry]
     @Query private var profiles: [UserProfile]
 
-    @State private var isPresentingLogSheet = false
     @AppStorage("nutritionShowFullMacros") private var showFullMacros = true
     @State private var showTotalCalories = false
     @State private var selectedMeal: MealType = MealType.current()
@@ -49,14 +48,6 @@ struct DailySummaryView: View {
         }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
-        .overlay(alignment: .bottomTrailing) {
-            logFoodButton
-        }
-        .sheet(isPresented: $isPresentingLogSheet) {
-            NavigationStack {
-                LogFoodFlowView(initialMealType: selectedMeal, initialDate: selectedDate)
-            }
-        }
         .sheet(isPresented: $isPresentingCalendar) {
             NavigationStack {
                 DatePicker(
@@ -272,30 +263,6 @@ struct DailySummaryView: View {
         selectedDate = newDate
     }
 
-    /// A floating card in the bottom-right corner (rather than a toolbar item) for logging
-    /// food — a more prominent, thumb-reachable "add" affordance.
-    private var logFoodButton: some View {
-        Button {
-            isPresentingLogSheet = true
-        } label: {
-            Image(systemName: "plus")
-                .font(.title2.weight(.semibold))
-                .foregroundStyle(.white)
-                .frame(width: Self.logButtonSize, height: Self.logButtonSize)
-                .background(Color.accentColor, in: Circle())
-                .shadow(color: .black.opacity(0.25), radius: 6, y: 3)
-        }
-        .accessibilityLabel("Log Food")
-        .padding(.trailing, Self.logButtonInset)
-        .padding(.bottom, Self.logButtonInset)
-    }
-
-    private static let logButtonSize: CGFloat = 56
-    private static let logButtonInset: CGFloat = 20
-    /// Empty space under the List's last row, so scrolling to the end lifts the meal card
-    /// clear of the floating + instead of leaving its time and kcal underneath it.
-    private static let logButtonClearance = logButtonSize + logButtonInset + 8
-
     /// The calorie ring plus the macro breakdown and the rest of the screen, all one plain
     /// `List` now, so the ring scrolls away with everything else instead of sitting pinned
     /// above it. The ring's own section has no header and is stripped of the List's row
@@ -372,7 +339,6 @@ struct DailySummaryView: View {
             }
         }
         .contentMargins(.top, Self.ringTopSpacing, for: .scrollContent)
-        .contentMargins(.bottom, Self.logButtonClearance, for: .scrollContent)
         .scrollIndicators(.hidden)
     }
 
