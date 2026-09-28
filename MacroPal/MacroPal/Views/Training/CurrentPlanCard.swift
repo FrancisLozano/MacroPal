@@ -58,14 +58,14 @@ struct CurrentPlanCard: View {
                                 summary(plan: plan)
                             }
                             .buttonStyle(.plain)
+                            .accessibilityLabel("Gym Workout, \(daysPerWeek(plan.days.count))")
                             .accessibilityValue(showWeek ? "Week shown" : "Week hidden")
                             .accessibilityHint(showWeek ? "Hides the week" : "Shows the week")
-                            // The expanded week marks today and its progress, so the today line
-                            // would repeat it.
+                            // Today stays the card's main row either way; the rest of the week
+                            // opens under it.
+                            todayRow
                             if showWeek {
                                 week(plan: plan)
-                            } else {
-                                todayRow
                             }
                         }
                     }
@@ -97,7 +97,9 @@ struct CurrentPlanCard: View {
         VStack(alignment: .leading, spacing: 2) {
             Text("Gym Workout")
                 .font(.title3.bold())
-            Text(daysPerWeek(plan.days.count))
+            // The toggle says what it does, in the tint, since the card has no chevrons.
+            let toggle = Text(showWeek ? "Hide week" : "Show week").foregroundStyle(.tint)
+            Text("\(daysPerWeek(plan.days.count)) · \(toggle)")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -137,8 +139,10 @@ struct CurrentPlanCard: View {
                 .font(.title3.weight(.semibold))
             HStack(spacing: 4) {
                 if isDone {
+                    // The text says "Done"; VoiceOver needn't read the symbol's name too.
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(.green)
+                        .accessibilityHidden(true)
                 }
                 Text(status)
                     .foregroundStyle(.secondary)
@@ -173,37 +177,41 @@ struct CurrentPlanCard: View {
         return progress.exercises == 1 ? "1 exercise" : "\(progress.exercises) exercises"
     }
 
-    /// Every workout of the week under the summary, one line each ("Monday: Push"), today's in
-    /// semibold. Days so far this week end with how they went ("✓ Done", "1 of 2 done"), and
-    /// today's with where it stands ("Today · 2 exercises"); tapping one opens its exercises.
+    /// The rest of the week under today's row, a line per day in the calendar's week order:
+    /// "Tuesday: Pull", or a muted "Thursday · Rest". Days so far this week end with how they
+    /// went ("✓ Done", "1 of 2 done") and open that day's sets, to fix or add one; later days
+    /// open the workout to do today.
     private func week(plan: WorkoutPlan) -> some View {
         let calendar = Calendar.current
         let todayWeekday = calendar.component(.weekday, from: .now)
         return VStack(alignment: .leading, spacing: 0) {
-            ForEach(plan.sortedDays) { day in
-                let progress = Self.dateThisWeek(weekday: day.weekday).map { date in
-                    DayProgress(
-                        day: day,
-                        session: sessions.first { calendar.isDate($0.date, inSameDayAs: date) },
-                        bodyweightKg: weightEntries.first?.weightKg
-                    )
-                }
+            ForEach(Self.weekdaysInOrder(calendar: calendar).filter { $0 != todayWeekday }, id: \.self) { weekday in
+                let name = calendar.weekdaySymbols[weekday - 1]
                 separator
                     .padding(.vertical, 14)
-                dayLink(
-                    day,
-                    title: "\(calendar.weekdaySymbols[day.weekday - 1]): \(day.name)",
-                    progress: progress,
-                    isToday: day.weekday == todayWeekday
-                )
+                if let day = plan.day(on: weekday) {
+                    let date = Self.dateThisWeek(weekday: weekday)
+                    let progress = date.map { date in
+                        DayProgress(
+                            day: day,
+                            session: sessions.first { calendar.isDate($0.date, inSameDayAs: date) },
+                            bodyweightKg: weightEntries.first?.weightKg
+                        )
+                    }
+                    dayLink(day, title: "\(name): \(day.name)", date: date, progress: progress)
+                } else {
+                    Text("\(name) · Rest")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
     }
 
-    /// A line of the week; `progress` is how the day went, for days up to today.
-    private func dayLink(_ day: PlanDay, title: String, progress: DayProgress?, isToday: Bool) -> some View {
+    /// A line of the week; `date` and `progress` are set for days so far this week.
+    private func dayLink(_ day: PlanDay, title: String, date: Date?, progress: DayProgress?) -> some View {
         NavigationLink {
-            PlanDayDetailView(day: day)
+            PlanDayDetailView(day: day, date: date ?? .now)
         } label: {
             // At accessibility sizes the status goes under the day, not squeezed beside it.
             let stacked = dynamicTypeSize.isAccessibilitySize
@@ -212,17 +220,17 @@ struct CurrentPlanCard: View {
                 : AnyLayout(HStackLayout(spacing: 4))
             layout {
                 Text(title)
-                    .fontWeight(isToday ? .semibold : .regular)
                 if !stacked { Spacer() }
                 if let progress, progress.isComplete {
                     HStack(spacing: 4) {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundStyle(.green)
+                            .accessibilityHidden(true)
                         Text("Done")
                             .foregroundStyle(.secondary)
                     }
-                } else if let status = weekStatus(of: progress, isToday: isToday) {
-                    Text(status)
+                } else if let progress, progress.setsLogged > 0 {
+                    Text("\(progress.exercisesDone) of \(progress.exercises) done")
                         .foregroundStyle(.secondary)
                 }
             }
@@ -234,16 +242,9 @@ struct CurrentPlanCard: View {
         .buttonStyle(.plain)
     }
 
-    /// The end of a week line short of done: "1 of 2 done" for a day started, today's with
-    /// "Today · " in front ("Today · 2 exercises" before its first set); nothing for a day missed
-    /// or still to come.
-    private func weekStatus(of progress: DayProgress?, isToday: Bool) -> String? {
-        guard let progress else { return nil }
-        if progress.setsLogged > 0 {
-            let done = "\(progress.exercisesDone) of \(progress.exercises) done"
-            return isToday ? "Today · \(done)" : done
-        }
-        return isToday ? "Today · \(status(of: progress))" : nil
+    /// The seven weekdays (1 = Sunday) starting from the calendar's first day of the week.
+    static func weekdaysInOrder(calendar: Calendar = .current) -> [Int] {
+        (0..<7).map { (calendar.firstWeekday - 1 + $0) % 7 + 1 }
     }
 
     /// The date `weekday` (1 = Sunday) falls on in the week holding `now`, or `nil` when that's
@@ -273,7 +274,7 @@ struct CurrentPlanCard: View {
     }
 
     private func daysPerWeek(_ count: Int) -> String {
-        count == 1 ? "1 Day a Week" : "\(count) Days a Week"
+        count == 1 ? "1 day a week" : "\(count) days a week"
     }
 
     /// The workouts with drag handles. Drags only change the draft, so Cancel leaves the plan

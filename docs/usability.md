@@ -5,14 +5,15 @@
 
 ## Start here (as of 2026-09-27)
 
-**2026-09-28: Training tab design critique and fixes, three rounds.** Impeccable critiques of
-the Training tab scored 26/40, then 28/40 after the first round (`15e5f6b`) and 28/40 again
-after the second (`e0deae3`). The user kept the page order and "Log an unplanned workout" on
-rest days, kept the pinned title, and took every issue each round. All three rounds are built —
-see **What changed on 2026-09-28**. Not seen live yet: the rest-day today row, the + sheet on a
-rest day, the in-progress / "Done · N sets · lb" text, the ✓ on earlier days of the week (today
-in the simulator is Monday, Push, no sets) and the VoiceOver announcements (unit-tested where
-they're logic). Install on the iPhone again to get all three rounds.
+**2026-09-28: Training tab design critique and fixes, four rounds.** Impeccable critiques of
+the Training tab scored 26 → 28 (`15e5f6b`) → 28 (`e0deae3`) → 26/40 (`3abde8a`); the last dip
+was a real finding — a past ✓ Done day opened today's session — plus a stricter reviewer. The
+user kept the page order, "Log an unplanned workout" on rest days and the pinned title, and took
+every issue each round. All four rounds are built — see **What changed on 2026-09-28**. Not seen
+live yet: opening an earlier workout day of the week (its sets, its date under the title,
+logging under that date), the rest-day today row, the + sheet on a rest day, the in-progress /
+"Done · N sets · lb" text and the VoiceOver announcements (today in the simulator is Monday,
+Push, no sets; Sunday was a rest day). Install on the iPhone again to get all four rounds.
 
 **Where things stand.** Everything is committed and pushed to `origin/main` (last code
 commit `52bc9cb`, then this doc); the working tree is clean. **Nothing is being built right
@@ -544,6 +545,28 @@ issues except the title):
   as asking for it to scroll away). Added to the critique's ignore list.
 
 Checked in the simulator: light, dark, the expanded week and accessibility-extra-large text.
+
+**Fourth round** (critique 26/40; the user chose the week rows and today row first, past days
+editable, all five issues):
+
+- **An earlier day of the week opens that day.** Tapping a day so far this week opens its own
+  session: its sets show, its date sits under the title ("Tuesday, Sep 22", `navigationSubtitle`),
+  and sets added or fixed there log under that date. `PlanDayDetailView(day:date:)` passes the
+  date to `ExerciseScreen` / `ExerciseTrackView`, which already logged to a date for back-dated
+  unplanned workouts. Before, every day opened today's session — a past ✓ Done day showed 0 sets
+  and anything logged there went into today. Today's row and days still to come open today's
+  session, as before (doing another day's workout today). Rest timers don't start on their own
+  for a day other than today (this also covers back-dated unplanned workouts).
+- **Today's row stays.** "Today: Push" is the card's main row whether or not the week is open;
+  the week opens under it with the other six days in the calendar's week order
+  (`CurrentPlanCard.weekdaysInOrder`, one test), rest days as muted "Sunday · Rest" lines.
+- **The toggle says what it does.** "5 days a week · Show week" / "· Hide week", the toggle
+  words in the tint — the cue without a chevron. "Days a Week" is sentence case now.
+- **VoiceOver** no longer reads the ✓ symbols (the text says "Done"); the "Today · No exercises
+  yet" join is gone with today's line in the week.
+
+Checked in the simulator: the collapsed card, the open week with rest lines, dark mode at
+accessibility-extra-large, and today's row opening Push with no subtitle.
 
 Also noticed by the critique, not done: the set input boxes on the exercise screen are 36 pt
 tall (under 44), the rest timer's 52 pt countdown doesn't scale with text size, and

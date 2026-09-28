@@ -44,6 +44,13 @@ struct TrainingDatesTests {
         #expect(day(CurrentPlanCard.dateThisWeek(weekday: 2, now: wednesday, calendar: mondayFirst)) == 21)
     }
 
+    @Test func listsTheWeekFromTheCalendarsFirstDay() {
+        #expect(CurrentPlanCard.weekdaysInOrder(calendar: calendar) == [1, 2, 3, 4, 5, 6, 7])
+        var mondayFirst = calendar
+        mondayFirst.firstWeekday = 2
+        #expect(CurrentPlanCard.weekdaysInOrder(calendar: mondayFirst) == [2, 3, 4, 5, 6, 7, 1])
+    }
+
     @Test func saysHowLongAgoAWeighInWas() {
         let earlierToday = calendar.date(byAdding: .hour, value: -8, to: wednesday)!
         let lateYesterday = calendar.date(byAdding: .hour, value: -16, to: wednesday)!

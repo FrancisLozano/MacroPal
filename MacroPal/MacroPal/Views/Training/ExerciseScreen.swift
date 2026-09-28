@@ -20,9 +20,9 @@ struct ExerciseScreen: View {
 
     @State private var tab: Tab = .workout
 
-    init(planExercise: PlanExercise) {
+    init(planExercise: PlanExercise, date: Date = .now) {
         exercise = planExercise.exercise
-        workout = ExerciseTrackView(planExercise: planExercise)
+        workout = ExerciseTrackView(planExercise: planExercise, date: date)
     }
 
     init(exercise: Exercise, date: Date) {

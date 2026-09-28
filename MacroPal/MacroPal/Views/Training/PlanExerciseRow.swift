@@ -9,7 +9,9 @@ import SwiftUI
 /// set tracking; the ellipsis menu edits the target, moves it within the day, or removes it.
 struct PlanExerciseRow: View {
     let planExercise: PlanExercise
-    let setsLoggedToday: Int
+    /// Sets of this exercise logged on `date`.
+    let setsLogged: Int
+    let date: Date
     let canMoveUp: Bool
     let canMoveDown: Bool
     /// -1 moves up one place, +1 down.
@@ -19,13 +21,13 @@ struct PlanExerciseRow: View {
     @State private var isPresentingTargetEditor = false
 
     private var isComplete: Bool {
-        setsLoggedToday >= planExercise.targetSets
+        setsLogged >= planExercise.targetSets
     }
 
     var body: some View {
         HStack(spacing: 12) {
             NavigationLink {
-                ExerciseScreen(planExercise: planExercise)
+                ExerciseScreen(planExercise: planExercise, date: date)
             } label: {
                 HStack(spacing: 12) {
                     ExerciseThumbnail(exercise: planExercise.exercise)
@@ -43,8 +45,8 @@ struct PlanExerciseRow: View {
                                 Image(systemName: "checkmark.circle.fill")
                                     .foregroundStyle(.green)
                                     .accessibilityLabel("Done for today")
-                            } else if setsLoggedToday > 0 {
-                                Text("\(setsLoggedToday)/\(planExercise.targetSets)")
+                            } else if setsLogged > 0 {
+                                Text("\(setsLogged)/\(planExercise.targetSets)")
                                     .font(.caption.monospacedDigit())
                                     .foregroundStyle(.secondary)
                             }

@@ -40,11 +40,13 @@ struct ExerciseTrackView: View {
     /// Recorded on each logged set so Workout History can say "Pull".
     let planDayName: String?
 
-    init(planExercise: PlanExercise) {
+    /// `date` is the day whose sets these are: today, or an earlier day of the week reopened
+    /// from the Current Plan card to fix or add a set.
+    init(planExercise: PlanExercise, date: Date = .now) {
         exercise = planExercise.exercise
         self.planExercise = planExercise
         target = (planExercise.targetSets, planExercise.targetReps, planExercise.repsLabel)
-        date = .now
+        self.date = date
         planDayName = planExercise.day?.name
     }
 
@@ -97,6 +99,12 @@ struct ExerciseTrackView: View {
     private var typing: Typing? {
         guard let id = focus?.rowID, let row = rows.first(where: { $0.id == id }) else { return nil }
         return Typing(rowID: id, weight: row.weightText, reps: row.repsText)
+    }
+
+    /// Rests start on their own only for today's sets: filling in an earlier day isn't a
+    /// workout in progress.
+    private var isToday: Bool {
+        Calendar.current.isDateInToday(date)
     }
 
     private var loggedCount: Int {
@@ -362,7 +370,7 @@ struct ExerciseTrackView: View {
             )
             rows[index].saved = values
             SetRow.suggest(values, below: index, in: &rows)
-            if startsRest && autoRestTimer {
+            if startsRest && autoRestTimer && isToday {
                 restTimer.start(seconds: restSeconds)
             }
         case .update(let values):
@@ -406,6 +414,7 @@ struct ExerciseTrackView: View {
     /// the day's last (any running rest stops), and a plain one on an unplanned workout. Replaces
     /// the rest the last set's log may have just started.
     private func restAfterExercise() {
+        guard isToday else { return }
         var nextUp: String?
         if let planExercise, let day = planExercise.day {
             let todaysSets = sessions.first { Calendar.current.isDate($0.date, inSameDayAs: date) }?.setEntries ?? []

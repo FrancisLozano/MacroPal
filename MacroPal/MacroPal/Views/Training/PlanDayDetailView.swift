@@ -6,7 +6,9 @@
 import SwiftUI
 import SwiftData
 
-/// One planned workout as a list of exercises. Tap an exercise to track its sets; the ellipsis
+/// One planned workout as a list of exercises, for today or, opened from an earlier day of the
+/// week, for that day: its sets show and any added or fixed go under that day's date. Tap an
+/// exercise to track its sets; the ellipsis
 /// edits its sets × reps, moves it up or down, or removes it. When the last exercise's sets are
 /// logged, Workout Complete shows at the bottom with the day's totals.
 ///
@@ -21,30 +23,36 @@ struct PlanDayDetailView: View {
     @AppStorage(WorkoutPreferences.defaultRepsMaxKey) private var defaultRepsMax = WorkoutPreferences.defaultRepsMaxDefault
 
     let day: PlanDay
+    /// The day whose sets to show and log: today unless opened from an earlier day of the week.
+    var date: Date = .now
 
     @State private var isPresentingExercisePicker = false
     @State private var isShowingWorkoutComplete = false
 
-    private var todaysSession: WorkoutSession? {
-        sessions.first { Calendar.current.isDateInToday($0.date) }
+    private var session: WorkoutSession? {
+        sessions.first { Calendar.current.isDate($0.date, inSameDayAs: date) }
     }
 
-    private func setsLoggedToday(for planExercise: PlanExercise) -> Int {
+    private var isToday: Bool {
+        Calendar.current.isDateInToday(date)
+    }
+
+    private func setsLogged(for planExercise: PlanExercise) -> Int {
         guard let exercise = planExercise.exercise else { return 0 }
-        return todaysSession?.setEntries.filter { $0.exercise == exercise }.count ?? 0
+        return session?.setEntries.filter { $0.exercise == exercise }.count ?? 0
     }
 
-    /// Today's sets of the day's exercises.
-    private var todaysDaySets: [WorkoutSetEntry] {
+    /// The date's sets of the day's exercises.
+    private var daySets: [WorkoutSetEntry] {
         let exercises = day.exercises.compactMap(\.exercise)
-        return todaysSession?.setEntries.filter { entry in
+        return session?.setEntries.filter { entry in
             exercises.contains { $0 == entry.exercise }
         } ?? []
     }
 
-    /// Every exercise on the day has its target sets logged today.
+    /// Every exercise on the day has its target sets logged on the date.
     private var isWorkoutComplete: Bool {
-        DayProgress(day: day, session: todaysSession).isComplete
+        DayProgress(day: day, session: session).isComplete
     }
 
     var body: some View {
@@ -60,7 +68,8 @@ struct PlanDayDetailView: View {
                 ForEach(exercises) { planExercise in
                     PlanExerciseRow(
                         planExercise: planExercise,
-                        setsLoggedToday: setsLoggedToday(for: planExercise),
+                        setsLogged: setsLogged(for: planExercise),
+                        date: date,
                         canMoveUp: planExercise !== exercises.first,
                         canMoveDown: planExercise !== exercises.last,
                         onMove: { offset in
@@ -81,9 +90,11 @@ struct PlanDayDetailView: View {
             .padding()
         }
         .navigationTitle(day.name)
+        // An earlier day says which, so its sets aren't taken for today's.
+        .navigationSubtitle(isToday ? "" : date.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))
         .safeAreaInset(edge: .bottom) {
             if isShowingWorkoutComplete {
-                let sets = todaysDaySets
+                let sets = daySets
                 WorkoutCompleteCard(
                     exercises: Set(sets.compactMap { $0.exercise?.persistentModelID }).count,
                     sets: sets.count,
