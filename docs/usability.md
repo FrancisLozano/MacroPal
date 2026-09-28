@@ -169,9 +169,9 @@ The week of real use and the threshold tuning were closed on 2026-09-27 at the u
 
 1. ~~**Reminders**~~ — **built 2026-09-27**, see **What changed on 2026-09-27**. Profile →
    Reminders; steps and weight default to 9 PM, food to the end of each meal's time frame.
-2. **Primary muscle's level on the exercise Progress tab**: Beginner → Novice → … for the
-   exercise's primary muscle(s), like the body-map muscle detail (current level, volume, bar
-   to the next level).
+2. ~~**Primary muscle's level on the exercise Progress tab**~~ — **built 2026-09-27**, see
+   **What changed on 2026-09-27**. A Muscle Level section per primary muscle, tap for the
+   muscle detail.
 3. **Starting point from months trained** (P2), when wanted: needs a stored start credit (an
    optional field, no versioned schema) and a place to enter it; the tenure cap still applies,
    so decide first whether the months also count as time trained.
@@ -460,6 +460,21 @@ Nutrition. 2026-09-23 closed the last two P3s and the outstanding re-checks; in 
 the user logged the first Training suggestions and the layout ones were built.
 
 ### What changed on 2026-09-27
+
+**Primary muscle's level on Progress.** An exercise's **Progress** tab has a **Muscle Level**
+section under the total volume — one row per primary muscle (Muscle Levels when there are
+several), each with the same summary the body map's muscle detail shows: "● Beginner →
+Novice", volume moved of what the next level needs and how much to go, the bar, and the
+time note ("Novice also needs training until Oct 12."). The level counts **every exercise**
+that works the muscle, as on the body map, not just this one. Tapping a row opens that
+muscle's detail sheet (where the volume came from). It shows even before this exercise has
+sets ("Not trained yet", or the level other exercises have built), under the No Sets Yet
+card. The summary is now its own view, `MuscleLevelSummary`, shared with `MuscleDetailView`;
+building `LoggedSet`s from sessions moved from `BodyMapCard` to `LoggedSet.all(in:)` (one new
+test). Checked in the simulator on Single-Arm Triceps Extension: empty → Not trained yet;
+one 30 × 10 set → Beginner → Novice, 300 of 20,430 lb; row opens the detail; after deleting
+the day (sections change shape) the row still opens it — the List button
+detachment problem didn't show here.
 
 **Log reminders.** Profile → **Reminders** ("Log Reminders", summary "Off" or the ones that are
 on) has a switch per reminder — **Steps**, **Weight**, **Breakfast**, **Lunch**, **Dinner** — and a
@@ -853,7 +868,7 @@ actually improving or just accumulating complaints.
 | Dislikes | 18 |
 | Suggestions | 34 |
 | Triaged (in Backlog) | 70 |
-| Done | 64 |
+| Done | 65 |
 | No change needed | 2 |
 | Won't Fix | 2 |
 
@@ -930,7 +945,7 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P2 | Starting point for past training: enter roughly how many months you've trained, and each muscle is credited a starting volume from the current plan and bodyweight, so levels don't start at zero. Needs a stored start credit (optional field, no versioned schema) and a place to enter it | Suggestions → Training (2026-09-25, starting-point flow) + Dislikes → Training (2026-09-25, 3 weeks of missing lifts) | Triaged |
 | P2 | "Same as last time" on a meal: re-log the foods from the last day that meal (Breakfast / Lunch / Dinner) was logged | Suggestions → Training, Nutrition (2026-09-25, "Same as last time", meal half) | Done 2026-09-27 — a **Same as Last Time** row at the top of Choose Food → History (see What changed on 2026-09-27) |
 | P2 | Reminder notifications for steps, food and weight (a daily nudge at a time you pick, skipped if you already logged). Steps and weight default to 9 PM, food to the end of each meal's time frame | Suggestions → General UI (2026-09-27) | Done 2026-09-27 — Profile → Reminders (see What changed on 2026-09-27) |
-| P2 | The primary muscle's level (Beginner → Novice → …) on each exercise's Progress tab | Parked follow-ups (per-lift goal), clarified 2026-09-27 | Triaged |
+| P2 | The primary muscle's level (Beginner → Novice → …) on each exercise's Progress tab | Parked follow-ups (per-lift goal), clarified 2026-09-27 | Done 2026-09-27 — a Muscle Level section on Progress (see What changed on 2026-09-27) |
 | P3 | Water tracking, then a water reminder | Suggestions → General UI (2026-09-27, water half) | Won't Fix — logged by accident (user, 2026-09-27) |
 | P2 | Swipeable steps history like Health's: Day / Week / Month, swipe between periods, bar chart and the period's total. Today tapping the steps value opens a history + chart, so this reworks that screen | Suggestions → Goals (2026-09-27) | Done 2026-09-27 — D / W / M on the Steps screen (see What changed on 2026-09-27) |
 | P3 | "Same as last time" on a workout | Suggestions → Training, Nutrition (2026-09-25, "Same as last time", workout half) | No change needed — the gray suggestions in each row are last session's numbers, and Complete Exercise logs any untouched rows at them (`ExerciseTrackView.complete()`), so one tap already does it |
