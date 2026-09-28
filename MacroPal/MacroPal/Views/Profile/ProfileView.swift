@@ -39,6 +39,9 @@ private struct ProfileOverview: View {
     @AppStorage(WorkoutPreferences.defaultRepsMaxKey) private var defaultRepsMax = WorkoutPreferences.defaultRepsMaxDefault
     @AppStorage(WorkoutPreferences.restSecondsKey) private var restSeconds = WorkoutPreferences.restSecondsDefault
     @AppStorage(WorkoutPreferences.autoRestTimerKey) private var autoRestTimer = WorkoutPreferences.autoRestTimerDefault
+    /// Read when the list appears (including on coming back from Reminders) rather than one
+    /// `@AppStorage` per reminder.
+    @State private var enabledReminders: [Reminder] = []
 
     private let viewModel = ProfileViewModel()
 
@@ -77,6 +80,18 @@ private struct ProfileOverview: View {
                             restSeconds: restSeconds,
                             autoRest: autoRestTimer
                         )
+                    )
+                }
+            }
+
+            Section("Reminders") {
+                NavigationLink {
+                    RemindersSettingsView()
+                } label: {
+                    summaryRow(
+                        "Log Reminders",
+                        systemImage: "bell",
+                        detail: viewModel.remindersSummary(enabled: enabledReminders)
                     )
                 }
             }
@@ -130,6 +145,9 @@ private struct ProfileOverview: View {
                     Label("Acknowledgements", systemImage: "heart.text.square")
                 }
             }
+        }
+        .onAppear {
+            enabledReminders = Reminder.allCases.filter { $0.isEnabled(in: .standard) }
         }
     }
 

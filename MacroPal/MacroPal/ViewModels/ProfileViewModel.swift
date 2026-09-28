@@ -41,6 +41,12 @@ final class ProfileViewModel {
         return [order, target, rest].joined(separator: " · ")
     }
 
+    /// The Reminders row's summary: "Off", or the reminders that are on — "Steps, Weight,
+    /// Dinner".
+    func remindersSummary(enabled: [Reminder]) -> String {
+        enabled.isEmpty ? "Off" : enabled.map(\.title).joined(separator: ", ")
+    }
+
     /// The Daily Targets row's summary: "2,000 kcal · 150P · 200C · 65F".
     func targetsSummary(calorieTarget: Int, proteinTargetG: Int, carbTargetG: Int, fatTargetG: Int) -> String {
         "\(calorieTarget.formatted()) kcal · \(proteinTargetG)P · \(carbTargetG)C · \(fatTargetG)F"

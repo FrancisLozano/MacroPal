@@ -48,6 +48,8 @@ struct MacroPalApp: App {
     /// reference to its delegate.
     private let notificationDelegate = RestNotificationDelegate()
 
+    @Environment(\.scenePhase) private var scenePhase
+
     init() {
         UNUserNotificationCenter.current().delegate = notificationDelegate
     }
@@ -57,5 +59,13 @@ struct MacroPalApp: App {
             RootView()
         }
         .modelContainer(sharedModelContainer)
+        // Rebuild the log reminders on the way in and out, so anything logged since the last
+        // time is skipped and the week ahead stays filled (see `ReminderScheduler`).
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active || phase == .background else { return }
+            Task {
+                await ReminderScheduler.reschedule(in: sharedModelContainer.mainContext)
+            }
+        }
     }
 }
