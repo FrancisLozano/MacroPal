@@ -17,6 +17,7 @@ struct CurrentPlanCard: View {
     @AppStorage(WeightUnit.storageKey) private var unit: WeightUnit = .lb
 
     @AppStorage("trainingShowWeek") private var showWeek = false
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var isPresentingRoutineEditor = false
     @State private var isPresentingUnplannedWorkout = false
     /// The workouts in their new order while reordering; `nil` when not reordering.
@@ -131,8 +132,9 @@ struct CurrentPlanCard: View {
 
     private func todayLabel(title: String, status: String, isDone: Bool) -> some View {
         VStack(alignment: .leading, spacing: 2) {
+            // As large as the card's heading: today's workout is what the page is opened for.
             Text(title)
-                .font(.body.weight(.semibold))
+                .font(.title3.weight(.semibold))
             HStack(spacing: 4) {
                 if isDone {
                     Image(systemName: "checkmark.circle.fill")
@@ -172,52 +174,86 @@ struct CurrentPlanCard: View {
     }
 
     /// Every workout of the week under the summary, one line each ("Monday: Push"), today's in
-    /// semibold with its progress at the end ("Today", "1 of 2 done", "✓ Done"); tapping one
-    /// opens its exercises.
+    /// semibold. Days so far this week end with how they went ("✓ Done", "1 of 2 done"), and
+    /// today's with where it stands ("Today · 2 exercises"); tapping one opens its exercises.
     private func week(plan: WorkoutPlan) -> some View {
-        let todayWeekday = Calendar.current.component(.weekday, from: .now)
+        let calendar = Calendar.current
+        let todayWeekday = calendar.component(.weekday, from: .now)
         return VStack(alignment: .leading, spacing: 0) {
             ForEach(plan.sortedDays) { day in
+                let progress = Self.dateThisWeek(weekday: day.weekday).map { date in
+                    DayProgress(
+                        day: day,
+                        session: sessions.first { calendar.isDate($0.date, inSameDayAs: date) },
+                        bodyweightKg: weightEntries.first?.weightKg
+                    )
+                }
                 separator
                     .padding(.vertical, 14)
                 dayLink(
                     day,
-                    title: "\(Calendar.current.weekdaySymbols[day.weekday - 1]): \(day.name)",
-                    today: day.weekday == todayWeekday ? todaysProgress(day) : nil
+                    title: "\(calendar.weekdaySymbols[day.weekday - 1]): \(day.name)",
+                    progress: progress,
+                    isToday: day.weekday == todayWeekday
                 )
             }
         }
     }
 
-    /// A line of the week; `today` is the day's progress when it's today's line.
-    private func dayLink(_ day: PlanDay, title: String, today: DayProgress?) -> some View {
+    /// A line of the week; `progress` is how the day went, for days up to today.
+    private func dayLink(_ day: PlanDay, title: String, progress: DayProgress?, isToday: Bool) -> some View {
         NavigationLink {
             PlanDayDetailView(day: day)
         } label: {
-            HStack(spacing: 4) {
+            // At accessibility sizes the status goes under the day, not squeezed beside it.
+            let stacked = dynamicTypeSize.isAccessibilitySize
+            let layout = stacked
+                ? AnyLayout(VStackLayout(alignment: .leading, spacing: 2))
+                : AnyLayout(HStackLayout(spacing: 4))
+            layout {
                 Text(title)
-                    .fontWeight(today == nil ? .regular : .semibold)
-                Spacer()
-                if let today {
-                    if today.isComplete {
+                    .fontWeight(isToday ? .semibold : .regular)
+                if !stacked { Spacer() }
+                if let progress, progress.isComplete {
+                    HStack(spacing: 4) {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundStyle(.green)
                         Text("Done")
                             .foregroundStyle(.secondary)
-                    } else if today.setsLogged > 0 {
-                        Text("Today · \(today.exercisesDone) of \(today.exercises) done")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        Text("Today")
-                            .foregroundStyle(.secondary)
                     }
+                } else if let status = weekStatus(of: progress, isToday: isToday) {
+                    Text(status)
+                        .foregroundStyle(.secondary)
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .font(.subheadline)
             .contentShape(Rectangle())
             .accessibilityElement(children: .combine)
         }
         .buttonStyle(.plain)
+    }
+
+    /// The end of a week line short of done: "1 of 2 done" for a day started, today's with
+    /// "Today · " in front ("Today · 2 exercises" before its first set); nothing for a day missed
+    /// or still to come.
+    private func weekStatus(of progress: DayProgress?, isToday: Bool) -> String? {
+        guard let progress else { return nil }
+        if progress.setsLogged > 0 {
+            let done = "\(progress.exercisesDone) of \(progress.exercises) done"
+            return isToday ? "Today · \(done)" : done
+        }
+        return isToday ? "Today · \(status(of: progress))" : nil
+    }
+
+    /// The date `weekday` (1 = Sunday) falls on in the week holding `now`, or `nil` when that's
+    /// still to come, so the week only reports on days that have happened.
+    static func dateThisWeek(weekday: Int, now: Date = .now, calendar: Calendar = .current) -> Date? {
+        guard let week = calendar.dateInterval(of: .weekOfYear, for: now) else { return nil }
+        let offset = (weekday - calendar.component(.weekday, from: week.start) + 7) % 7
+        guard let date = calendar.date(byAdding: .day, value: offset, to: week.start),
+              calendar.startOfDay(for: date) <= calendar.startOfDay(for: now) else { return nil }
+        return date
     }
 
     /// A 1-pt line rather than `Divider()`: the system hairline blurs away at some row

@@ -25,6 +25,12 @@ struct MuscleLevelInfoView: View {
         "Five years or more of hard, consistent work.",
     ]
 
+    /// "3 sets of 10 at 100 lb is 3,000 lb", in the user's unit.
+    private var volumeExample: String {
+        let (weight, total) = unit == .kg ? (50, 1_500) : (100, 3_000)
+        return "3 sets of 10 at \(weight) \(unit.symbol) is \(total.formatted()) \(unit.symbol)."
+    }
+
     private var bodyweightKg: Double? { weightEntries.first?.weightKg }
 
     private var sexFactor: Double {
@@ -37,7 +43,7 @@ struct MuscleLevelInfoView: View {
                 Section {
                     Text("Each muscle's color is its level. To move up, a muscle needs both:")
                     Label {
-                        Text("**Volume.** Everything it has moved — weight × reps over every set, ever — compared with your bodyweight. 3 sets of 10 at 100 lb is 3,000 lb. Muscles that only assist get part of the credit.")
+                        Text("**Volume.** Everything it has moved — weight × reps over every set, ever — compared with your bodyweight. \(volumeExample) Muscles that only assist get part of the credit.")
                     } icon: {
                         Image(systemName: "scalemass")
                     }

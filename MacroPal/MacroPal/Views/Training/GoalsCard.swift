@@ -19,7 +19,6 @@ struct GoalsCard: View {
     @State private var isPresentingLogStepsSheet = false
 
     private let stepsViewModel = StepsViewModel()
-    @ScaledMetric private var logCircleDiameter: CGFloat = 30
 
     private var profile: UserProfile? { profiles.first }
 
@@ -60,21 +59,24 @@ struct GoalsCard: View {
         }
     }
 
-    /// The latest weigh-in against the goal weight ("227 → 154.3 lb"), read like the steps row;
-    /// just the goal before the first weigh-in. The row, caption and all, opens the weight history.
+    /// The latest weigh-in against the goal weight ("227 → 154.3 lb") under when it was taken
+    /// ("Weighed 3 days ago"), so an old number doesn't pass for today's; just the goal before
+    /// the first weigh-in. The row, caption and all, opens the weight history.
     private var weightRow: some View {
         let latest = weightEntries.max { $0.date < $1.date }
-        let current = latest.map { unit.formatted(fromKg: $0.weightKg) }
+        let current = latest.map { unit.formattedLift(fromKg: $0.weightKg) }
+        let age = latest.map { Self.age(of: $0.date) }
         return HStack {
-            historyLink(caption: current == nil ? "Goal weight" : "Weight") {
+            historyLink(caption: age.map { "Weighed \($0)" } ?? "Goal weight") {
                 WeightHistoryView()
             } value: {
                 Text(current ?? goalText)
                     .font(.title3.bold())
-                Text(current == nil ? unit.symbol : "→ \(goalText) \(unit.symbol)")
+                // No-break spaces keep the goal and its unit together when the text wraps.
+                Text(current == nil ? unit.symbol : "→\u{00A0}\(goalText)\u{00A0}\(unit.symbol)")
                     .foregroundStyle(.secondary)
             }
-            .accessibilityLabel(current.map { "Weight \($0) \(unit.symbol), goal \(goalText). Weight history" }
+            .accessibilityLabel(current.map { "Weight \($0) \(unit.symbol), weighed \(age ?? ""), goal \(goalText). Weight history" }
                 ?? "Goal weight \(goalText) \(unit.symbol). Weight history")
             logButton("Log weight") { isPresentingLogWeightSheet = true }
         }
@@ -128,11 +130,7 @@ struct GoalsCard: View {
     /// A small gray circle with a +, in a 44-pt hit area so it's easy to hit one-handed.
     private func logButton(_ accessibilityLabel: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: "plus")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Color.accentColor)
-                .frame(width: logCircleDiameter, height: logCircleDiameter)
-                .background(Color(.tertiarySystemFill), in: Circle())
+            PlusCircle()
                 .frame(minWidth: 44, minHeight: 44)
                 .contentShape(Rectangle())
         }
@@ -142,7 +140,19 @@ struct GoalsCard: View {
 
     private var goalText: String {
         guard let profile else { return "—" }
-        return unit.formatted(fromKg: profile.goalWeightKg)
+        return unit.formattedLift(fromKg: profile.goalWeightKg)
+    }
+
+    /// How long ago `date` was, in whole calendar days: "today", "yesterday", "3 days ago".
+    static func age(of date: Date, now: Date = .now, calendar: Calendar = .current) -> String {
+        let days = calendar.dateComponents(
+            [.day], from: calendar.startOfDay(for: date), to: calendar.startOfDay(for: now)
+        ).day ?? 0
+        switch days {
+        case ...0: return "today"
+        case 1: return "yesterday"
+        default: return "\(days) days ago"
+        }
     }
 }
 

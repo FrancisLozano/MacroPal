@@ -35,6 +35,21 @@ struct TrainingSection<Accessory: View, Content: View>: View {
     static var cardBackground: Color { Color(.secondarySystemGroupedBackground) }
 }
 
+/// The Training page's + for logging something: an accent plus on a small gray circle, growing
+/// with the text size. The Goals rows and "Log an Unplanned Workout" share it, so every + on
+/// the page looks the same.
+struct PlusCircle: View {
+    @ScaledMetric private var diameter: CGFloat = 30
+
+    var body: some View {
+        Image(systemName: "plus")
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(Color.accentColor)
+            .frame(width: diameter, height: diameter)
+            .background(Color(.tertiarySystemFill), in: Circle())
+    }
+}
+
 extension View {
     /// A heading button's icon (the ⓘ, the ⋯) with a 44-pt hit area around it, kept right-aligned
     /// and without making the heading taller. Goes on the button's label: a frame outside a

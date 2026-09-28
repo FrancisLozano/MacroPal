@@ -54,14 +54,14 @@ struct TrainingView: View {
             Button {
                 isPresentingLogWorkoutSheet = true
             } label: {
-                HStack(spacing: 12) {
-                    Image(systemName: "plus.circle")
-                        .foregroundStyle(Color.accentColor)
-                        .frame(width: 20)
+                // Baseline-aligned, so the + stays by the first line when the text wraps.
+                HStack(alignment: .firstTextBaseline, spacing: 12) {
+                    PlusCircle()
                     Text("Log an Unplanned Workout")
                     Spacer()
                 }
-                .padding()
+                .padding(.horizontal)
+                .padding(.vertical, 12)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
