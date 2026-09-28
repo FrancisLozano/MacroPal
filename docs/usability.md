@@ -301,6 +301,11 @@ Both messages were checked by forcing the first attempt to fail with a temporary
 
 ## Decisions worth remembering
 
+- **The Nutrition ring keeps its ⟳ eaten ↔ goal toggle** (2026-09-27). A design critique
+  flagged that the ring never shows calories left; two replacements were built — "of 2,000 kcal
+  · 1,342 left", then "1,342 kcal left" with a "2,000" mark under the arc — and the user
+  rejected both: the original looks better and pressing the button is enjoyable. Reverted;
+  only the red over-goal lap was kept. Don't re-propose calories left on the ring.
 - **The Daily Log keeps color to the macros** (2026-09-25). The calories bar was split into
   light / mid / dark blue by meal, with a matching dot beside each meal heading; the user found
   it too busy next to the orange / green / purple macro bars, so the bar went back to solid
@@ -460,6 +465,12 @@ Nutrition. 2026-09-23 closed the last two P3s and the outstanding re-checks; in 
 the user logged the first Training suggestions and the layout ones were built.
 
 ### What changed on 2026-09-27
+
+**Red lap past the calorie goal.** On the Nutrition ring, calories past the goal are drawn as a
+red second lap from the ring's left end (like an Activity ring), capped at double the goal;
+before, the ring just stopped at full and only the "kcal eaten" caption turned red. Everything
+else is unchanged. Checked in the simulator in light and dark mode with a temporary 500 kcal
+goal (658 eaten → red over the first third).
 
 **Past training.** Profile → Workout → **Past Training** (summary "Start over", "1 year",
 "2 years 3 months") offers **Start Over** — levels come only from sets logged in MacroPal, the

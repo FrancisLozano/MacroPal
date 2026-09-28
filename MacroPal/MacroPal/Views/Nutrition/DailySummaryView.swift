@@ -515,12 +515,23 @@ struct DailySummaryView: View {
             segments = [(Self.soloColor, fraction)]
         }
 
+        // Past the goal the ring is already full, so the overshoot is drawn as a second lap
+        // from the start, the way an Activity ring keeps going. Red, like the over-goal
+        // caption; capped at one extra lap (double the goal).
+        let overFraction = target > 0 ? min(1, max(0, totals.calories / target - 1)) : 0
+
         return ZStack {
             Circle()
                 .trim(from: 0, to: 0.5)
                 .stroke(Color.secondary.opacity(0.15), style: StrokeStyle(lineWidth: Self.ringLineWidth, lineCap: .round))
                 .rotationEffect(.degrees(180))
             halfRingSegments(segments)
+            if overFraction > 0 {
+                Circle()
+                    .trim(from: 0, to: overFraction * 0.5)
+                    .stroke(Color.red, style: StrokeStyle(lineWidth: Self.ringLineWidth, lineCap: .round))
+                    .rotationEffect(.degrees(180))
+            }
         }
         // A Circle sized to fill its frame gets stroked lineWidth/2 *past* that frame's
         // edge on every side. Insetting by lineWidth/2 here shrinks the circle so the
