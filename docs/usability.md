@@ -466,6 +466,13 @@ the user logged the first Training suggestions and the layout ones were built.
 
 ### What changed on 2026-09-27
 
+**Past days no longer say "today"; Today button.** On the Nutrition screen the meals header
+reads "Logged Today" only on today and the weekday otherwise ("Logged Saturday", matching the
+day name above the week strip); an empty meal card says "Nothing logged yet" on today and
+"Nothing logged" on other days. Away from today, a **Today** button sits to the right of the
+Nutrition title and jumps straight back (the week strip slides like any jump); on today it's
+hidden. Checked in the simulator: today, Sat 26 (empty), and tapping Today from Sat 26.
+
 **Week strip readable at large text sizes.** On the Nutrition screen, the day circles were a
 fixed 32 pt, so at accessibility text sizes every date became "…". The circle now grows with
 the text size (`@ScaledMetric`, `dayCircleDiameter`) up to 44 pt — about as wide as seven

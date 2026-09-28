@@ -97,10 +97,20 @@ struct DailySummaryView: View {
     /// original date navigator). A plain stack above the List never has that problem.
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Nutrition")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .padding(.horizontal)
+            HStack(alignment: .firstTextBaseline) {
+                Text("Nutrition")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                Spacer()
+                // Only away from today: one tap back, however many weeks the chevrons,
+                // swipes or calendar have moved. The week strip slides back like any jump.
+                if !isToday {
+                    Button("Today") {
+                        selectedDate = Calendar.current.startOfDay(for: .now)
+                    }
+                }
+            }
+            .padding(.horizontal)
 
             dateChevronRow
             weekStrip
@@ -340,14 +350,14 @@ struct DailySummaryView: View {
                     .listRowInsets(EdgeInsets())
             } header: {
                 HStack {
-                    Text("Logged Today")
+                    Text(isToday ? "Logged Today" : "Logged \(selectedDate.formatted(.dateTime.weekday(.wide)))")
                     Spacer()
                     Button {
                         isPresentingMealInfo = true
                     } label: {
                         Image(systemName: "info.circle")
                     }
-                    .accessibilityLabel("About Logged Today")
+                    .accessibilityLabel("About meals")
                     .textCase(nil)
                     .popover(isPresented: $isPresentingMealInfo) {
                         Text("Log food under whichever card matches when you actually ate — not necessarily right now. Breakfast, Lunch, and Dinner together cover the whole day, so a snack at 4 PM still counts under Lunch and a meal after 9 PM still counts under Dinner. The card shown here just defaults to the current time; swipe to pick a different one.")
@@ -467,11 +477,11 @@ struct DailySummaryView: View {
         .contentShape(Rectangle())
     }
 
-    /// "Nothing logged today" when empty, the food's name for a single entry, or the first
+    /// "Nothing logged yet" (today) or "Nothing logged" (another day) when empty, the food's name for a single entry, or the first
     /// entry's name plus a "and N more" count once there's more than one.
     private func foodSummary(for entries: [FoodEntry]) -> String {
         guard let first = entries.first else {
-            return "Nothing logged today"
+            return isToday ? "Nothing logged yet" : "Nothing logged"
         }
         let additional = entries.count - 1
         guard additional > 0 else {
