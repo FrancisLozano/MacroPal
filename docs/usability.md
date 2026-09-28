@@ -48,7 +48,7 @@ that *is* the workout "Same as last time". The starting point will be **months t
 (not a level per muscle, not back-filled sessions). Body-map zoom is not built; the title
 menu in the muscle detail covers missed taps.
 
-**Check on the iPhone after installing:**
+**Check on the iPhone after installing** — all checked on 2026-09-27 after reinstalling; fine:
 - **Automatic Rest Timer** — the new default (on) only applies if the switch was never
   touched; a stored choice wins. If the timer doesn't start after a set, turn it on in
   Profile → Workout.
@@ -155,25 +155,26 @@ movement family; the user does the one in front of the body, not overhead.
   up weekdays and day counts, and couldn't spot off-topic messages. So anything the text says
   plainly is read in code (`MessageCues`), with the model as the fallback — keep new rules
   there, with a test, rather than only tweaking the prompt.
+- **Changing an app preference from outside** (e.g. a reminder time for a quick test): the
+  simulator caches preferences, so writing the plist alone isn't seen. Terminate the app, then
+  `xcrun simctl spawn <id> defaults write com.francislozano.MacroPal <key> -int <value>`, then
+  launch. Reminder scheduling is logged under category `Reminders`.
 - Model failures are logged: `xcrun simctl spawn booted log show --last 5m --predicate
   'subsystem == "com.francislozano.MacroPal" AND category == "RoutineAssistant"' --info`.
 
-## Next tasks (as of 2026-09-25)
+## Next tasks (as of 2026-09-27)
 
-1. **Use the app for a week on the iPhone (2026-09-24 → 09-30)** and log what you notice — see
-   **A week of real use** below. On 09-30, ask for "triage the week".
-2. **Tune the volume thresholds** once real weeks are logged: `MuscleLevelEngine.levelMinimumBodyweights`
-   (90 / 600 / 2,500 / 7,500 / 15,000 bodyweights), the tenure months, and the bodyweight shares
-   in `ExerciseMuscleData.swift` (including the new adductor credits). The ⓘ sheet follows the
-   constants.
-3. **Keep logging** Likes / Dislikes / Suggestions during the week of use below, then triage
-   them at the end of the week — including how Edit Routine by message does with your own
-   wording (note the exact message and what it filled in).
-4. **Remaining P2s**, when wanted: reminder notifications (steps / food / weight)
-   (from 09-27); a starting point from months trained
-   (needs a stored start credit — an optional field, no versioned schema — and a place to
-   enter it; the tenure cap still applies, so decide whether the months also count as time
-   trained). "Same as last time" on a meal was built 2026-09-27.
+The week of real use and the threshold tuning were closed on 2026-09-27 at the user's request
+("that is enough from what I have"), and the post-install iPhone checks are done — all fine.
+
+1. ~~**Reminders**~~ — **built 2026-09-27**, see **What changed on 2026-09-27**. Profile →
+   Reminders; steps and weight default to 9 PM, food to the end of each meal's time frame.
+2. **Primary muscle's level on the exercise Progress tab**: Beginner → Novice → … for the
+   exercise's primary muscle(s), like the body-map muscle detail (current level, volume, bar
+   to the next level).
+3. **Starting point from months trained** (P2), when wanted: needs a stored start credit (an
+   optional field, no versioned schema) and a place to enter it; the tenure cap still applies,
+   so decide first whether the months also count as time trained.
 
 **Small leftovers:**
 - Food logged as **Snack** before 2026-09-25 still exists (the case stays in `MealType` so it
@@ -187,6 +188,8 @@ movement family; the user does the one in front of the body, not overhead.
   The rule itself is gone.
 
 ## A week of real use (2026-09-24 → 2026-09-30)
+
+**Closed early on 2026-09-27 at the user's request** — kept for reference only.
 
 The raw log went from 2026-09-08 to 2026-09-23 without an entry, and everything in between was
 built from those entries. This week is for collecting the next round.
@@ -270,8 +273,9 @@ a screenshot or sketch works best, as with the whiteboard for Training.
 
 ### Parked follow-ups (not yet triaged)
 
-- A per-lift goal you set yourself on Exercise Progress (needs a new model field — optional
-  or defaulted where it's declared, so no versioned schema is needed).
+The rest of this list was dropped on 2026-09-27 (the user doesn't need them); the per-lift goal
+became Next task 2 (the primary muscle's level on Progress).
+
 - **Your own photo for exercises without a drawing** (user, 2026-09-23: later). Tap the empty
   image spot on the Workout tab to take or pick a photo, saved on the exercise (a new
   optional field, so no versioned schema). Would cover the 9 starters with no drawing —
@@ -280,18 +284,6 @@ a screenshot or sketch works best, as with the whiteboard for Training.
   exercise you create. Checked first: Everkinetic has no chest-supported row; wger's
   "Incline Chest-Supported Dumbbell Row" image is tagged CC BY-SA 4.0 but sourced from a
   blog by someone else, so its rights are unclear and it wasn't used.
-- **"Today" doesn't refresh at midnight.** The Current Plan card works out today's workout
-  when it's drawn; left open on the Training tab past midnight it shows yesterday's until it
-  redraws (switch tabs). Offered, not requested; a fix would redraw on the day changing.
-- HealthKit step import (now possible — the app runs on the user's iPhone — needs
-  permissions).
-- Default Time from the Workout settings reference screenshot (only once timed exercises
-  exist).
-- Bring back RPE / session notes for unplanned workouts, if they're missed.
-- Not checked yet: the rest timer ending while the unplanned-workout sheet is open, and the
-  rest notification on the lock screen of a real iPhone.
-- Portfolio extras: move the Backlog to GitHub Issues if it grows again (SPEC.md §7 suggests
-  it).
 
 ### Watch for: the store retry at launch
 
@@ -468,6 +460,21 @@ Nutrition. 2026-09-23 closed the last two P3s and the outstanding re-checks; in 
 the user logged the first Training suggestions and the layout ones were built.
 
 ### What changed on 2026-09-27
+
+**Log reminders.** Profile → **Reminders** ("Log Reminders", summary "Off" or the ones that are
+on) has a switch per reminder — **Steps**, **Weight**, **Breakfast**, **Lunch**, **Dinner** — and a
+time under each once it's on. Defaults: steps and weight 9:00 PM; each meal the end of its time
+frame (10:00 AM, 5:00 PM, 11:59 PM). All off until turned on; turning one on asks for
+notification permission, and if notifications are denied the page says so with an Open
+Settings button. A reminder is **skipped on a day that's already logged** (steps > 0, a
+weigh-in, or any food under that meal). Since a repeating notification can't skip a day, each
+reminder gets a one-off notification for each of the next 7 days, rebuilt whenever the app
+opens or goes to the background (so logging needs no hooks) and when a setting changes —
+opening the app once a week keeps them coming. `Reminder` (keys, defaults, copy),
+`ReminderScheduler.plan` (pure, tested) and `reschedule`, `RemindersSettingsView`; failures and
+counts go to the log (category `Reminders`). Six new tests. Checked in the simulator: the page,
+Steps on showing 21:00, and a "Log your steps — Add today's step count before the day ends."
+banner firing on time with the app in the background (then turned back off).
 
 **Steps by day / week / month.** The Steps screen (tap the steps value on the Goals card) has
 **D / W / M** in place of 7 Days / 30 Days. Below it, a strip of calendar periods you swipe
@@ -845,10 +852,10 @@ actually improving or just accumulating complaints.
 | Likes | 1 |
 | Dislikes | 18 |
 | Suggestions | 34 |
-| Triaged (in Backlog) | 69 |
-| Done | 63 |
+| Triaged (in Backlog) | 70 |
+| Done | 64 |
 | No change needed | 2 |
-| Won't Fix | 1 |
+| Won't Fix | 2 |
 
 ## Backlog (triaged)
 
@@ -922,8 +929,9 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P2 | Progress bar toward each muscle's next level, in volume — in the muscle detail above: "Beginner → Novice", "3,135 of 20,430 lb", "17,295 lb to go", a bar in the next level's color measured from the current level's start, and a line when time also holds it back ("Novice also needs training until Oct 8", or "Volume reached…" once the bar is full). `MuscleLevelEngine.progress(for:…)` / `MuscleProgress`, 5 new `MuscleLevelEngineTests` (incl. tap hit-testing) | Suggestions → Training (2026-09-25, progress bar) | Done (3059d43) — checked in the simulator 2026-09-25 |
 | P2 | Starting point for past training: enter roughly how many months you've trained, and each muscle is credited a starting volume from the current plan and bodyweight, so levels don't start at zero. Needs a stored start credit (optional field, no versioned schema) and a place to enter it | Suggestions → Training (2026-09-25, starting-point flow) + Dislikes → Training (2026-09-25, 3 weeks of missing lifts) | Triaged |
 | P2 | "Same as last time" on a meal: re-log the foods from the last day that meal (Breakfast / Lunch / Dinner) was logged | Suggestions → Training, Nutrition (2026-09-25, "Same as last time", meal half) | Done 2026-09-27 — a **Same as Last Time** row at the top of Choose Food → History (see What changed on 2026-09-27) |
-| P2 | Reminder notifications for steps, food and weight (a daily nudge at a time you pick, skipped if you already logged) | Suggestions → General UI (2026-09-27) | Triaged |
-| P3 | Water tracking, then a water reminder — the app has no water logging yet, so the reminder waits on it | Suggestions → General UI (2026-09-27, water half) | Triaged |
+| P2 | Reminder notifications for steps, food and weight (a daily nudge at a time you pick, skipped if you already logged). Steps and weight default to 9 PM, food to the end of each meal's time frame | Suggestions → General UI (2026-09-27) | Done 2026-09-27 — Profile → Reminders (see What changed on 2026-09-27) |
+| P2 | The primary muscle's level (Beginner → Novice → …) on each exercise's Progress tab | Parked follow-ups (per-lift goal), clarified 2026-09-27 | Triaged |
+| P3 | Water tracking, then a water reminder | Suggestions → General UI (2026-09-27, water half) | Won't Fix — logged by accident (user, 2026-09-27) |
 | P2 | Swipeable steps history like Health's: Day / Week / Month, swipe between periods, bar chart and the period's total. Today tapping the steps value opens a history + chart, so this reworks that screen | Suggestions → Goals (2026-09-27) | Done 2026-09-27 — D / W / M on the Steps screen (see What changed on 2026-09-27) |
 | P3 | "Same as last time" on a workout | Suggestions → Training, Nutrition (2026-09-25, "Same as last time", workout half) | No change needed — the gray suggestions in each row are last session's numbers, and Complete Exercise logs any untouched rows at them (`ExerciseTrackView.complete()`), so one tap already does it |
 | P3 | Complete Exercise not tappable until every set is logged | Suggestions → Training (2026-09-25) | Won't Fix — decided 2026-09-25: Complete logging untouched rows at last session's numbers is the workout "Same as last time" above; disabling it would take that away. With sets logging themselves (P1 above) and the exercise completing on its last set, the button matters less anyway |
