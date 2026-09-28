@@ -45,7 +45,7 @@ struct DayProgressTests {
     @Test func nothingLoggedWithoutASession() {
         let (day, _, _) = pushDay()
         let progress = DayProgress(day: day, session: nil)
-        #expect(progress == DayProgress(exercises: 2, exercisesDone: 0, setsLogged: 0))
+        #expect(progress == DayProgress(exercises: 2, exercisesDone: 0, setsLogged: 0, volumeKg: 0))
         #expect(!progress.isComplete)
     }
 
@@ -54,7 +54,8 @@ struct DayProgressTests {
         let other = Exercise(name: "Curl", muscleGroup: .biceps, equipment: "")
         container.mainContext.insert(other)
         let progress = DayProgress(day: day, session: session([bench, bench, bench, dips, other]))
-        #expect(progress == DayProgress(exercises: 2, exercisesDone: 1, setsLogged: 4))
+        #expect(progress.exercisesDone == 1)
+        #expect(progress.setsLogged == 4)
         #expect(!progress.isComplete)
     }
 
@@ -63,6 +64,18 @@ struct DayProgressTests {
         let progress = DayProgress(day: day, session: session([bench, bench, bench, dips, dips]))
         #expect(progress.isComplete)
         #expect(progress.setsLogged == 5)
+    }
+
+    @Test func volumeCountsOnlyTheDaysSets() {
+        let (day, bench, _) = pushDay()
+        let other = Exercise(name: "Curl", muscleGroup: .biceps, equipment: "")
+        container.mainContext.insert(other)
+        let benchOnly = session([bench])
+        let withOther = session([bench, other])
+        let volume = DayProgress(day: day, session: benchOnly).volumeKg
+        #expect(volume > 0)
+        #expect(DayProgress(day: day, session: withOther).volumeKg == volume)
+        #expect(volume == DayProgress.volumeKg(of: benchOnly.setEntries, bodyweightKg: nil))
     }
 
     @Test func anEmptyDayIsNeverComplete() {

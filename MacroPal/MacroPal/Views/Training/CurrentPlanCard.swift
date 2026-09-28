@@ -13,6 +13,8 @@ import SwiftData
 struct CurrentPlanCard: View {
     @Query private var plans: [WorkoutPlan]
     @Query(sort: \WorkoutSession.date, order: .reverse) private var sessions: [WorkoutSession]
+    @Query(sort: \WeightEntry.date, order: .reverse) private var weightEntries: [WeightEntry]
+    @AppStorage(WeightUnit.storageKey) private var unit: WeightUnit = .lb
 
     @AppStorage("trainingShowWeek") private var showWeek = false
     @State private var isPresentingRoutineEditor = false
@@ -38,6 +40,7 @@ struct CurrentPlanCard: View {
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
+                        .headingButtonTarget()
                 }
                 .accessibilityLabel("Plan options")
             }
@@ -54,9 +57,10 @@ struct CurrentPlanCard: View {
                                 summary(plan: plan)
                             }
                             .buttonStyle(.plain)
+                            .accessibilityValue(showWeek ? "Week shown" : "Week hidden")
                             .accessibilityHint(showWeek ? "Hides the week" : "Shows the week")
-                            // The expanded week already marks today, so the today line would
-                            // repeat it.
+                            // The expanded week marks today and its progress, so the today line
+                            // would repeat it.
                             if showWeek {
                                 week(plan: plan)
                             } else {
@@ -108,7 +112,7 @@ struct CurrentPlanCard: View {
         separator
             .padding(.vertical, 14)
         if let today {
-            let progress = DayProgress(day: today, session: todaysSession)
+            let progress = todaysProgress(today)
             NavigationLink {
                 PlanDayDetailView(day: today)
             } label: {
@@ -148,10 +152,18 @@ struct CurrentPlanCard: View {
         sessions.first { Calendar.current.isDateInToday($0.date) }
     }
 
+    private func todaysProgress(_ day: PlanDay) -> DayProgress {
+        DayProgress(day: day, session: todaysSession, bodyweightKg: weightEntries.first?.weightKg)
+    }
+
+    /// "5 exercises" → "2 of 5 exercises done" → "Done · 15 sets · 4,860 lb" (volume counted
+    /// like Workout Complete).
     private func status(of progress: DayProgress) -> String {
         if progress.exercises == 0 { return "No exercises yet" }
         if progress.isComplete {
-            return progress.setsLogged == 1 ? "Done · 1 set" : "Done · \(progress.setsLogged) sets"
+            let sets = progress.setsLogged == 1 ? "1 set" : "\(progress.setsLogged) sets"
+            let volume = unit.fromKg(progress.volumeKg).formatted(.number.precision(.fractionLength(0)))
+            return "Done · \(sets) · \(volume) \(unit.symbol)"
         }
         if progress.setsLogged > 0 {
             return "\(progress.exercisesDone) of \(progress.exercises) exercises done"
@@ -160,7 +172,8 @@ struct CurrentPlanCard: View {
     }
 
     /// Every workout of the week under the summary, one line each ("Monday: Push"), today's in
-    /// semibold with "Today" at its end; tapping one opens its exercises.
+    /// semibold with its progress at the end ("Today", "1 of 2 done", "✓ Done"); tapping one
+    /// opens its exercises.
     private func week(plan: WorkoutPlan) -> some View {
         let todayWeekday = Calendar.current.component(.weekday, from: .now)
         return VStack(alignment: .leading, spacing: 0) {
@@ -170,23 +183,34 @@ struct CurrentPlanCard: View {
                 dayLink(
                     day,
                     title: "\(Calendar.current.weekdaySymbols[day.weekday - 1]): \(day.name)",
-                    isToday: day.weekday == todayWeekday
+                    today: day.weekday == todayWeekday ? todaysProgress(day) : nil
                 )
             }
         }
     }
 
-    private func dayLink(_ day: PlanDay, title: String, isToday: Bool) -> some View {
+    /// A line of the week; `today` is the day's progress when it's today's line.
+    private func dayLink(_ day: PlanDay, title: String, today: DayProgress?) -> some View {
         NavigationLink {
             PlanDayDetailView(day: day)
         } label: {
-            HStack {
+            HStack(spacing: 4) {
                 Text(title)
-                    .fontWeight(isToday ? .semibold : .regular)
+                    .fontWeight(today == nil ? .regular : .semibold)
                 Spacer()
-                if isToday {
-                    Text("Today")
-                        .foregroundStyle(.secondary)
+                if let today {
+                    if today.isComplete {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                        Text("Done")
+                            .foregroundStyle(.secondary)
+                    } else if today.setsLogged > 0 {
+                        Text("Today · \(today.exercisesDone) of \(today.exercises) done")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text("Today")
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
             .font(.subheadline)

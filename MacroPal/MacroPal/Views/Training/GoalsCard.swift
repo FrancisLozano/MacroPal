@@ -19,6 +19,7 @@ struct GoalsCard: View {
     @State private var isPresentingLogStepsSheet = false
 
     private let stepsViewModel = StepsViewModel()
+    @ScaledMetric private var logCircleDiameter: CGFloat = 30
 
     private var profile: UserProfile? { profiles.first }
 
@@ -60,73 +61,82 @@ struct GoalsCard: View {
     }
 
     /// The latest weigh-in against the goal weight ("227 → 154.3 lb"), read like the steps row;
-    /// just the goal before the first weigh-in. Tapping the numbers opens the weight history.
+    /// just the goal before the first weigh-in. The row, caption and all, opens the weight history.
     private var weightRow: some View {
         let latest = weightEntries.max { $0.date < $1.date }
         let current = latest.map { unit.formatted(fromKg: $0.weightKg) }
         return HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(current == nil ? "Goal weight" : "Weight")
-                    .font(.caption)
+            historyLink(caption: current == nil ? "Goal weight" : "Weight") {
+                WeightHistoryView()
+            } value: {
+                Text(current ?? goalText)
+                    .font(.title3.bold())
+                Text(current == nil ? unit.symbol : "→ \(goalText) \(unit.symbol)")
                     .foregroundStyle(.secondary)
-                NavigationLink {
-                    WeightHistoryView()
-                } label: {
-                    HStack(alignment: .firstTextBaseline, spacing: 4) {
-                        Text(current ?? goalText)
-                            .font(.title3.bold())
-                        Text(current == nil ? unit.symbol : "→ \(goalText) \(unit.symbol)")
-                            .foregroundStyle(.secondary)
-                    }
-                    .foregroundStyle(Color.primary)
-                }
-                .accessibilityLabel(current.map { "Weight \($0) \(unit.symbol), goal \(goalText). Weight history" }
-                    ?? "Goal weight \(goalText) \(unit.symbol). Weight history")
             }
-            Spacer()
+            .accessibilityLabel(current.map { "Weight \($0) \(unit.symbol), goal \(goalText). Weight history" }
+                ?? "Goal weight \(goalText) \(unit.symbol). Weight history")
             logButton("Log weight") { isPresentingLogWeightSheet = true }
         }
     }
 
-    /// Today's steps against the goal; tapping the numbers opens the steps history.
+    /// Today's steps against the goal; the row opens the steps history.
     private var stepsRow: some View {
         let today = stepsViewModel.steps(on: .now, in: stepEntries)
         let goal = profile?.stepGoal ?? 10_000
         return HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Steps today")
-                    .font(.caption)
+            historyLink(caption: "Steps today") {
+                StepsHistoryView()
+            } value: {
+                Text(today, format: .number)
+                    .font(.title3.bold())
+                Text("/ \(goal.formatted())")
                     .foregroundStyle(.secondary)
-                NavigationLink {
-                    StepsHistoryView()
-                } label: {
-                    HStack(alignment: .firstTextBaseline, spacing: 4) {
-                        Text(today, format: .number)
-                            .font(.title3.bold())
-                        Text("/ \(goal.formatted())")
-                            .foregroundStyle(.secondary)
-                        if today >= goal {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(.green)
-                        }
-                    }
-                    .foregroundStyle(Color.primary)
+                if today >= goal {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
                 }
-                .accessibilityLabel("\(today) of \(goal) steps today. Steps history")
             }
-            Spacer()
+            .accessibilityLabel("\(today) of \(goal) steps today. Steps history")
             logButton("Log steps") { isPresentingLogStepsSheet = true }
         }
     }
 
+    /// A caption over a value, the whole block (up to the +) one link, so a thumb doesn't have
+    /// to land on the numbers.
+    private func historyLink<Destination: View, Value: View>(
+        caption: String,
+        @ViewBuilder destination: () -> Destination,
+        @ViewBuilder value: () -> Value
+    ) -> some View {
+        NavigationLink(destination: destination()) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(caption)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    value()
+                }
+            }
+            .foregroundStyle(Color.primary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// A small gray circle with a +, in a 44-pt hit area so it's easy to hit one-handed.
     private func logButton(_ accessibilityLabel: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: "plus")
                 .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Color.accentColor)
+                .frame(width: logCircleDiameter, height: logCircleDiameter)
+                .background(Color(.tertiarySystemFill), in: Circle())
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(Rectangle())
         }
-        .buttonStyle(.bordered)
-        .buttonBorderShape(.circle)
-        .controlSize(.small)
+        .buttonStyle(.borderless)
         .accessibilityLabel(accessibilityLabel)
     }
 

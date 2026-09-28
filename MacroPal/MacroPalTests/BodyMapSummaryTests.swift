@@ -15,6 +15,7 @@ struct BodyMapSummaryTests {
     @Test func shortensALongList() {
         let levels: [Muscle: Int] = [.chest: 2, .shoulders: 2, .triceps: 2, .lats: 2, .quads: 2, .abs: 1]
         #expect(BodyMapCard.summary(levels) == "Novice: Chest, Shoulders, Triceps, +2 more")
+        #expect(BodyMapCard.summary(levels, names: 1) == "Novice: Chest, +4 more")
     }
 
     @Test func saysSoWhenEveryMuscleIsLevel() {

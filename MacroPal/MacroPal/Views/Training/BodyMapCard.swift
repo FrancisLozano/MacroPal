@@ -15,6 +15,7 @@ struct BodyMapCard: View {
     @Query private var profiles: [UserProfile]
     @State private var isShowingInfo = false
     @State private var selectedMuscle: Muscle?
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     private var bodyweightKg: Double? { weightEntries.first?.weightKg }
     private var sex: Sex { profiles.first?.sex ?? .male }
@@ -30,6 +31,7 @@ struct BodyMapCard: View {
                 isShowingInfo = true
             } label: {
                 Image(systemName: "info.circle")
+                    .headingButtonTarget()
             }
             .accessibilityLabel("How levels work")
         } content: {
@@ -38,7 +40,9 @@ struct BodyMapCard: View {
                     BodyFigure(side: .front, colors: colors) { selectedMuscle = $0 }
                     BodyFigure(side: .back, colors: colors) { selectedMuscle = $0 }
                 }
-                .frame(height: 200)
+                // Shorter at accessibility text sizes, so the plan's today row still starts
+                // above the tab bar.
+                .frame(height: dynamicTypeSize.isAccessibilitySize ? 140 : 200)
                 .frame(maxWidth: .infinity)
                 // The figures are drawings; VoiceOver gets one element that reads every level
                 // and opens the detail, whose title menu picks the muscle.
@@ -53,9 +57,10 @@ struct BodyMapCard: View {
                     Text(prompt)
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                } else if let summary = Self.summary(levels) {
-                    // The colors in words, so the map doesn't depend on the ⓘ legend.
-                    Text(summary)
+                } else if let summary = Self.summary(levels, names: dynamicTypeSize.isAccessibilitySize ? 1 : 3) {
+                    // The colors in words, so the map doesn't depend on the ⓘ legend, and the
+                    // one hint that the figures can be tapped.
+                    Text("\(summary) · Tap a muscle")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity)
@@ -73,9 +78,9 @@ struct BodyMapCard: View {
         }
     }
 
-    /// The highest level reached and which muscles hold it: "Novice: Chest, Quads, +2 more",
-    /// or "All 13 trained muscles are Beginner" when they're level.
-    static func summary(_ levels: [Muscle: Int]) -> String? {
+    /// The highest level reached and which muscles hold it, up to `names` of them: "Novice:
+    /// Chest, Quads, +2 more", or "All 13 trained muscles are Beginner" when they're level.
+    static func summary(_ levels: [Muscle: Int], names: Int = 3) -> String? {
         guard let top = levels.values.max() else { return nil }
         let name = MuscleLevelEngine.levelNames[top - 1]
         if levels.values.allSatisfy({ $0 == top }) {
@@ -84,8 +89,8 @@ struct BodyMapCard: View {
                 : "All \(levels.count) trained muscles are \(name)"
         }
         let leaders = muscles(at: top, in: levels)
-        let shown = leaders.prefix(3).map(\.displayName).joined(separator: ", ")
-        let more = leaders.count > 3 ? ", +\(leaders.count - 3) more" : ""
+        let shown = leaders.prefix(names).map(\.displayName).joined(separator: ", ")
+        let more = leaders.count > names ? ", +\(leaders.count - names) more" : ""
         return "\(name): \(shown)\(more)"
     }
 

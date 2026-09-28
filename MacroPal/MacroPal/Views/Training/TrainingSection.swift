@@ -35,6 +35,17 @@ struct TrainingSection<Accessory: View, Content: View>: View {
     static var cardBackground: Color { Color(.secondarySystemGroupedBackground) }
 }
 
+extension View {
+    /// A heading button's icon (the ⓘ, the ⋯) with a 44-pt hit area around it, kept right-aligned
+    /// and without making the heading taller. Goes on the button's label: a frame outside a
+    /// button doesn't widen what it responds to.
+    func headingButtonTarget() -> some View {
+        frame(minWidth: 44, minHeight: 44, alignment: .trailing)
+            .contentShape(Rectangle())
+            .padding(.vertical, -12)
+    }
+}
+
 extension TrainingSection where Accessory == EmptyView {
     init(_ title: String?, @ViewBuilder content: () -> Content) {
         self.title = title

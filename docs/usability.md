@@ -5,11 +5,13 @@
 
 ## Start here (as of 2026-09-27)
 
-**2026-09-28: Training tab design critique and fixes.** An Impeccable critique of the Training
-tab scored 26/40; the user picked "today as the main action", a stronger today row only (no
-reordering of the page) and all five issues. All five are built — see **What changed on
-2026-09-28**. Not seen live yet: the rest-day today row, the + sheet on a rest day, and the
-"Done · N sets" state (unit-tested; today in the simulator is Push with no sets).
+**2026-09-28: Training tab design critique and fixes, two rounds.** Impeccable critiques of
+the Training tab scored 26/40, then 28/40 after the first round of fixes (`15e5f6b`). The user
+kept the page order and "Log an unplanned workout" on rest days, and took all five issues each
+round. Both rounds are built — see **What changed on 2026-09-28**. Not seen live yet: the
+rest-day today row, the + sheet on a rest day, the in-progress / "Done · N sets · lb" text and
+the VoiceOver announcements (unit-tested where they're logic; today in the simulator is Push with
+no sets). Install on the iPhone again to get both rounds.
 
 **Where things stand.** Everything is committed and pushed to `origin/main` (last code
 commit `52bc9cb`, then this doc); the working tree is clean. **Nothing is being built right
@@ -498,6 +500,29 @@ From an Impeccable design critique of the Training tab (26/40, snapshot in
   comment claimed this already happened; it didn't).
 
 Checked in the simulator: light, dark, the expanded week and accessibility-extra-large text.
+
+**Second round** (critique 28/40; the user chose tap targets and cues first, all five issues):
+
+- **Tap targets.** The Goals card's + buttons keep their 30-pt gray circle (`@ScaledMetric`)
+  but answer to a 44-pt area; the whole left side of each Goals row, caption included, opens
+  the weight / steps history (was just the number). The Progress ⓘ and plan ⋯ get a 44-pt hit
+  area without making their headings taller (`headingButtonTarget()` in `TrainingSection.swift`
+  — it has to go on the button's label; a frame outside a button doesn't widen it). Checked:
+  a tap just outside the + circle opens Log Weight.
+- **Tap cues.** The body-map caption ends "· Tap a muscle"; the Gym Workout toggle tells
+  VoiceOver "Week shown" / "Week hidden". Still no arrows.
+- **The expanded week shows today's progress** at the end of its line: "Today" → "Today · 1 of
+  2 done" → ✓ "Done". (The expanded state is remembered, so the card can open that way every
+  day; before, progress then never showed.)
+- **Accessibility text sizes:** the map is 140 pt instead of 200 and the caption names one
+  muscle ("Novice: Chest, +8 more"), so "Today: Push" starts above the tab bar at
+  accessibility-extra-large.
+- **Finished workout:** "✓ Done · 6 sets · 4,860 lb". The volume math moved from
+  `PlanDayDetailView` into `DayProgress.volumeKg(of:bodyweightKg:)`, so Workout Complete and
+  the card count it the same way; one new test.
+- Not taken from the critique: demoting "Gym Workout" to a secondary line (the user asked for
+  it as the heading on 2026-09-23).
+
 Also noticed by the critique, not done: the set input boxes on the exercise screen are 36 pt
 tall (under 44), the rest timer's 52 pt countdown doesn't scale with text size, and
 `ExerciseThumbnail`'s red has no dark-mode variant.

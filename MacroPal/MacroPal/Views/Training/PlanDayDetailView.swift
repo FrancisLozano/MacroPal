@@ -87,7 +87,7 @@ struct PlanDayDetailView: View {
                 WorkoutCompleteCard(
                     exercises: Set(sets.compactMap { $0.exercise?.persistentModelID }).count,
                     sets: sets.count,
-                    volumeKg: volumeKg(of: sets)
+                    volumeKg: DayProgress.volumeKg(of: sets, bodyweightKg: weightEntries.first?.weightKg)
                 ) {
                     withAnimation { isShowingWorkoutComplete = false }
                 }
@@ -119,17 +119,6 @@ struct PlanDayDetailView: View {
 
     /// Load × reps over `sets`, counted as the Progress tab and body map count it: both
     /// dumbbells, machines scaled, a share of bodyweight for bodyweight moves.
-    private func volumeKg(of sets: [WorkoutSetEntry]) -> Double {
-        sets.reduce(0) { total, entry in
-            guard let exercise = entry.exercise else { return total }
-            let set = LoggedSet(date: entry.session?.date ?? .now, exerciseName: exercise.name,
-                                muscleGroup: exercise.muscleGroup, weightKg: entry.weightKg, reps: entry.reps)
-            let profile = ExerciseMuscleData.profile(forName: exercise.name, group: exercise.muscleGroup)
-            let load = MuscleLevelEngine.load(of: set, profile: profile, bodyweightKg: weightEntries.first?.weightKg)
-            return total + load * Double(max(0, entry.reps))
-        }
-    }
-
     private func remove(_ planExercise: PlanExercise) {
         modelContext.delete(planExercise)
         // Close the gap so `order` stays contiguous for the next append.
