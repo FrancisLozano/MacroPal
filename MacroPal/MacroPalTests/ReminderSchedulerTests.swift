@@ -64,5 +64,8 @@ struct ReminderSchedulerTests {
         let viewModel = ProfileViewModel()
         #expect(viewModel.remindersSummary(enabled: []) == "Off")
         #expect(viewModel.remindersSummary(enabled: [.steps, .dinner]) == "Steps, Dinner")
+        #expect(viewModel.remindersSummary(enabled: Reminder.allCases) == "All")
+        #expect(viewModel.remindersSummary(enabled: [.steps], notificationsDenied: true) == "Off in iOS Settings")
+        #expect(viewModel.remindersSummary(enabled: [], notificationsDenied: true) == "Off")
     }
 }

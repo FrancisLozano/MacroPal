@@ -132,8 +132,8 @@ movement family; the user does the one in front of the body, not overhead.
   (swipe a day to delete it).
 - **Choose Exercise** — Suggested / All, grouped under Chest, Triceps, Biceps, Back,
   Shoulders, Legs, Abs; word-by-word search; + for a new exercise. 51 starter exercises.
-- **Profile** — Personal Info, Workout settings (set-row order, default sets/reps, rest
-  timer; Show PRs was removed), Goal & Daily Targets, Units (lb/kg, cm or ft/in), About →
+- **Profile** — Nutrition (Goal, Daily Targets), Training (Workout settings: set-row order,
+  default sets/reps, rest timer; Past Training; Sex), Reminders, Units (lb/kg),
   Acknowledgements.
 - **Widget** — small (calorie ring) and medium (calories + Protein / Carbs / Fat).
 
@@ -243,10 +243,10 @@ Values as of 2026-09-23. "In app" means you can change it yourself; the rest are
 
 | Adjustment | Now | Where |
 |---|---|---|
-| Calorie / macro targets | 2,000 kcal · 150P / 200C / 65F | In app: Profile → Goal & Daily Targets |
+| Calorie / macro targets | 2,000 kcal · 150P / 200C / 65F | In app: Profile → Daily Targets |
 | Step goal | 10,000 | In app: Goals card → tap today's steps → Daily Goal |
 | Goal weight | 154.3 lb | In app: Goals card → tap the goal weight → Goal Weight |
-| lb/kg, cm or ft/in | lb, cm | In app: Profile → Units & Measurements |
+| lb/kg | lb | In app: Profile → Units |
 | Default sets / reps for new exercises | 3 × 10 | In app: Profile → Workout |
 | How long typing pauses before a set logs itself | 1 s | `ExerciseTrackView.autoLogDelay` |
 | How long "Exercise Complete" shows before going back | 1.5 s | `ExerciseTrackView.autoFinishDelay` |
@@ -473,6 +473,32 @@ user's whiteboard sketch — body map on top, Current Plan, Goals below. On 2026
 of that doc's success criteria were met, and in the evening the tab was restyled to match
 Nutrition. 2026-09-23 closed the last two P3s and the outstanding re-checks; in the afternoon
 the user logged the first Training suggestions and the layout ones were built.
+
+### What changed on 2026-09-29
+
+From an Impeccable design critique of the Profile tab (26/40, snapshot in
+`.impeccable/critique/`, not in the repo). The user chose to fix both P1s and all three P2s.
+
+- **Personal Info removed.** Height, birth date and activity level were edited but read
+  nowhere (no TDEE or target math uses them), so the row implied a calculator that doesn't
+  exist. The fields stay on `UserProfile` so existing stores open unchanged. **Sex** (the one
+  that matters, for muscle-level volume) moved to the Training section as an inline picker.
+  With height gone, the cm / ft-in unit and `HeightUnit` were deleted.
+- **Sections follow the tabs.** Nutrition (Goal, Daily Targets), Training (Workout, Past
+  Training, Sex), Reminders, Units (lb/kg), then Acknowledgements. Single-row sections lost the
+  headers that repeated their row. Each row now has its page's title: "Daily Targets" (was
+  Calories & Macros), "Workout" (was Workout Display & Defaults), "Reminders" (was Log
+  Reminders).
+- **Footers say what the settings do.** Nutrition: Goal only tells the coach which way weight
+  should move and doesn't change the targets; goal weight is on the Training tab. Training:
+  past training and sex set the body-map levels.
+- **Reminders summary is honest.** It reads "Off in iOS Settings" when reminders are on but
+  notifications are denied, and "All" when all five are on.
+- **Daily Targets number pad has a Done key.**
+- **Large text.** Summary values no longer split across lines ("2,000 kcal", "2 × 10",
+  "Rest 2 min", "1 month" use non-breaking spaces); the reminder time indent scales with text
+  size (`@ScaledMetric`). Past Training at 0 months reads "Not counted" (was "Start over",
+  which sounded like a button).
 
 ### What changed on 2026-09-28
 

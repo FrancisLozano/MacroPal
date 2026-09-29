@@ -65,10 +65,10 @@ struct PastTrainingTests {
 
     @Test func summaryReadsInYearsAndMonths() {
         let viewModel = ProfileViewModel()
-        #expect(viewModel.pastTrainingSummary(months: 0) == "Start over")
-        #expect(viewModel.pastTrainingSummary(months: 8) == "8 months")
-        #expect(viewModel.pastTrainingSummary(months: 12) == "1 year")
-        #expect(viewModel.pastTrainingSummary(months: 27) == "2 years 3 months")
+        #expect(viewModel.pastTrainingSummary(months: 0) == "Not counted")
+        #expect(viewModel.pastTrainingSummary(months: 8) == "8\u{00A0}months")
+        #expect(viewModel.pastTrainingSummary(months: 12) == "1\u{00A0}year")
+        #expect(viewModel.pastTrainingSummary(months: 27) == "2\u{00A0}years 3\u{00A0}months")
     }
 
     @MainActor

@@ -81,6 +81,8 @@ private struct ReminderRow: View {
 
     @AppStorage private var isOn: Bool
     @AppStorage private var minute: Int
+    /// Lines the time up under the reminder's title, past its icon, at any text size.
+    @ScaledMetric private var timeIndent: CGFloat = 36
 
     init(reminder: Reminder, onTurnOn: @escaping () async -> Bool, onChange: @escaping () -> Void) {
         self.reminder = reminder
@@ -117,7 +119,7 @@ private struct ReminderRow: View {
         }
         if isOn {
             DatePicker("Time", selection: time, displayedComponents: .hourAndMinute)
-                .padding(.leading, 36)
+                .padding(.leading, timeIndent)
                 .onChange(of: minute) { onChange() }
         }
     }

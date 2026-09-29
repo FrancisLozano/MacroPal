@@ -8,16 +8,6 @@ import Foundation
 @testable import MacroPal
 
 struct WorkoutSettingsTests {
-    // MARK: Height
-
-    @Test func heightConvertsBetweenCmAndFeetInches() {
-        #expect(HeightUnit.feetAndInches(fromCm: 170) == (5, 7))
-        #expect(HeightUnit.feetAndInches(fromCm: 182.88) == (6, 0))
-        #expect(abs(HeightUnit.cm(feet: 5, inches: 10) - 177.8) < 0.001)
-        #expect(HeightUnit.feetInches.formatted(cm: 170) == "5′7″")
-        #expect(HeightUnit.cm.formatted(cm: 170) == "170 cm")
-    }
-
     // MARK: Rest timer
 
     @Test func restTimerCountsDownAndFinishes() {
@@ -118,6 +108,6 @@ struct WorkoutSettingsTests {
 
     @Test func workoutSummaryReadsAsOneLine() {
         let summary = ProfileViewModel().workoutSummary(weightFirst: true, sets: 3, reps: 8, repsMax: 10, restSeconds: 120, autoRest: true)
-        #expect(summary == "Weight first · 3 × 8–10 · Rest 2 min, auto")
+        #expect(summary == "Weight first · 3\u{00A0}×\u{00A0}8–10 · Rest\u{00A0}2\u{00A0}min, auto")
     }
 }

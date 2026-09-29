@@ -19,47 +19,43 @@ final class ProfileViewModel {
         return "Your macro targets add up to \(macroCalories) kcal, which doesn't quite match your \(calorieTarget) kcal target."
     }
 
-    /// Whole years between `birthDate` and `now`.
-    func age(birthDate: Date, now: Date = .now, calendar: Calendar = .current) -> Int {
-        calendar.dateComponents([.year], from: birthDate, to: now).year ?? 0
-    }
-
-    /// The Personal Info row's summary: "Male · 24 · 170 cm · Sedentary" (or "5′7″").
-    func personalSummary(
-        sex: Sex, birthDate: Date, heightCm: Double, activityLevel: ActivityLevel,
-        heightUnit: HeightUnit = .cm, now: Date = .now
-    ) -> String {
-        [sex.displayName, "\(age(birthDate: birthDate, now: now))", heightUnit.formatted(cm: heightCm), activityLevel.displayName]
-            .joined(separator: " · ")
+    /// Joins a number and its unit ("2 min", "3 × 8–10") with non-breaking spaces, so large
+    /// text wraps the summary lines between values, never inside one.
+    private func keepTogether(_ text: String) -> String {
+        text.replacingOccurrences(of: " ", with: "\u{00A0}")
     }
 
     /// The Workout row's summary: "Reps first · 3 × 8–10 · Rest 2 min".
     func workoutSummary(weightFirst: Bool, sets: Int, reps: Int, repsMax: Int, restSeconds: Int, autoRest: Bool) -> String {
         let order = weightFirst ? "Weight first" : "Reps first"
-        let target = "\(sets) × \(WorkoutPreferences.repsLabel(reps: reps, repsMax: repsMax))"
-        let rest = "Rest \(WorkoutPreferences.restLabel(seconds: restSeconds))" + (autoRest ? ", auto" : "")
+        let target = keepTogether("\(sets) × \(WorkoutPreferences.repsLabel(reps: reps, repsMax: repsMax))")
+        let rest = keepTogether("Rest \(WorkoutPreferences.restLabel(seconds: restSeconds))") + (autoRest ? ", auto" : "")
         return [order, target, rest].joined(separator: " · ")
     }
 
-    /// Past Training: "Start over", or the time — "8 months", "1 year", "2 years 3 months".
+    /// Past Training: "Not counted", or the time — "8 months", "1 year", "2 years 3 months".
     func pastTrainingSummary(months: Int) -> String {
-        guard months > 0 else { return "Start over" }
+        guard months > 0 else { return "Not counted" }
         let (years, rest) = (months / 12, months % 12)
         let parts = [
-            years > 0 ? "\(years) \(years == 1 ? "year" : "years")" : nil,
-            rest > 0 ? "\(rest) \(rest == 1 ? "month" : "months")" : nil,
+            years > 0 ? keepTogether("\(years) \(years == 1 ? "year" : "years")") : nil,
+            rest > 0 ? keepTogether("\(rest) \(rest == 1 ? "month" : "months")") : nil,
         ]
         return parts.compactMap { $0 }.joined(separator: " ")
     }
 
-    /// The Reminders row's summary: "Off", or the reminders that are on — "Steps, Weight,
-    /// Dinner".
-    func remindersSummary(enabled: [Reminder]) -> String {
-        enabled.isEmpty ? "Off" : enabled.map(\.title).joined(separator: ", ")
+    /// The Reminders row's summary: "Off", "All", or the reminders that are on — "Steps,
+    /// Weight, Dinner". Reminders switched on while iOS blocks notifications won't arrive, so
+    /// the row says so instead of listing them.
+    func remindersSummary(enabled: [Reminder], notificationsDenied: Bool = false) -> String {
+        if enabled.isEmpty { return "Off" }
+        if notificationsDenied { return "Off in iOS Settings" }
+        if enabled.count == Reminder.allCases.count { return "All" }
+        return enabled.map(\.title).joined(separator: ", ")
     }
 
     /// The Daily Targets row's summary: "2,000 kcal · 150P · 200C · 65F".
     func targetsSummary(calorieTarget: Int, proteinTargetG: Int, carbTargetG: Int, fatTargetG: Int) -> String {
-        "\(calorieTarget.formatted()) kcal · \(proteinTargetG)P · \(carbTargetG)C · \(fatTargetG)F"
+        keepTogether("\(calorieTarget.formatted()) kcal") + " · \(proteinTargetG)P · \(carbTargetG)C · \(fatTargetG)F"
     }
 }

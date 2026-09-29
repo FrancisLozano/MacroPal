@@ -52,8 +52,11 @@ enum Goal: String, Codable, CaseIterable, Identifiable {
 /// Use `UserProfile.current(in:)` to fetch or lazily create it rather than inserting directly.
 @Model
 final class UserProfile {
+    /// Height, birth date and activity level are no longer shown or read (nothing computed
+    /// from them); kept so existing stores open unchanged.
     var heightCm: Double
     var birthDate: Date
+    /// Scales muscle-level volume (Profile → Training → Sex).
     var sex: Sex
     var activityLevel: ActivityLevel
     var goal: Goal

@@ -32,7 +32,7 @@ struct GoalsCard: View {
     }
 
     var body: some View {
-        // lb/kg lives in Profile → Units & Measurements.
+        // lb/kg lives in Profile → Units.
         TrainingSection("Goals") {
             VStack(alignment: .leading, spacing: 12) {
                 weightRow
