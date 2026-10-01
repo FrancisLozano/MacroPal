@@ -75,19 +75,33 @@ and narrative polish, made explicit in the spec instead of left implicit in the 
 
 ## Screenshots
 
-*(Placeholders — filling these in next. Notes below are for me to remember what to capture and why.)*
+### Nutrition
 
-- **Daily Log / calories ring** — the redesigned nutrition summary (Apple Health-style ring
-  segmented by macro, calories-eaten framing). Shows the visual-density fix from the
-  "takes up too much vertical space" dislike.
-- **Food search** — relevance-ranked Open Food Facts search with bolded match highlighting and
-  brand names, next to the old manual-entry-only flow it replaced. A before/after pair here is
-  the single most legible proof of the case study above.
-- **Insights feed** — an example `Insight` card (e.g. a strength-stall or weight-plateau
-  recommendation) showing the supporting metric alongside the recommendation, to make the
-  "explainable, not a chatbot" design decision visible rather than just asserted.
-- **Workouts (post-rework)** — capture once the Body/Workouts redesign (next up, above) ships,
-  as the second case study.
+<table>
+  <tr>
+    <td width="50%"><img src="screens/01-log-foods.png" alt="Daily Log with breakfast and lunch logged against a 2,000 kcal target"></td>
+    <td width="50%"><img src="screens/02-choose-food.png" alt="Choose Food sheet with search, barcode scanner, Same as Last Time and Recents"></td>
+  </tr>
+  <tr>
+    <td><b>Daily Log.</b> Calories against the day's target, protein / carbs / fat bars, and each meal's macros in its heading.</td>
+    <td><b>Choose Food.</b> Open Food Facts search and barcode scanning, plus "Same as Last Time" and Recents for one-tap repeats.</td>
+  </tr>
+</table>
+
+### Training
+
+<table>
+  <tr>
+    <td width="33%"><img src="screens/03-training-progress.png" alt="Training tab with the muscle-level body map and the week's plan"></td>
+    <td width="33%"><img src="screens/05-push-exercises.png" alt="Push day with five exercises, each marked done"></td>
+    <td width="33%"><img src="screens/04-push-workout.png" alt="Workout Complete card: 5 exercises, 10 sets, 5,800 lb moved"></td>
+  </tr>
+  <tr>
+    <td><b>Progress.</b> A body map colored by each muscle's level from logged volume, above the week's plan.</td>
+    <td><b>A workout day.</b> Every exercise in the day's plan, checked off as its sets are logged.</td>
+    <td><b>Workout complete.</b> Exercises, sets and total weight moved, shown after the day's last exercise.</td>
+  </tr>
+</table>
 
 ## Project status
 
