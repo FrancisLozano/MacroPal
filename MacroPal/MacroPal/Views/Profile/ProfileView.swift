@@ -33,6 +33,7 @@ private struct ProfileOverview: View {
     @Bindable var profile: UserProfile
 
     @AppStorage(WeightUnit.storageKey) private var weightUnit: WeightUnit = .lb
+    @AppStorage(Appearance.storageKey) private var appearance: Appearance = .automatic
     @AppStorage(WorkoutPreferences.weightFirstKey) private var weightFirst = WorkoutPreferences.weightFirstDefault
     @AppStorage(WorkoutPreferences.defaultSetsKey) private var defaultSets = WorkoutPreferences.defaultSetsDefault
     @AppStorage(WorkoutPreferences.defaultRepsKey) private var defaultReps = WorkoutPreferences.defaultRepsDefault
@@ -137,6 +138,18 @@ private struct ProfileOverview: View {
                 } label: {
                     Label("Weight", systemImage: "scalemass")
                 }
+            }
+
+            Section {
+                Picker(selection: $appearance) {
+                    ForEach(Appearance.allCases) { appearance in
+                        Text(appearance.displayName).tag(appearance)
+                    }
+                } label: {
+                    Label("Appearance", systemImage: "circle.lefthalf.filled")
+                }
+            } footer: {
+                Text("Automatic follows your iPhone's light or dark setting.")
             }
 
             Section {

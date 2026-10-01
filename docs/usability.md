@@ -474,6 +474,16 @@ of that doc's success criteria were met, and in the evening the tab was restyled
 Nutrition. 2026-09-23 closed the last two P3s and the outstanding re-checks; in the afternoon
 the user logged the first Training suggestions and the layout ones were built.
 
+### What changed on 2026-10-01
+
+- **Appearance setting.** Profile → Appearance: Automatic / Light / Dark, on request. Automatic
+  (the default) follows the phone. Stored in `@AppStorage` (`Appearance` in
+  `Models/Appearance.swift`, key `"appearance"`) like the weight unit, and applied once with
+  `.preferredColorScheme` on `RootView` in `MacroPalApp`, so sheets and every tab follow it.
+  The widget isn't affected; it still follows the phone. Checked in the simulator: Dark turns
+  the whole app dark right away, and going back to Automatic returns it to light. (iOS can get
+  stuck there sometimes; it didn't.)
+
 ### What changed on 2026-09-29
 
 From an Impeccable design critique of the Profile tab (26/40, snapshot in

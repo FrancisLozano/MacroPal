@@ -49,6 +49,7 @@ struct MacroPalApp: App {
     private let notificationDelegate = RestNotificationDelegate()
 
     @Environment(\.scenePhase) private var scenePhase
+    @AppStorage(Appearance.storageKey) private var appearance: Appearance = .automatic
 
     init() {
         UNUserNotificationCenter.current().delegate = notificationDelegate
@@ -57,6 +58,7 @@ struct MacroPalApp: App {
     var body: some Scene {
         WindowGroup {
             RootView()
+                .preferredColorScheme(appearance.colorScheme)
         }
         .modelContainer(sharedModelContainer)
         // Rebuild the log reminders on the way in and out, so anything logged since the last
