@@ -10,9 +10,9 @@ import UserNotifications
 /// without touching the real notification center.
 @MainActor
 protocol RestNotificationScheduling {
-    /// Replaces any pending rest notification with one at `date`, naming the next exercise
-    /// when there is one.
-    func schedule(at date: Date, nextUp: String?)
+    /// Replaces any pending rest notification with one at `date`, pointing to the next
+    /// exercise when the rest is between two.
+    func schedule(at date: Date, isBetweenExercises: Bool)
     func cancel()
 }
 
@@ -27,7 +27,7 @@ final class RestNotifications: RestNotificationScheduling {
     /// quick −15s / +15s taps could otherwise land out of order.
     private var latestDate: Date?
 
-    func schedule(at date: Date, nextUp: String?) {
+    func schedule(at date: Date, isBetweenExercises: Bool) {
         latestDate = date
         Task {
             guard (try? await center.requestAuthorization(options: [.alert, .sound])) == true,
@@ -37,7 +37,7 @@ final class RestNotifications: RestNotificationScheduling {
 
             let content = UNMutableNotificationContent()
             content.title = "Rest over"
-            content.body = RestNotifications.body(nextUp: nextUp)
+            content.body = RestNotifications.body(isBetweenExercises: isBetweenExercises)
             content.sound = .default
             let trigger = UNTimeIntervalNotificationTrigger(timeInterval: interval, repeats: false)
             // The same identifier replaces the earlier request instead of adding a second one.
@@ -45,10 +45,10 @@ final class RestNotifications: RestNotificationScheduling {
         }
     }
 
-    /// "Time for your next set.", or "Next up: Bench Press." between exercises. Shared with the
-    /// in-app card.
-    static func body(nextUp: String?) -> String {
-        nextUp.map { "Next up: \($0)." } ?? "Time for your next set."
+    /// "Time for your next set.", or "Start your next exercise." between exercises. Doesn't
+    /// name one: the day's exercises can be done in any order. Shared with the in-app card.
+    static func body(isBetweenExercises: Bool) -> String {
+        isBetweenExercises ? "Start your next exercise." : "Time for your next set."
     }
 
     func cancel() {

@@ -33,10 +33,10 @@ struct WorkoutSettingsTests {
     @MainActor
     final class FakeNotifications: RestNotificationScheduling {
         var scheduled: Date?
-        var nextUp: String?
-        func schedule(at date: Date, nextUp: String?) {
+        var isBetweenExercises = false
+        func schedule(at date: Date, isBetweenExercises: Bool) {
             scheduled = date
-            self.nextUp = nextUp
+            self.isBetweenExercises = isBetweenExercises
         }
         func cancel() { scheduled = nil }
     }
@@ -72,18 +72,18 @@ struct WorkoutSettingsTests {
         #expect(model.finishedAt == nil)
     }
 
-    @MainActor @Test func restBetweenExercisesNamesTheNextOne() {
+    @MainActor @Test func restBetweenExercisesPointsToTheNextOne() {
         let notifications = FakeNotifications()
         let model = RestTimerModel(notifications: notifications)
-        model.start(seconds: 90, nextUp: "Incline Press")
-        #expect(model.nextUp == "Incline Press")
-        #expect(notifications.nextUp == "Incline Press")
-        #expect(RestNotifications.body(nextUp: "Incline Press") == "Next up: Incline Press.")
+        model.start(seconds: 90, isBetweenExercises: true)
+        #expect(model.isBetweenExercises)
+        #expect(notifications.isBetweenExercises)
+        #expect(RestNotifications.body(isBetweenExercises: true) == "Start your next exercise.")
 
         // A plain rest between sets clears it.
         model.start(seconds: 90)
-        #expect(model.nextUp == nil)
-        #expect(RestNotifications.body(nextUp: nil) == "Time for your next set.")
+        #expect(!model.isBetweenExercises)
+        #expect(RestNotifications.body(isBetweenExercises: false) == "Time for your next set.")
     }
 
     @MainActor @Test func restMissedInTheBackgroundSkipsTheCard() {

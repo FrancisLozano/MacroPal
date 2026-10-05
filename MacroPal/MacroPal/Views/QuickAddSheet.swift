@@ -10,11 +10,14 @@ enum QuickAddChoice {
     case logFood
     case logWorkout(PlanDay)
     case logUnplannedWorkout
+    case logWeight
+    case logSteps
 }
 
-/// The short sheet the + beside the tab bar opens: log food (today's Daily Log) or log today's
-/// planned workout. Both rows look the same whatever the day; on a rest day the workout row
-/// opens an unplanned workout, and with no plan yet it explains itself in an alert.
+/// The short sheet the + beside the tab bar opens: log food (today's Daily Log), today's
+/// planned workout, a weigh-in or the day's steps. The rows look the same whatever the day; on
+/// a rest day the workout row opens an unplanned workout, and with no plan yet it explains
+/// itself in an alert.
 struct QuickAddSheet: View {
     /// Today's planned workout, or `nil` on a rest day or without a plan.
     let workout: PlanDay?
@@ -42,6 +45,18 @@ struct QuickAddSheet: View {
             } label: {
                 row(title: "Log Workout", detail: workoutDetail, systemImage: "dumbbell.fill")
             }
+
+            Button {
+                onChoose(.logWeight)
+            } label: {
+                row(title: "Log Weight", detail: "Today's weigh-in", systemImage: "scalemass.fill")
+            }
+
+            Button {
+                onChoose(.logSteps)
+            } label: {
+                row(title: "Log Steps", detail: "Today's total", systemImage: "figure.walk")
+            }
         }
         // Plain black rows, like a menu, rather than the List's blue button tint.
         .tint(.primary)
@@ -52,7 +67,7 @@ struct QuickAddSheet: View {
         }
         .listStyle(.insetGrouped)
         .scrollDisabled(true)
-        .presentationDetents([.height(220)])
+        .presentationDetents([.height(380)])
         .presentationDragIndicator(.visible)
     }
 

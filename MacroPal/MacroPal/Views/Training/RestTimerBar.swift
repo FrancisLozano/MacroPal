@@ -6,7 +6,7 @@
 import SwiftUI
 
 /// The running rest countdown, pinned above the tab bar on the workout screens: a card with
-/// the time left in large type, "Next up" between exercises, a draining bar, and −15 s / +15 s
+/// the time left in large type, "Next exercise" between exercises, a draining bar, and −15 s / +15 s
 /// / Skip big enough to hit one-handed. `compact` shrinks it to one line while the keyboard is
 /// up. Disappears when the rest is over, as the `RestOverCard` slides up in its place.
 struct RestTimerBar: View {
@@ -37,8 +37,8 @@ struct RestTimerBar: View {
                 Label("Rest", systemImage: "timer")
                     .font(.headline)
                 Spacer()
-                if let nextUp = restTimer.nextUp {
-                    Text("Next up: \(nextUp)")
+                if restTimer.isBetweenExercises {
+                    Text("Next exercise")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)

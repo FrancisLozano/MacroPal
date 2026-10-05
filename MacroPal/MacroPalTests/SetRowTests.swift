@@ -119,12 +119,15 @@ struct SetRowTests {
         #expect(rows[2].weightPlaceholder == "")
     }
 
-    @Test func rowsWithALastSessionKeepSuggestingIt() {
+    @Test func todaysSetIsSuggestedOverLastSession() {
         var withHistory = row()
         withHistory.last = SetValues(weight: 135, reps: 10)
         var rows = [row(), withHistory]
         SetRow.suggest(SetValues(weight: 145, reps: 6), below: 0, in: &rows)
-        #expect(rows[1].weightPlaceholder == "135")
+        #expect(rows[1].weightPlaceholder == "145")
+        #expect(rows[1].repsPlaceholder == "6")
+        // Last session's set stays on the "Last:" line.
+        #expect(rows[1].last == SetValues(weight: 135, reps: 10))
     }
 
     @Test func weightsFormatWithoutGrouping() {

@@ -44,9 +44,9 @@ final class RestTimerModel {
     static let lateFinishTolerance: TimeInterval = 2
 
     private(set) var timer: RestTimer?
-    /// The exercise the rest leads into, when it's the rest between two exercises; kept after
-    /// the rest ends so the "Rest over" card can name it.
-    private(set) var nextUp: String?
+    /// Whether the rest is between two exercises rather than two sets; kept after the rest
+    /// ends so the "Rest over" card can say so.
+    private(set) var isBetweenExercises = false
     /// When the last rest ended with the app open; the card shows while this is set.
     private(set) var finishedAt: Date?
 
@@ -59,9 +59,9 @@ final class RestTimerModel {
         self.notifications = notifications ?? RestNotifications()
     }
 
-    func start(seconds: Int, nextUp: String? = nil, now: Date = .now) {
+    func start(seconds: Int, isBetweenExercises: Bool = false, now: Date = .now) {
         timer = RestTimer(seconds: seconds, now: now)
-        self.nextUp = nextUp
+        self.isBetweenExercises = isBetweenExercises
         finishedAt = nil
         scheduleEnd()
     }
@@ -93,7 +93,7 @@ final class RestTimerModel {
 
     private func scheduleEnd() {
         guard let timer else { return }
-        notifications.schedule(at: timer.endsAt, nextUp: nextUp)
+        notifications.schedule(at: timer.endsAt, isBetweenExercises: isBetweenExercises)
         finishTask?.cancel()
         finishTask = Task { [weak self] in
             // A suspended app wakes here late, which `finishIfDue` spots.

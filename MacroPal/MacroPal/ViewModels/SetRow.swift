@@ -13,9 +13,9 @@ struct SetValues: Equatable {
 
 /// One set on the exercise screen's Workout tab, and the rules for saving it as you type.
 /// Boxes start empty; the placeholders are what the set will be if left untouched (last
-/// session's set, or the set just saved above it), and `last` is last session's set for the
-/// "Last:" line. Kept free of SwiftData so the rules can be unit-tested; the view maps a
-/// `SetChange` onto the store.
+/// session's set until a set above it is saved today, then that one), and `last` is last
+/// session's set for the "Last:" line. Kept free of SwiftData so the rules can be unit-tested;
+/// the view maps a `SetChange` onto the store.
 struct SetRow: Identifiable {
     let id = UUID()
     var weightText = ""
@@ -92,12 +92,12 @@ struct SetRow: Identifiable {
         return filled.typedValues != nil
     }
 
-    /// After a set is saved, the empty rows below it suggest the same weight × reps, so on a
-    /// first-ever session the weight only has to be typed once. Rows with a last session keep
-    /// suggesting that.
+    /// After a set is saved, the empty rows below it suggest the same weight × reps — today's
+    /// set over last session's, which stays on their "Last:" line — so a repeat set is one tap
+    /// on that line, and on a first-ever session the weight only has to be typed once.
     static func suggest(_ values: SetValues, below index: Int, in rows: inout [SetRow]) {
         for later in rows.indices
-        where later > index && rows[later].last == nil && !rows[later].isLogged && rows[later].isBlank {
+        where later > index && !rows[later].isLogged && rows[later].isBlank {
             rows[later].weightPlaceholder = format(values.weight)
             rows[later].repsPlaceholder = String(values.reps)
         }

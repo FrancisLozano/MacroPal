@@ -12,11 +12,12 @@ import SwiftData
 /// set saves on its own a moment after you stop typing, and when you leave its row, so
 /// backing out midway loses nothing; when the last set logs, the exercise completes itself
 /// after a moment. Complete Exercise logs the untouched rows at their suggested values and
-/// goes back. Clearing both boxes unlogs a set. Used from a plan day (with
-/// its sets × reps target) and from an unplanned workout (Profile → Workout's default sets).
+/// goes back. Tapping a row's "Last:" line makes its grey numbers real and logs the set, so a
+/// repeat set is one tap. Clearing both boxes unlogs a set. Used from a plan day (with its
+/// sets × reps target) and from an unplanned workout (Profile → Workout's default sets).
 /// Column order, units and the rest timer follow Profile → Workout. Start Rest sits at the
 /// bottom, where the running rest card replaces it. Finishing an exercise from a plan day rests
-/// toward the day's next unfinished exercise ("Next up"), or after the last one, doesn't —
+/// toward the day's next exercise ("Start your next exercise"), or after the last one, doesn't —
 /// the day's list shows Workout Complete instead.
 struct ExerciseTrackView: View {
     @Environment(\.modelContext) private var modelContext
@@ -287,11 +288,24 @@ struct ExerciseTrackView: View {
         .padding(12)
     }
 
+    /// The "Last:" line's tap: the row's grey numbers become real ones and the set logs, as if
+    /// typed. Nil when there's nothing to fill in (logged already, or no weight suggested yet).
+    private func useSuggestion(for row: SetRow) -> (() -> Void)? {
+        guard !row.isLogged, row.wouldLogOnComplete else { return nil }
+        return {
+            guard let index = rows.firstIndex(where: { $0.id == row.id }) else { return }
+            // Leaving a box would commit it, so let go of it first and log what's filled in.
+            if focus?.rowID == row.id { focus = nil }
+            rows[index].fillEmptyFromPlaceholders()
+            commitAndMaybeFinish(row.id)
+        }
+    }
+
     private func weightBox(_ row: Binding<SetRow>, id: SetRow.ID) -> some View {
         box(
             text: row.weightText, placeholder: row.wrappedValue.weightPlaceholder,
             suffix: unit.symbol, last: row.wrappedValue.last.map { SetRow.format($0.weight) },
-            keyboard: .decimalPad, field: .weight(id)
+            useSuggestion: useSuggestion(for: row.wrappedValue), keyboard: .decimalPad, field: .weight(id)
         )
     }
 
@@ -307,14 +321,15 @@ struct ExerciseTrackView: View {
         box(
             text: row.repsText, placeholder: row.wrappedValue.repsPlaceholder,
             suffix: "reps", last: row.wrappedValue.last.map { String($0.reps) },
-            keyboard: .numberPad, field: .reps(id)
+            useSuggestion: useSuggestion(for: row.wrappedValue), keyboard: .numberPad, field: .reps(id)
         )
     }
 
-    /// A number box with its unit, and "Last: …" under it.
+    /// A number box with its unit, and "Last: …" under it — in the tint, and tappable, while
+    /// it can fill the row in.
     private func box(
         text: Binding<String>, placeholder: String, suffix: String, last: String?,
-        keyboard: UIKeyboardType, field: Field
+        useSuggestion: (() -> Void)?, keyboard: UIKeyboardType, field: Field
     ) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 4) {
@@ -332,9 +347,19 @@ struct ExerciseTrackView: View {
             .contentShape(Rectangle())
             .onTapGesture { focus = field }
 
-            Text("Last: \(last ?? "–")")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            Button {
+                useSuggestion?()
+            } label: {
+                Text("Last: \(last ?? "–")")
+                    .font(.caption)
+                    .foregroundStyle(useSuggestion == nil ? AnyShapeStyle(.secondary) : AnyShapeStyle(.tint))
+                    // Taller than the caption, so it's easy to hit mid-set.
+                    .frame(maxWidth: .infinity, minHeight: 24, alignment: .leading)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(useSuggestion == nil)
+            .accessibilityHint(useSuggestion == nil ? "" : "Logs this set with the suggested numbers")
         }
         .frame(maxWidth: .infinity)
     }
@@ -415,20 +440,20 @@ struct ExerciseTrackView: View {
     /// the rest the last set's log may have just started.
     private func restAfterExercise() {
         guard isToday else { return }
-        var nextUp: String?
+        var isBetweenExercises = false
         if let planExercise, let day = planExercise.day {
             let todaysSets = sessions.first { Calendar.current.isDate($0.date, inSameDayAs: date) }?.setEntries ?? []
             let left = day.exercisesLeft(after: planExercise) { other in
                 todaysSets.filter { $0.exercise == other.exercise }.count
             }
-            guard let next = left.first else {
+            guard !left.isEmpty else {
                 restTimer.stop()
                 return
             }
-            nextUp = next.exercise?.name
+            isBetweenExercises = true
         }
         if autoRestTimer {
-            restTimer.start(seconds: restSeconds, nextUp: nextUp)
+            restTimer.start(seconds: restSeconds, isBetweenExercises: isBetweenExercises)
         }
     }
 

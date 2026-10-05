@@ -30,6 +30,8 @@ struct RootView: View {
     /// shows for the first time) drew the pushed page's large title over its content.
     @State private var pendingQuickAdd: QuickAddChoice?
     @State private var isPresentingUnplannedWorkout = false
+    @State private var isPresentingLogWeight = false
+    @State private var isPresentingLogSteps = false
 
     /// Blue with a white +, like the floating button it replaced. A tab bar draws its icons as
     /// templates in one flat color, so the icon is drawn as a picture and marked
@@ -121,6 +123,16 @@ struct RootView: View {
         .sheet(isPresented: $isPresentingUnplannedWorkout) {
             UnplannedWorkoutView()
         }
+        .sheet(isPresented: $isPresentingLogWeight) {
+            NavigationStack {
+                LogWeightEntryView()
+            }
+        }
+        .sheet(isPresented: $isPresentingLogSteps) {
+            NavigationStack {
+                LogStepsView()
+            }
+        }
         // One rest timer for the whole app, so it survives moving between workout screens.
         .environment(restTimer)
         // Here, not in the card: there's one card per tab (and one in the unplanned-workout
@@ -151,6 +163,11 @@ struct RootView: View {
         case .logUnplannedWorkout:
             selectedTab = .training
             isPresentingUnplannedWorkout = true
+        // Quick entries: they open over whichever tab is showing rather than switching.
+        case .logWeight:
+            isPresentingLogWeight = true
+        case .logSteps:
+            isPresentingLogSteps = true
         }
     }
 }
