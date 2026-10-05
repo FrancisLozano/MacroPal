@@ -1,9 +1,35 @@
 # Usability Notes & Feedback Log
 
 **Status:** Living document — ongoing, not tied to a phase
-**Started:** 2026-09-06 · **Last updated:** 2026-09-28
+**Started:** 2026-09-06 · **Last updated:** 2026-10-05
 
-## Start here (as of 2026-09-27)
+## Start here (as of 2026-10-05)
+
+**2026-10-05: six entries from use, all built and pushed.** The user logged 3 dislikes and 3
+suggestions (top of **Dislikes** / **Suggestions**); all six are Backlog rows marked Done. Built
+in three batches, each committed and pushed to `origin/main`: `caa6522`, `aee8fde`, `8b46497`.
+Details are under **What changed on 2026-10-05**. The working tree is clean and **nothing is being
+built right now**. **The iPhone doesn't have these yet**: install from Xcode again to get them.
+1. The expanded week lists today in its weekday slot again (bold), as well as in the Today row.
+2. Saving weight again on the same day replaces that day's entry instead of adding another one
+   (steps already worked that way).
+3. The + sheet has **Log Weight** and **Log Steps**, which open over the current tab.
+4. Rests between exercises say **"Start your next exercise"** and don't name one, since a day's
+   exercises can be done in any order.
+5. **Tap a set's "Last:" line** to turn its grey numbers into real values and log the set. Sets 2+
+   suggest the set just logged today, not last session's.
+6. Body-map level colors go **light → dark in dark mode too** (before, they went dim → bright).
+
+Not seen live: the "Next exercise" / "Start your next exercise" text on the rest cards and the
+notification (the copy is unit-tested), unlogging a set right after tapping "Last", and the
+body map itself in the new colors. The simulator has no logged weight, so every muscle shows
+untrained gray; only the ⓘ legend was seen in dark mode.
+
+**Decided on 2026-10-05 (no need to re-ask):** there are no per-row ✓ buttons for logging sets.
+A ✓ circle on every row was built and the user disliked it. A next row pre-filled with real
+values plus one big ✓ was built next and also dropped. Repeating a set is a tap on its "Last:"
+line. The rest copy doesn't name the next exercise; the user preferred that to an ⓘ
+explaining that order matters.
 
 **2026-09-28: Training tab design critique and fixes, four rounds.** Impeccable critiques of
 the Training tab scored 26 → 28 (`15e5f6b`) → 28 (`e0deae3`) → 26/40 (`3abde8a`); the last dip
@@ -15,8 +41,8 @@ logging under that date), the rest-day today row, the + sheet on a rest day, the
 "Done · N sets · lb" text and the VoiceOver announcements (today in the simulator is Monday,
 Push, no sets; Sunday was a rest day). Install on the iPhone again to get all four rounds.
 
-**Where things stand.** Everything is committed and pushed to `origin/main` (last code
-commit `52bc9cb`, then this doc); the working tree is clean. **Nothing is being built right
+**Where things stood on 2026-09-28** (now replaced by the 2026-10-05 note above). Everything was committed and pushed to `origin/main` (last code
+commit `52bc9cb`, then this doc); the working tree was clean. **Nothing is being built right
 now.** The app runs on the user's iPhone (installed from Xcode) — **but the iPhone doesn't have
 the 09-25 Training changes or the new app icon yet**: install from Xcode again to get both.
 
@@ -120,9 +146,11 @@ movement family; the user does the one in front of the body, not overhead.
   (Recommended / Upper/Lower / PPL / PPL + U/L / Full Body) and, with Apple Intelligence, a "Describe it"
   field that fills both in), Goals card (weight + steps,
   each with a + to log; tap the value for its history — steps swipe by day / week / month), Log an Unplanned Workout.
+  The + beside the tab bar opens Log Food, Log Workout, Log Weight and Log Steps.
   No all-workouts history (removed on request); past sets live in each exercise's Progress.
 - **Exercise screen** — *Workout*: a start → end drawing of the exercise (42 starters), a row per set (reps and lb boxes, "Last:" from the
-  previous session), boxes start empty with the suggestion in gray, sets save when you leave
+  previous session), boxes start empty with the suggestion in gray (last session's set, or the
+  set just logged above it today), tapping "Last:" logs the set at that suggestion, sets save when you leave
   the row, clearing both boxes unlogs a set, Complete Exercise logs untouched rows at their
   suggestion and goes back, ⓘ says where to change the set count, rest timer (its end: a banner
   in the background, a "Rest over" card from the bottom in the app). *Overview*:
@@ -138,6 +166,17 @@ movement family; the user does the one in front of the body, not overhead.
 - **Widget** — small (calorie ring) and medium (calories + Protein / Carbs / Fat).
 
 **Simulator notes for the next session:**
+- **State as of 2026-10-05:** the simulator's data was found reset (no plan, no Cable Crunch
+  sets). A test plan was created: 3 days, Mon/Wed/Fri, Push/Pull/Legs. Push has Barbell Bench
+  Press and Cable Chest Fly. Today's test sets are junk and can be deleted from each exercise's
+  Progress tab: Bench 3 × 10 (one at 135 lb, two at **1 lb**, from the typing tool dropping
+  keys) and Cable Chest Fly 2 × 10 × 30 lb. No weight is logged, so the body map is all gray.
+  The simulator is set to **dark** appearance (`xcrun simctl ui <id> appearance dark`), and
+  notifications were denied at the first rest prompt.
+- Taps sent in the first ~3 s after `launch` are swallowed, and so are taps sent in a quick
+  chain through a sheet. Sleep 2–3 s after launching and between screens.
+- The tool's `text` action drops keys if it runs before the keyboard is up ("135" became "1").
+  Wait about 1 s after tapping a box before typing.
 - iPhone 17 Pro, `A30B354E-BDCE-4007-B1A0-9F79091EE9E5`. The simulator tool's screenshot
   worked on 2026-09-25 but often shows the screen from *before* the last tap — take a second
   one, or `sleep 1.5` then `xcrun simctl io … screenshot` (reliable) and Read the PNG.
@@ -249,6 +288,7 @@ Values as of 2026-09-23. "In app" means you can change it yourself; the rest are
 | lb/kg | lb | In app: Profile → Units |
 | Default sets / reps for new exercises | 3 × 10 | In app: Profile → Workout |
 | How long typing pauses before a set logs itself | 1 s | `ExerciseTrackView.autoLogDelay` |
+| Where sets 2+ get their grey suggestion | today's set above, else last session's | `SetRow.suggest` |
 | How long "Exercise Complete" shows before going back | 1.5 s | `ExerciseTrackView.autoFinishDelay` |
 | Rest time, auto-start rest timer | 120 s, on (default since 2026-09-25) | In app: Profile → Workout |
 | Set rows reps-first or weight-first | reps-first | In app: Profile → Workout |
@@ -310,6 +350,17 @@ Both messages were checked by forcing the first attempt to fail with a temporary
 (removed before committing); a normal launch logs nothing.
 
 ## Decisions worth remembering
+
+- **Repeating a set is a tap on its "Last:" line, not a ✓ button** (2026-10-05). Two versions
+  were built first: a ✓ circle on every row, then a next row pre-filled with real values plus
+  one big ✓. The user disliked both. Today's previous set is the suggestion for sets 2+, and
+  last session's set stays on the "Last:" line. Don't bring back per-row log buttons.
+- **The rest copy doesn't name the next exercise** (2026-10-05): a day's exercises can be done
+  in any order, so naming one was wrong as often as not. Chosen over an ⓘ about order.
+- **Level colors run light → dark in both appearances** (2026-10-05). This replaces dim →
+  bright in dark mode (2026-09-27): the user reads the deepest red as the highest level.
+- **One weigh-in per day** (2026-10-05), like steps. A second save that day replaces the
+  first; the trend chart already averaged same-day entries.
 
 - **The Nutrition ring keeps its ⟳ eaten ↔ goal toggle** (2026-09-27). A design critique
   flagged that the ring never shows calories left; two replacements were built — "of 2,000 kcal
@@ -473,6 +524,48 @@ user's whiteboard sketch — body map on top, Current Plan, Goals below. On 2026
 of that doc's success criteria were met, and in the evening the tab was restyled to match
 Nutrition. 2026-09-23 closed the last two P3s and the outstanding re-checks; in the afternoon
 the user logged the first Training suggestions and the layout ones were built.
+
+### What changed on 2026-10-05
+
+From the user's six entries (top of **Dislikes** / **Suggestions**), ranked and built in three
+batches. All unit tests passed (201).
+
+**Batch A: bugs (`caa6522`)**
+- **The expanded week keeps today.** `CurrentPlanCard.week` used to filter today out, since it
+  has its own Today row on top. Now every weekday is listed in calendar order, and today's line
+  (workout or Rest) is semibold. Checked in the simulator (Monday: Push).
+- **One weigh-in per day.** `LogWeightEntryView` inserted a new `WeightEntry` on every save.
+  Saving now goes through `WeightViewModel.log(weightKg:on:in:)`: it finds that day's entries,
+  updates the first (date and weight) and deletes any extra duplicates; with no entry, it
+  inserts one. This mirrors `StepsViewModel.log`. Duplicates already in a store stay until that
+  day is saved again. `WeightLoggingTests` (3).
+
+**Batch B: logging flow (`aee8fde`)**
+- **+ sheet: Log Weight and Log Steps.** New `QuickAddChoice.logWeight` / `.logSteps` rows
+  ("Today's weigh-in", "Today's total"). `RootView` presents `LogWeightEntryView` /
+  `LogStepsView` in their own sheets once the + sheet has closed, over whichever tab is showing
+  (no tab switch). The sheet is now 380 pt tall. Checked in the simulator.
+- **The rest copy doesn't name the next exercise.** `RestTimerModel.nextUp: String?` became
+  `isBetweenExercises: Bool`, and `RestNotificationScheduling.schedule(at:isBetweenExercises:)`
+  matches it. The running card reads "Next exercise", and the rest-over card and banner read
+  "Start your next exercise." (between sets they still read "Time for your next set.").
+  `restAfterExercise` only checks that exercises are left. `WorkoutSettingsTests` updated.
+- **Repeat a set with one tap on "Last:".** Under each box, "Last: …" is a button, in the
+  tint color while it can fill the row and faded while it can't. That's when the row is
+  logged, or when no weight is suggested yet (a first-ever session before any weight is
+  typed). Tapping it fills empty boxes from their placeholders and logs the set like typing
+  would, rest timer included (`ExerciseTrackView.useSuggestion(for:)`). `SetRow.suggest` now
+  gives every empty row below a logged set **that set's** weight × reps, even when the row has
+  last-session history (that history stays on its "Last:" line). Checked in the simulator:
+  typed 30 lb on Set 1, then tapped "Last" → 10 × 30 logged; tapped Set 2's "Last" → 10 × 30
+  logged. `SetRowTests.todaysSetIsSuggestedOverLastSession`.
+
+**Batch C: colors (`8b46497`)**
+- **Dark-mode level colors run light → dark.** Only `LevelPalette.darkSteps` changed: now
+  (S, B) = (0.30, 1.00) → (0.92, 0.62), pale pink to deep red, the same direction as light mode.
+  This reverses the 2026-09-27 choice of dim → bright in dark mode. World Class stops short of
+  light mode's darkest step so it stays clear on the dark card. The body map, the ⓘ legend and
+  the muscle-detail bars all use these colors. Checked in the ⓘ legend in dark mode.
 
 ### What changed on 2026-10-01
 
@@ -1097,10 +1190,10 @@ actually improving or just accumulating complaints.
 | Metric | Count |
 |---|---|
 | Likes | 1 |
-| Dislikes | 18 |
-| Suggestions | 34 |
-| Triaged (in Backlog) | 70 |
-| Done | 66 |
+| Dislikes | 21 |
+| Suggestions | 37 |
+| Triaged (in Backlog) | 76 |
+| Done | 72 |
 | No change needed | 2 |
 | Won't Fix | 2 |
 
@@ -1181,6 +1274,12 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P3 | Water tracking, then a water reminder | Suggestions → General UI (2026-09-27, water half) | Won't Fix — logged by accident (user, 2026-09-27) |
 | P2 | Swipeable steps history like Health's: Day / Week / Month, swipe between periods, bar chart and the period's total. Today tapping the steps value opens a history + chart, so this reworks that screen | Suggestions → Goals (2026-09-27) | Done 2026-09-27 — D / W / M on the Steps screen (see What changed on 2026-09-27) |
 | P3 | "Same as last time" on a workout | Suggestions → Training, Nutrition (2026-09-25, "Same as last time", workout half) | No change needed — the gray suggestions in each row are last session's numbers, and Complete Exercise logs any untouched rows at them (`ExerciseTrackView.complete()`), so one tap already does it |
+| P1 | The expanded week left out today (it only showed in the Today row on top) — today is listed in its weekday slot, in semibold | Dislikes → Training (2026-10-05) | Done (caa6522) — checked in the simulator |
+| P1 | Saving weight twice on one day made two entries — `WeightViewModel.log` replaces that day's entry and clears duplicates, like steps (steps already replaced) | Suggestions → Goals (2026-10-05, overwrite) | Done (caa6522) — `WeightLoggingTests` |
+| P2 | Log Weight and Log Steps in the + sheet | Suggestions → General UI (2026-10-05) | Done (aee8fde) — checked in the simulator |
+| P2 | Rest copy says "Start your next exercise" instead of naming one (exercises happen out of order); chosen over an ⓘ | Suggestions → Training (2026-10-05) | Done (aee8fde) — copy unit-tested, not seen live |
+| P1 | A better way to repeat a set's lbs and reps — tap the "Last:" line to log the grey suggestion; sets 2+ suggest today's previous set. Per-row ✓ circles and a pre-filled row with one big ✓ were built and dropped | Dislikes → Training (2026-10-05) | Done (aee8fde) — checked in the simulator |
+| P2 | Body-map colors dark → light in dark mode — now light → dark in both appearances | Dislikes → Training (2026-10-05) | Done (8b46497) — checked in the ⓘ legend, dark mode |
 | P3 | Complete Exercise not tappable until every set is logged | Suggestions → Training (2026-09-25) | Won't Fix — decided 2026-09-25: Complete logging untouched rows at last session's numbers is the workout "Same as last time" above; disabling it would take that away. With sets logging themselves (P1 above) and the exercise completing on its last set, the button matters less anyway |
 
 Priority scale: **P1** (actively annoying, fix soon) / **P2** (worth doing, no rush) /
@@ -1201,6 +1300,12 @@ commit) / `No change needed` (verified the behavior already exists — say how y
 
 *(newest first)*
 
+- 2026-10-05 (Training) — When the week is expanded on the Current Plan card, today disappears
+  from it (it only shows in the Today row above). It should still be listed there.
+- 2026-10-05 (Training) — The body map's colors go dark → light; they should go light → dark.
+  (Dark mode ran dim → bright.)
+- 2026-10-05 (Training) — Repeating the same lbs and reps for a set needs a better button.
+  (There wasn't one: you had to tap into a box.)
 - 2026-09-25 (Training) — Obliques' muscle detail says "Not trained yet" even though it shows
   378 lb moved. (Cause: Cable Crunch credits obliques at 0.4, and only credits of 0.5+ count
   as "trained", so the volume adds up but the level stays 0.)
@@ -1241,6 +1346,10 @@ commit) / `No change needed` (verified the behavior already exists — say how y
 
 *(newest first)*
 
+- 2026-10-05 (General UI) — The + button should include Log Steps and Log Weight.
+- 2026-10-05 (Training) — Say "start next exercise" instead of naming what's next, since
+  exercises happen out of order — unless an ⓘ explaining that order matters is better.
+- 2026-10-05 (Goals) — If a day's steps or weight are saved again, overwrite that day's log.
 - 2026-09-27 (General UI) — Reminder notifications for steps, food, weight and water. (The
   app doesn't track water yet, so that one needs water logging first.)
 - 2026-09-27 (Goals) — A swipeable steps history like the Health app's: swipe between days /
