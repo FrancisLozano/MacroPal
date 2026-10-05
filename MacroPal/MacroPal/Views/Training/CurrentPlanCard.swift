@@ -61,8 +61,8 @@ struct CurrentPlanCard: View {
                             .accessibilityLabel("Gym Workout, \(daysPerWeek(plan.days.count))")
                             .accessibilityValue(showWeek ? "Week shown" : "Week hidden")
                             .accessibilityHint(showWeek ? "Hides the week" : "Shows the week")
-                            // Today stays the card's main row either way; the rest of the week
-                            // opens under it.
+                            // Today stays the card's main row either way; the week opens under
+                            // it, with today in its place there too.
                             todayRow
                             if showWeek {
                                 week(plan: plan)
@@ -177,16 +177,18 @@ struct CurrentPlanCard: View {
         return progress.exercises == 1 ? "1 exercise" : "\(progress.exercises) exercises"
     }
 
-    /// The rest of the week under today's row, a line per day in the calendar's week order:
-    /// "Tuesday: Pull", or a muted "Thursday · Rest". Days so far this week end with how they
-    /// went ("✓ Done", "1 of 2 done") and open that day's sets, to fix or add one; later days
-    /// open the workout to do today.
+    /// The whole week under today's row, a line per day in the calendar's week order:
+    /// "Tuesday: Pull", or a muted "Thursday · Rest", with today's line in bold so the week
+    /// still reads in order. Days so far this week end with how they went ("✓ Done", "1 of 2
+    /// done") and open that day's sets, to fix or add one; later days open the workout to do
+    /// today.
     private func week(plan: WorkoutPlan) -> some View {
         let calendar = Calendar.current
         let todayWeekday = calendar.component(.weekday, from: .now)
         return VStack(alignment: .leading, spacing: 0) {
-            ForEach(Self.weekdaysInOrder(calendar: calendar).filter { $0 != todayWeekday }, id: \.self) { weekday in
+            ForEach(Self.weekdaysInOrder(calendar: calendar), id: \.self) { weekday in
                 let name = calendar.weekdaySymbols[weekday - 1]
+                let isToday = weekday == todayWeekday
                 separator
                     .padding(.vertical, 14)
                 if let day = plan.day(on: weekday) {
@@ -199,9 +201,11 @@ struct CurrentPlanCard: View {
                         )
                     }
                     dayLink(day, title: "\(name): \(day.name)", date: date, progress: progress)
+                        .fontWeight(isToday ? .semibold : nil)
                 } else {
                     Text("\(name) · Rest")
                         .font(.subheadline)
+                        .fontWeight(isToday ? .semibold : nil)
                         .foregroundStyle(.secondary)
                 }
             }

@@ -11,6 +11,7 @@ struct LogWeightEntryView: View {
     @Environment(\.dismiss) private var dismiss
 
     @AppStorage(WeightUnit.storageKey) private var unit: WeightUnit = .lb
+    private let viewModel = WeightViewModel()
 
     @State private var date: Date = .now
     @State private var weightText: String = ""
@@ -57,8 +58,7 @@ struct LogWeightEntryView: View {
 
     private func save() {
         guard let weightKg else { return }
-        let entry = WeightEntry(date: date, weightKg: weightKg, notes: nil)
-        modelContext.insert(entry)
+        viewModel.log(weightKg: weightKg, on: date, in: modelContext)
         dismiss()
     }
 }

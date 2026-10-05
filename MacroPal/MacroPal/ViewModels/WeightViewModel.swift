@@ -14,10 +14,26 @@ struct WeightTrendPoint: Identifiable {
     var id: Date { date }
 }
 
-/// Logging a `WeightEntry` is simple enough to live directly in its View. The real logic
-/// here is updating the goal weight and computing the trend chart's data points.
+/// Logging weight (one entry per day, replaced on re-log), updating the goal weight and
+/// computing the trend chart's data points.
 @Observable
 final class WeightViewModel {
+    /// Sets `day`'s weight to `weightKg`, updating that day's entry if there is one, like
+    /// steps. Any older duplicates for the day go, so the day keeps a single weigh-in.
+    func log(weightKg: Double, on day: Date, in context: ModelContext, calendar: Calendar = .current) {
+        let start = calendar.startOfDay(for: day)
+        guard let end = calendar.date(byAdding: .day, value: 1, to: start) else { return }
+        let descriptor = FetchDescriptor<WeightEntry>(predicate: #Predicate { $0.date >= start && $0.date < end })
+        let existing = (try? context.fetch(descriptor)) ?? []
+        if let entry = existing.first {
+            entry.date = day
+            entry.weightKg = weightKg
+            existing.dropFirst().forEach(context.delete)
+        } else {
+            context.insert(WeightEntry(date: day, weightKg: weightKg))
+        }
+    }
+
     func updateGoalWeight(_ goalWeightKg: Double, on profile: UserProfile) {
         profile.goalWeightKg = goalWeightKg
     }
