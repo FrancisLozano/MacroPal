@@ -408,6 +408,7 @@ struct LogFoodEntryView: View {
                 )
             }
         }
+        ReminderScheduler.didLog(Reminder(meal: mealType), on: date, in: modelContext)
         onSaved()
     }
 }

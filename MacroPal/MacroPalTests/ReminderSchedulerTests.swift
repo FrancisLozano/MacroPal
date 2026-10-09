@@ -60,6 +60,22 @@ struct ReminderSchedulerTests {
         #expect(planned.identifier(calendar: calendar) == "reminder.lunch.2026-09-27")
     }
 
+    /// `didLog` removes the notification by the time something was logged, so that has to
+    /// name the same notification as the 9 PM one scheduled for that day.
+    @Test func aLogAnyTimeOfDayNamesThatDaysNotification() {
+        let scheduled = PlannedReminder(reminder: .steps, fireDate: at(day: 27, hour: 21))
+        for loggedAt in [at(day: 27, hour: 0), at(day: 27, hour: 15, minute: 30), at(day: 27, hour: 23, minute: 59)] {
+            #expect(ReminderScheduler.identifier(for: .steps, on: loggedAt, calendar: calendar) == scheduled.identifier(calendar: calendar))
+        }
+    }
+
+    @Test func eachMealMapsToItsReminder() {
+        #expect(Reminder(meal: .breakfast) == .breakfast)
+        #expect(Reminder(meal: .lunch) == .lunch)
+        #expect(Reminder(meal: .dinner) == .dinner)
+        #expect(Reminder(meal: .snack) == nil)
+    }
+
     @Test func profileSummaryNamesTheRemindersThatAreOn() {
         let viewModel = ProfileViewModel()
         #expect(viewModel.remindersSummary(enabled: []) == "Off")

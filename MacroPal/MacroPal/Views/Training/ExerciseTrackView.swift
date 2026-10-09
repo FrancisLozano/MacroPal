@@ -12,8 +12,9 @@ import SwiftData
 /// set saves on its own a moment after you stop typing, and when you leave its row, so
 /// backing out midway loses nothing; when the last set logs, the exercise completes itself
 /// after a moment. Complete Exercise logs the untouched rows at their suggested values and
-/// goes back. Tapping a row's "Last:" line makes its grey numbers real and logs the set, so a
-/// repeat set is one tap. Clearing both boxes unlogs a set. Used from a plan day (with its
+/// goes back. Tapping a box's "Last:" line makes that box's grey number real (reps or weight,
+/// not both), and the set logs once both boxes are filled, so a repeat set is a tap on each
+/// (one on a bodyweight move). Clearing both boxes unlogs a set. Used from a plan day (with its
 /// sets × reps target) and from an unplanned workout (Profile → Workout's default sets).
 /// Column order, units and the rest timer follow Profile → Workout. Start Rest sits at the
 /// bottom, where the running rest card replaces it. Finishing an exercise from a plan day rests
@@ -288,15 +289,17 @@ struct ExerciseTrackView: View {
         .padding(12)
     }
 
-    /// The "Last:" line's tap: the row's grey numbers become real ones and the set logs, as if
-    /// typed. Nil when there's nothing to fill in (logged already, or no weight suggested yet).
-    private func useSuggestion(for row: SetRow) -> (() -> Void)? {
-        guard !row.isLogged, row.wouldLogOnComplete else { return nil }
+    /// A "Last:" line's tap: that box's grey number becomes a real one, and if the other box
+    /// is filled too the set logs, as if typed. Nil when there's nothing to fill in (logged
+    /// already, or nothing suggested for that box yet).
+    private func useSuggestion(for row: SetRow, box: SetRow.Box) -> (() -> Void)? {
+        guard row.canUseSuggestion(for: box) else { return nil }
         return {
             guard let index = rows.firstIndex(where: { $0.id == row.id }) else { return }
+            rows[index].useSuggestion(for: box)
+            guard rows[index].typedValues != nil else { return }
             // Leaving a box would commit it, so let go of it first and log what's filled in.
             if focus?.rowID == row.id { focus = nil }
-            rows[index].fillEmptyFromPlaceholders()
             commitAndMaybeFinish(row.id)
         }
     }
@@ -305,7 +308,8 @@ struct ExerciseTrackView: View {
         box(
             text: row.weightText, placeholder: row.wrappedValue.weightPlaceholder,
             suffix: unit.symbol, last: row.wrappedValue.last.map { SetRow.format($0.weight) },
-            useSuggestion: useSuggestion(for: row.wrappedValue), keyboard: .decimalPad, field: .weight(id)
+            useSuggestion: useSuggestion(for: row.wrappedValue, box: .weight),
+            suggestionHint: "Fills in the suggested weight", keyboard: .decimalPad, field: .weight(id)
         )
     }
 
@@ -321,15 +325,16 @@ struct ExerciseTrackView: View {
         box(
             text: row.repsText, placeholder: row.wrappedValue.repsPlaceholder,
             suffix: "reps", last: row.wrappedValue.last.map { String($0.reps) },
-            useSuggestion: useSuggestion(for: row.wrappedValue), keyboard: .numberPad, field: .reps(id)
+            useSuggestion: useSuggestion(for: row.wrappedValue, box: .reps),
+            suggestionHint: "Fills in the suggested reps", keyboard: .numberPad, field: .reps(id)
         )
     }
 
     /// A number box with its unit, and "Last: …" under it — in the tint, and tappable, while
-    /// it can fill the row in.
+    /// it can fill this box in.
     private func box(
         text: Binding<String>, placeholder: String, suffix: String, last: String?,
-        useSuggestion: (() -> Void)?, keyboard: UIKeyboardType, field: Field
+        useSuggestion: (() -> Void)?, suggestionHint: String, keyboard: UIKeyboardType, field: Field
     ) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 4) {
@@ -359,7 +364,7 @@ struct ExerciseTrackView: View {
             }
             .buttonStyle(.plain)
             .disabled(useSuggestion == nil)
-            .accessibilityHint(useSuggestion == nil ? "" : "Logs this set with the suggested numbers")
+            .accessibilityHint(useSuggestion == nil ? "" : suggestionHint)
         }
         .frame(maxWidth: .infinity)
     }

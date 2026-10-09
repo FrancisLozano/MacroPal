@@ -85,6 +85,31 @@ struct SetRow: Identifiable {
         return saved == nil ? .insert(values) : .update(values)
     }
 
+    /// One of the row's two boxes, each with its own "Last:" line.
+    enum Box {
+        case weight, reps
+    }
+
+    /// Whether that box's "Last:" line can fill it: the set isn't logged yet and the box has a
+    /// valid grey number to take.
+    func canUseSuggestion(for box: Box) -> Bool {
+        guard !isLogged else { return false }
+        switch box {
+        case .weight: return !isBodyweight && Double(weightPlaceholder).map { $0 >= 0 } == true
+        case .reps: return Int(repsPlaceholder).map { $0 > 0 } == true
+        }
+    }
+
+    /// A "Last:" tap: only that box takes its grey number, so reps and weight can be repeated
+    /// separately. The set logs once both are filled (`typedValues`), as if typed.
+    mutating func useSuggestion(for box: Box) {
+        guard canUseSuggestion(for: box) else { return }
+        switch box {
+        case .weight: weightText = weightPlaceholder
+        case .reps: repsText = repsPlaceholder
+        }
+    }
+
     /// Whether Complete Exercise would log this row.
     var wouldLogOnComplete: Bool {
         var filled = self
@@ -93,8 +118,8 @@ struct SetRow: Identifiable {
     }
 
     /// After a set is saved, the empty rows below it suggest the same weight × reps — today's
-    /// set over last session's, which stays on their "Last:" line — so a repeat set is one tap
-    /// on that line, and on a first-ever session the weight only has to be typed once.
+    /// set over last session's, which stays on their "Last:" line — so a repeat set is a tap
+    /// on each "Last:" line, and on a first-ever session the weight only has to be typed once.
     static func suggest(_ values: SetValues, below index: Int, in rows: inout [SetRow]) {
         for later in rows.indices
         where later > index && !rows[later].isLogged && rows[later].isBlank {

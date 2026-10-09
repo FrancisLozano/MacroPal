@@ -7,8 +7,8 @@ import SwiftUI
 import SwiftData
 
 /// Goals section of the Training page. Each row shows the current value against its goal;
-/// tapping the value opens that goal's history (where the goal itself is edited), and the +
-/// logs a new value.
+/// tapping the row logs today's value, and the small chart opens that goal's history and
+/// stats (where the goal itself is edited).
 struct GoalsCard: View {
     @Query private var profiles: [UserProfile]
     @Query private var stepEntries: [StepEntry]
@@ -61,14 +61,14 @@ struct GoalsCard: View {
 
     /// The latest weigh-in against the goal weight ("227 → 154.3 lb") under when it was taken
     /// ("Weighed 3 days ago"), so an old number doesn't pass for today's; just the goal before
-    /// the first weigh-in. The row, caption and all, opens the weight history.
+    /// the first weigh-in. The row, caption and all, logs a weigh-in.
     private var weightRow: some View {
         let latest = weightEntries.max { $0.date < $1.date }
         let current = latest.map { unit.formattedLift(fromKg: $0.weightKg) }
         let age = latest.map { Self.age(of: $0.date) }
         return HStack {
-            historyLink(caption: age.map { "Weighed \($0)" } ?? "Goal weight") {
-                WeightHistoryView()
+            logRow(caption: age.map { "Weighed \($0)" } ?? "Goal weight") {
+                isPresentingLogWeightSheet = true
             } value: {
                 Text(current ?? goalText)
                     .font(.title3.bold())
@@ -76,19 +76,20 @@ struct GoalsCard: View {
                 Text(current == nil ? unit.symbol : "→\u{00A0}\(goalText)\u{00A0}\(unit.symbol)")
                     .foregroundStyle(.secondary)
             }
-            .accessibilityLabel(current.map { "Weight \($0) \(unit.symbol), weighed \(age ?? ""), goal \(goalText). Weight history" }
-                ?? "Goal weight \(goalText) \(unit.symbol). Weight history")
-            logButton("Log weight") { isPresentingLogWeightSheet = true }
+            .accessibilityLabel(current.map { "Weight \($0) \(unit.symbol), weighed \(age ?? ""), goal \(goalText)" }
+                ?? "Goal weight \(goalText) \(unit.symbol)")
+            .accessibilityHint("Logs today's weight")
+            historyLink("Weight history") { WeightHistoryView() }
         }
     }
 
-    /// Today's steps against the goal; the row opens the steps history.
+    /// Today's steps against the goal; the row logs today's steps.
     private var stepsRow: some View {
         let today = stepsViewModel.steps(on: .now, in: stepEntries)
         let goal = profile?.stepGoal ?? 10_000
         return HStack {
-            historyLink(caption: "Steps today") {
-                StepsHistoryView()
+            logRow(caption: "Steps today") {
+                isPresentingLogStepsSheet = true
             } value: {
                 Text(today, format: .number)
                     .font(.title3.bold())
@@ -99,19 +100,20 @@ struct GoalsCard: View {
                         .foregroundStyle(.green)
                 }
             }
-            .accessibilityLabel("\(today) of \(goal) steps today. Steps history")
-            logButton("Log steps") { isPresentingLogStepsSheet = true }
+            .accessibilityLabel("\(today) of \(goal) steps today")
+            .accessibilityHint("Logs today's steps")
+            historyLink("Steps history") { StepsHistoryView() }
         }
     }
 
-    /// A caption over a value, the whole block (up to the +) one link, so a thumb doesn't have
-    /// to land on the numbers.
-    private func historyLink<Destination: View, Value: View>(
+    /// A caption over a value, the whole block (up to the chart) one button that logs, so a
+    /// thumb doesn't have to land on the numbers.
+    private func logRow<Value: View>(
         caption: String,
-        @ViewBuilder destination: () -> Destination,
+        action: @escaping () -> Void,
         @ViewBuilder value: () -> Value
     ) -> some View {
-        NavigationLink(destination: destination()) {
+        Button(action: action) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(caption)
                     .font(.caption)
@@ -127,10 +129,14 @@ struct GoalsCard: View {
         .buttonStyle(.plain)
     }
 
-    /// A small gray circle with a +, in a 44-pt hit area so it's easy to hit one-handed.
-    private func logButton(_ accessibilityLabel: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            PlusCircle()
+    /// A small gray circle with a chart, in a 44-pt hit area so it's easy to hit one-handed,
+    /// opening the goal's history.
+    private func historyLink<Destination: View>(
+        _ accessibilityLabel: String,
+        @ViewBuilder destination: () -> Destination
+    ) -> some View {
+        NavigationLink(destination: destination()) {
+            IconCircle(systemName: "chart.bar.fill")
                 .frame(minWidth: 44, minHeight: 44)
                 .contentShape(Rectangle())
         }

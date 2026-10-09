@@ -59,6 +59,7 @@ struct LogWeightEntryView: View {
     private func save() {
         guard let weightKg else { return }
         viewModel.log(weightKg: weightKg, on: date, in: modelContext)
+        ReminderScheduler.didLog(.weight, on: date, in: modelContext)
         dismiss()
     }
 }

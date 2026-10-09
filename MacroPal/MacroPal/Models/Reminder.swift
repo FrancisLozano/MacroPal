@@ -27,6 +27,12 @@ enum Reminder: String, CaseIterable, Identifiable {
         }
     }
 
+    /// The food reminder for `meal`; `nil` for Snack, which has none.
+    init?(meal: MealType) {
+        guard let reminder = Self.allCases.first(where: { $0.mealType == meal }) else { return nil }
+        self = reminder
+    }
+
     /// Steps and weight at 9 PM; a meal at the end of its time frame (10:00 AM, 5:00 PM,
     /// 11:59 PM), the last moment it can still be logged under that meal.
     var defaultMinute: Int {

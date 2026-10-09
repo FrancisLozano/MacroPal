@@ -1,9 +1,20 @@
 # Usability Notes & Feedback Log
 
 **Status:** Living document — ongoing, not tied to a phase
-**Started:** 2026-09-06 · **Last updated:** 2026-10-05
+**Started:** 2026-09-06 · **Last updated:** 2026-10-09
 
-## Start here (as of 2026-10-05)
+## Start here (as of 2026-10-09)
+
+**2026-10-09: three new entries from use, all built (not committed yet).** 1 suggestion and 2
+dislikes (top of **Suggestions** / **Dislikes**); Backlog rows marked Done. Details under
+**What changed on 2026-10-09**. All 209 unit tests pass. **The iPhone doesn't have these yet**.
+1. Goals card: tap the weight / steps row to log today's value; the small chart opens its
+   history and stats. Checked in the simulator.
+2. Each "Last:" line fills only its own box (reps or lb); the set logs once both are filled.
+   Unit-tested, not seen live.
+3. Logging steps, weight or food removes that day's reminder right away. The user confirmed
+   it was the **steps** reminder. Unit-tested; the notification itself not seen live (the
+   simulator has notifications denied).
 
 **2026-10-05: six entries from use, all built and pushed.** The user logged 3 dislikes and 3
 suggestions (top of **Dislikes** / **Suggestions**); all six are Backlog rows marked Done. Built
@@ -211,7 +222,40 @@ movement family; the user does the one in front of the body, not overhead.
 - Model failures are logged: `xcrun simctl spawn booted log show --last 5m --predicate
   'subsystem == "com.francislozano.MacroPal" AND category == "RoutineAssistant"' --info`.
 
-## Next tasks (as of 2026-09-27)
+## Next tasks (as of 2026-10-09)
+
+From the user's 2026-10-09 entries. **All three built 2026-10-09**, see **What changed on
+2026-10-09**; kept for the reasoning.
+
+1. ~~**Goals card: tap the card to log, a small icon for history**~~ (Suggestions → Goals,
+   2026-10-09). Right now each Goals row (weight, steps) has a small **+** that logs and
+   the value opens the history. Swap them: tapping anywhere on the weight or steps row opens
+   Log Weight / Log Steps for today, and a small icon (a chart glyph where the + is) opens
+   the history and stats. Keep the rows' VoiceOver labels in step ("Log today's weight",
+   "Weight history").
+2. ~~**"Last:" fills only its own box**~~ (Dislikes → Training, 2026-10-09). Today each box has
+   its own "Last:" line under it (`ExerciseTrackView.box`), but both run the same
+   `useSuggestion`, which fills reps *and* lb and logs the set. Make the reps "Last:" fill
+   only reps and the lb "Last:" fill only lb. Decide on build: the set should still log by
+   itself once both boxes have a value (the same 1 s auto-log as typing), so tapping both
+   lines repeats the set. Bodyweight moves have only the reps box, so their one tap still
+   logs the set. Update the hint ("Logs this set…") and `SetRowTests`, and the 2026-10-05 decision
+   ("Repeating a set is a tap on its Last: line") under **Decisions worth remembering** (still
+   no per-row ✓ buttons).
+3. ~~**No reminder when that thing is already logged today**~~ (Dislikes → General UI,
+   2026-10-09). `ReminderScheduler` already leaves out days that have a log, but it only
+   rebuilds when the app becomes active or goes to the background (`MacroPalApp`
+   `onChange(of: scenePhase)`) and from Profile → Reminders — not when something is saved.
+   Likely causes to check first: (a) a log saved while the app stays open, with the
+   reminder firing before it's backgrounded (the delegate shows banners in the foreground);
+   (b) the background reschedule is an unawaited `Task` that may not finish before the app
+   is suspended; (c) a log path the fetch misses (e.g. a 0-step entry, or a weigh-in dated
+   just before midnight). Fix: reschedule right after saving weight, steps or food (and
+   from the + sheet's Log Weight / Log Steps), plus a unit test on `plan` for "logged today
+   → nothing for today". Ask the user which reminder it was (steps, weight or a meal) if it
+   isn't clear from testing. *(It was steps.)*
+
+## Earlier tasks (as of 2026-09-27, all done)
 
 The week of real use and the threshold tuning were closed on 2026-09-27 at the user's request
 ("that is enough from what I have"), and the post-install iPhone checks are done — all fine.
@@ -355,6 +399,8 @@ Both messages were checked by forcing the first attempt to fail with a temporary
   were built first: a ✓ circle on every row, then a next row pre-filled with real values plus
   one big ✓. The user disliked both. Today's previous set is the suggestion for sets 2+, and
   last session's set stays on the "Last:" line. Don't bring back per-row log buttons.
+  **Revised 2026-10-09:** each box's "Last:" fills only that box (reps or lb), and the set
+  logs once both are filled, so a repeat set is two taps (one on a bodyweight move).
 - **The rest copy doesn't name the next exercise** (2026-10-05): a day's exercises can be done
   in any order, so naming one was wrong as often as not. Chosen over an ⓘ about order.
 - **Level colors run light → dark in both appearances** (2026-10-05). This replaces dim →
@@ -524,6 +570,28 @@ user's whiteboard sketch — body map on top, Current Plan, Goals below. On 2026
 of that doc's success criteria were met, and in the evening the tab was restyled to match
 Nutrition. 2026-09-23 closed the last two P3s and the outstanding re-checks; in the afternoon
 the user logged the first Training suggestions and the layout ones were built.
+
+### What changed on 2026-10-09
+
+- **Goals card** (`GoalsCard`): the weight and steps rows are now one button each that opens
+  Log Weight / Log Steps (dated today). The + is replaced by a chart icon (`chart.bar.fill`)
+  that opens Weight / Steps history. `PlusCircle` became `IconCircle(systemName:)`, which
+  defaults to the + so "Log an Unplanned Workout" is unchanged. VoiceOver: the row reads the
+  value with the hint "Logs today's weight / steps"; the icon is "Weight history" / "Steps
+  history".
+- **"Last:" per box** (`SetRow.Box`, `canUseSuggestion(for:)`, `useSuggestion(for:)`;
+  `ExerciseTrackView.useSuggestion(for:box:)`): the reps line fills only reps, the lb line
+  only lb, each from its grey number (today's previous set for sets 2+, else last session).
+  When that leaves both boxes filled, the set logs at once; otherwise it waits. Leaving the
+  row still fills the other box from its grey number, as typing one box always did. A
+  bodyweight move's reps line still logs the set in one tap. Six new `SetRowTests`.
+- **Reminders after logging** (`ReminderScheduler.didLog`): saving steps (above 0), weight,
+  or food (Log Food and Same as Last Time) removes that reminder's notification for that day
+  at once, by its id (`reminder.steps.2026-10-09`), then rebuilds the rest. Before, only the
+  rebuild on app open / background removed it, and the background one ran in an unawaited
+  `Task` that could be suspended part-way. That rebuild now asks for background time
+  (`beginBackgroundTask`). `Reminder(meal:)` maps a meal to its reminder. Two new
+  `ReminderSchedulerTests`.
 
 ### What changed on 2026-10-05
 
@@ -1190,10 +1258,10 @@ actually improving or just accumulating complaints.
 | Metric | Count |
 |---|---|
 | Likes | 1 |
-| Dislikes | 21 |
-| Suggestions | 37 |
-| Triaged (in Backlog) | 76 |
-| Done | 72 |
+| Dislikes | 23 |
+| Suggestions | 38 |
+| Triaged (in Backlog) | 79 |
+| Done | 75 |
 | No change needed | 2 |
 | Won't Fix | 2 |
 
@@ -1280,6 +1348,9 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P2 | Rest copy says "Start your next exercise" instead of naming one (exercises happen out of order); chosen over an ⓘ | Suggestions → Training (2026-10-05) | Done (aee8fde) — copy unit-tested, not seen live |
 | P1 | A better way to repeat a set's lbs and reps — tap the "Last:" line to log the grey suggestion; sets 2+ suggest today's previous set. Per-row ✓ circles and a pre-filled row with one big ✓ were built and dropped | Dislikes → Training (2026-10-05) | Done (aee8fde) — checked in the simulator |
 | P2 | Body-map colors dark → light in dark mode — now light → dark in both appearances | Dislikes → Training (2026-10-05) | Done (8b46497) — checked in the ⓘ legend, dark mode |
+| P2 | Goals card: tapping the weight / steps row logs today's value; a small icon opens its history and stats (swap of today's + to log, tap value for history) | Suggestions → Goals (2026-10-09) | Done 2026-10-09 — checked in the simulator |
+| P1 | A set's "Last:" line fills only its own box (reps or lb), not both; the set logs once both are filled | Dislikes → Training (2026-10-09) | Done 2026-10-09 — `SetRowTests`, not seen live |
+| P1 | The steps reminder still fired after steps were logged that day — logging now removes that day's notification at once, and the background rebuild gets background time | Dislikes → General UI (2026-10-09) | Done 2026-10-09 — `ReminderSchedulerTests`, notification not seen live |
 | P3 | Complete Exercise not tappable until every set is logged | Suggestions → Training (2026-09-25) | Won't Fix — decided 2026-09-25: Complete logging untouched rows at last session's numbers is the workout "Same as last time" above; disabling it would take that away. With sets logging themselves (P1 above) and the exercise completing on its last set, the button matters less anyway |
 
 Priority scale: **P1** (actively annoying, fix soon) / **P2** (worth doing, no rush) /
@@ -1300,6 +1371,11 @@ commit) / `No change needed` (verified the behavior already exists — say how y
 
 *(newest first)*
 
+- 2026-10-09 (Training) — Tapping "Last:" under either box fills both lbs and reps. Each
+  "Last:" should fill only its own section: the one under reps fills reps, the one under lbs
+  fills lbs.
+- 2026-10-09 (General UI) — If I've already logged it, the reminder notification shouldn't
+  come through.
 - 2026-10-05 (Training) — When the week is expanded on the Current Plan card, today disappears
   from it (it only shows in the Today row above). It should still be listed there.
 - 2026-10-05 (Training) — The body map's colors go dark → light; they should go light → dark.
@@ -1346,6 +1422,8 @@ commit) / `No change needed` (verified the behavior already exists — say how y
 
 *(newest first)*
 
+- 2026-10-09 (Goals) — It's easier to press the weight / steps card itself to log today's
+  value, with the small icon opening its history and stats.
 - 2026-10-05 (General UI) — The + button should include Log Steps and Log Weight.
 - 2026-10-05 (Training) — Say "start next exercise" instead of naming what's next, since
   exercises happen out of order — unless an ⓘ explaining that order matters is better.

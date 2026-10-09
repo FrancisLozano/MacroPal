@@ -56,7 +56,7 @@ struct TrainingView: View {
             } label: {
                 // Baseline-aligned, so the + stays by the first line when the text wraps.
                 HStack(alignment: .firstTextBaseline, spacing: 12) {
-                    PlusCircle()
+                    IconCircle()
                     Text("Log an Unplanned Workout")
                     Spacer()
                 }

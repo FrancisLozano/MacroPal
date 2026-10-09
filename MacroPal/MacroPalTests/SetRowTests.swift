@@ -110,6 +110,53 @@ struct SetRowTests {
         #expect(!firstEver.wouldLogOnComplete)
     }
 
+    @Test func theRepsLastLineFillsOnlyTheReps() {
+        var tapped = row()
+        tapped.useSuggestion(for: .reps)
+        #expect(tapped.repsText == "10")
+        #expect(tapped.weightText == "")
+        // Not a set until the weight is in too.
+        #expect(tapped.typedValues == nil)
+    }
+
+    @Test func theWeightLastLineFillsOnlyTheWeight() {
+        var tapped = row()
+        tapped.useSuggestion(for: .weight)
+        #expect(tapped.weightText == "135")
+        #expect(tapped.repsText == "")
+        #expect(tapped.typedValues == nil)
+    }
+
+    @Test func tappingBothLastLinesMakesTheSet() {
+        var tapped = row()
+        tapped.useSuggestion(for: .reps)
+        tapped.useSuggestion(for: .weight)
+        #expect(tapped.change == .insert(SetValues(weight: 135, reps: 10)))
+    }
+
+    @Test func aLastLineKeepsWhatIsTypedInTheOtherBox() {
+        var tapped = row(weight: "145")
+        tapped.useSuggestion(for: .reps)
+        #expect(tapped.change == .insert(SetValues(weight: 145, reps: 10)))
+    }
+
+    @Test func aBodyweightRepsLastLineMakesTheSet() {
+        var bodyweight = row(suggesting: ("", "12"))
+        bodyweight.isBodyweight = true
+        #expect(!bodyweight.canUseSuggestion(for: .weight))
+        bodyweight.useSuggestion(for: .reps)
+        #expect(bodyweight.change == .insert(SetValues(weight: 0, reps: 12)))
+    }
+
+    @Test func aLastLineIsOffWithNothingToFillOrOnceLogged() {
+        let firstEver = row(suggesting: ("", "10"))
+        #expect(!firstEver.canUseSuggestion(for: .weight))
+        #expect(firstEver.canUseSuggestion(for: .reps))
+        let logged = row(weight: "135", reps: "10", saved: SetValues(weight: 135, reps: 10))
+        #expect(!logged.canUseSuggestion(for: .weight))
+        #expect(!logged.canUseSuggestion(for: .reps))
+    }
+
     @Test func aSavedSetIsSuggestedBelowWhenThereIsNoHistory() {
         var rows = [row(suggesting: ("", "10")), row(suggesting: ("", "10")), row(weight: "50", suggesting: ("", "10"))]
         SetRow.suggest(SetValues(weight: 95, reps: 8), below: 0, in: &rows)

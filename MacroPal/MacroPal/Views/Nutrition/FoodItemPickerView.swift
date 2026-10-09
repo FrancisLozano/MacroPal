@@ -361,6 +361,7 @@ struct FoodItemPickerView: View {
     private func lastTimeRow(_ lastTime: LastTimeMeal) -> some View {
         Button {
             viewModel.logAgain(lastTime.entries, as: lastTime.meal, on: lastTime.day, context: modelContext)
+            ReminderScheduler.didLog(Reminder(meal: lastTime.meal), on: lastTime.day, in: modelContext)
             dismiss()
         } label: {
             HStack {

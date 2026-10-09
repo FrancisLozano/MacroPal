@@ -69,6 +69,8 @@ struct LogStepsView: View {
     private func save() {
         guard let steps else { return }
         viewModel.log(steps: steps, on: date, in: modelContext)
+        // A 0 total doesn't count as logged, so its reminder stays (see `ReminderScheduler`).
+        ReminderScheduler.didLog(steps > 0 ? .steps : nil, on: date, in: modelContext)
         dismiss()
     }
 }

@@ -65,8 +65,12 @@ struct MacroPalApp: App {
         // time is skipped and the week ahead stays filled (see `ReminderScheduler`).
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active || phase == .background else { return }
+            // Ask for background time, or the app can be suspended mid-rebuild and leave the
+            // old notifications — including today's for something just logged — in place.
+            let backgroundTask = UIApplication.shared.beginBackgroundTask(withName: "Reschedule reminders")
             Task {
                 await ReminderScheduler.reschedule(in: sharedModelContainer.mainContext)
+                UIApplication.shared.endBackgroundTask(backgroundTask)
             }
         }
     }

@@ -18,8 +18,7 @@ struct PlannedReminder: Equatable {
     /// "reminder.steps.2026-09-27" — one per reminder per day, so rescheduling replaces
     /// rather than duplicates, and a day that gets logged can simply be left out.
     func identifier(calendar: Calendar) -> String {
-        let day = calendar.dateComponents([.year, .month, .day], from: fireDate)
-        return String(format: "%@%@.%04d-%02d-%02d", ReminderScheduler.identifierPrefix, reminder.rawValue, day.year ?? 0, day.month ?? 0, day.day ?? 0)
+        ReminderScheduler.identifier(for: reminder, on: fireDate, calendar: calendar)
     }
 }
 
@@ -28,8 +27,8 @@ struct PlannedReminder: Equatable {
 /// A repeating notification can't skip one day, so instead each enabled reminder gets a
 /// one-off notification for each of the next `daysAhead` days, leaving out days it's already
 /// logged and times already past. Rebuilt whenever the app opens or goes to the background
-/// (so anything logged in between is accounted for) and when a setting changes. Opening the
-/// app at least once a week keeps them coming.
+/// (so anything logged in between is accounted for), when a setting changes, and right after
+/// something is logged (`didLog`). Opening the app at least once a week keeps them coming.
 @MainActor
 enum ReminderScheduler {
     static let identifierPrefix = "reminder."
@@ -56,6 +55,25 @@ enum ReminderScheduler {
                 return PlannedReminder(reminder: reminder, fireDate: fireDate)
             }
         }
+    }
+
+    nonisolated static func identifier(for reminder: Reminder, on day: Date, calendar: Calendar) -> String {
+        let day = calendar.dateComponents([.year, .month, .day], from: day)
+        return String(format: "%@%@.%04d-%02d-%02d", identifierPrefix, reminder.rawValue, day.year ?? 0, day.month ?? 0, day.day ?? 0)
+    }
+
+    /// Called right after `reminder`'s thing is logged for `day`: drops that day's notification
+    /// at once, then rebuilds the rest. Waiting for the app to go to the background isn't
+    /// enough — that rebuild can be suspended before it finishes, and a reminder due while the
+    /// app is still open would come through anyway (seen 2026-10-09 with steps).
+    static func didLog(_ reminder: Reminder?, on day: Date, in context: ModelContext) {
+        if let reminder {
+            let identifier = identifier(for: reminder, on: day, calendar: .current)
+            let center = UNUserNotificationCenter.current()
+            center.removePendingNotificationRequests(withIdentifiers: [identifier])
+            center.removeDeliveredNotifications(withIdentifiers: [identifier])
+        }
+        Task { await reschedule(in: context) }
     }
 
     /// Replaces every pending reminder with a fresh plan. Only schedules when notifications

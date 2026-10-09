@@ -35,14 +35,15 @@ struct TrainingSection<Accessory: View, Content: View>: View {
     static var cardBackground: Color { Color(.secondarySystemGroupedBackground) }
 }
 
-/// The Training page's + for logging something: an accent plus on a small gray circle, growing
-/// with the text size. The Goals rows and "Log an Unplanned Workout" share it, so every + on
-/// the page looks the same.
-struct PlusCircle: View {
+/// A small accent icon on a gray circle, growing with the text size: the + on "Log an
+/// Unplanned Workout" and the chart on each Goals row share it, so the page's small buttons
+/// look the same.
+struct IconCircle: View {
+    var systemName = "plus"
     @ScaledMetric private var diameter: CGFloat = 30
 
     var body: some View {
-        Image(systemName: "plus")
+        Image(systemName: systemName)
             .font(.subheadline.weight(.semibold))
             .foregroundStyle(Color.accentColor)
             .frame(width: diameter, height: diameter)
