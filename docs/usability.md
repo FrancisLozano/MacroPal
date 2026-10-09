@@ -5,9 +5,11 @@
 
 ## Start here (as of 2026-10-09)
 
-**2026-10-09: three new entries from use, all built (not committed yet).** 1 suggestion and 2
-dislikes (top of **Suggestions** / **Dislikes**); Backlog rows marked Done. Details under
-**What changed on 2026-10-09**. All 209 unit tests pass. **The iPhone doesn't have these yet**.
+**2026-10-09: three new entries from use, all built and pushed (`b52a92a`).** 1 suggestion and
+2 dislikes (top of **Suggestions** / **Dislikes**); Backlog rows marked Done. Details under
+**What changed on 2026-10-09**. All 209 unit tests pass. The working tree is clean and
+**nothing is being built right now**. **The iPhone doesn't have these yet**: install from
+Xcode again.
 1. Goals card: tap the weight / steps row to log today's value; the small chart opens its
    history and stats. Checked in the simulator.
 2. Each "Last:" line fills only its own box (reps or lb); the set logs once both are filled.
@@ -15,6 +17,11 @@ dislikes (top of **Suggestions** / **Dislikes**); Backlog rows marked Done. Deta
 3. Logging steps, weight or food removes that day's reminder right away. The user confirmed
    it was the **steps** reminder. Unit-tested; the notification itself not seen live (the
    simulator has notifications denied).
+
+**Check on the iPhone after installing:** with the steps reminder on, log today's steps before
+its time and confirm no "Log your steps" comes through that evening; tap each "Last:" line on a
+set (reps alone shouldn't log; reps then lb should). The simulator has the 10-09 build
+installed and no new test data was logged.
 
 **2026-10-05: six entries from use, all built and pushed.** The user logged 3 dislikes and 3
 suggestions (top of **Dislikes** / **Suggestions**); all six are Backlog rows marked Done. Built
@@ -224,7 +231,7 @@ movement family; the user does the one in front of the body, not overhead.
 
 ## Next tasks (as of 2026-10-09)
 
-From the user's 2026-10-09 entries. **All three built 2026-10-09**, see **What changed on
+From the user's 2026-10-09 entries. **All three built 2026-10-09** (`b52a92a`), see **What changed on
 2026-10-09**; kept for the reasoning.
 
 1. ~~**Goals card: tap the card to log, a small icon for history**~~ (Suggestions → Goals,
@@ -1348,9 +1355,9 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P2 | Rest copy says "Start your next exercise" instead of naming one (exercises happen out of order); chosen over an ⓘ | Suggestions → Training (2026-10-05) | Done (aee8fde) — copy unit-tested, not seen live |
 | P1 | A better way to repeat a set's lbs and reps — tap the "Last:" line to log the grey suggestion; sets 2+ suggest today's previous set. Per-row ✓ circles and a pre-filled row with one big ✓ were built and dropped | Dislikes → Training (2026-10-05) | Done (aee8fde) — checked in the simulator |
 | P2 | Body-map colors dark → light in dark mode — now light → dark in both appearances | Dislikes → Training (2026-10-05) | Done (8b46497) — checked in the ⓘ legend, dark mode |
-| P2 | Goals card: tapping the weight / steps row logs today's value; a small icon opens its history and stats (swap of today's + to log, tap value for history) | Suggestions → Goals (2026-10-09) | Done 2026-10-09 — checked in the simulator |
-| P1 | A set's "Last:" line fills only its own box (reps or lb), not both; the set logs once both are filled | Dislikes → Training (2026-10-09) | Done 2026-10-09 — `SetRowTests`, not seen live |
-| P1 | The steps reminder still fired after steps were logged that day — logging now removes that day's notification at once, and the background rebuild gets background time | Dislikes → General UI (2026-10-09) | Done 2026-10-09 — `ReminderSchedulerTests`, notification not seen live |
+| P2 | Goals card: tapping the weight / steps row logs today's value; a small icon opens its history and stats (swap of today's + to log, tap value for history) | Suggestions → Goals (2026-10-09) | Done (b52a92a) — checked in the simulator |
+| P1 | A set's "Last:" line fills only its own box (reps or lb), not both; the set logs once both are filled | Dislikes → Training (2026-10-09) | Done (b52a92a) — `SetRowTests`, not seen live |
+| P1 | The steps reminder still fired after steps were logged that day — logging now removes that day's notification at once, and the background rebuild gets background time | Dislikes → General UI (2026-10-09) | Done (b52a92a) — `ReminderSchedulerTests`, notification not seen live |
 | P3 | Complete Exercise not tappable until every set is logged | Suggestions → Training (2026-09-25) | Won't Fix — decided 2026-09-25: Complete logging untouched rows at last session's numbers is the workout "Same as last time" above; disabling it would take that away. With sets logging themselves (P1 above) and the exercise completing on its last set, the button matters less anyway |
 
 Priority scale: **P1** (actively annoying, fix soon) / **P2** (worth doing, no rush) /
