@@ -1,9 +1,15 @@
 # Usability Notes & Feedback Log
 
 **Status:** Living document — ongoing, not tied to a phase
-**Started:** 2026-09-06 · **Last updated:** 2026-10-09
+**Started:** 2026-09-06 · **Last updated:** 2026-10-10
 
-## Start here (as of 2026-10-09)
+## Start here (as of 2026-10-10)
+
+**2026-10-10: widgets redesigned, built and pushed.** From one dislike (top of **Dislikes**):
+the widgets felt cramped. The user chose the layout in chat; details under **What changed on
+2026-10-10**. Checked on the simulator home screen (dark mode, one 847 kcal food logged). The
+over-goal state is only in the new "Over goal" Xcode preview, not seen live. **The iPhone
+doesn't have this yet**: install from Xcode again, and check both widget sizes there.
 
 **2026-10-09: three new entries from use, all built and pushed (`b52a92a`).** 1 suggestion and
 2 dislikes (top of **Suggestions** / **Dislikes**); Backlog rows marked Done. Details under
@@ -181,9 +187,14 @@ movement family; the user does the one in front of the body, not overhead.
 - **Profile** — Nutrition (Goal, Daily Targets), Training (Workout settings: set-row order,
   default sets/reps, rest timer; Past Training; Sex), Reminders, Units (lb/kg),
   Acknowledgements.
-- **Widget** — small (calorie ring) and medium (calories + Protein / Carbs / Fat).
+- **Widget** — small (calorie ring, "kcal left", P / C / F mini bars) and medium (ring +
+  Protein / Carbs / Fat rows: eaten / target g with a progress bar).
 
 **Simulator notes for the next session:**
+- **State as of 2026-10-10 (iPhone 17 Pro sim, dark mode):** small and medium MacroPal widgets
+  are on the first home-screen page. Today has one test food under Breakfast: Greek Yogurt,
+  Peach & Ginger, 1,100 g (847 kcal; the amount came from typing in front of the 100). Delete
+  it from the Daily Log if it gets in the way of screenshots.
 - **State as of 2026-10-05:** the simulator's data was found reset (no plan, no Cable Crunch
   sets). A test plan was created: 3 days, Mon/Wed/Fri, Push/Pull/Legs. Push has Barbell Bench
   Press and Cable Chest Fly. Today's test sets are junk and can be deleted from each exercise's
@@ -577,6 +588,26 @@ user's whiteboard sketch — body map on top, Current Plan, Goals below. On 2026
 of that doc's success criteria were met, and in the evening the tab was restyled to match
 Nutrition. 2026-09-23 closed the last two P3s and the outstanding re-checks; in the afternoon
 the user logged the first Training suggestions and the layout ones were built.
+
+### What changed on 2026-10-10
+
+- **Widgets** (`MacroPalWidget.swift`), from the user's dislike that they felt cramped. Asked
+  first; the user picked: ring + stacked bars for medium, macros as eaten vs target, ring
+  center as calories left (labeled), and a macro hint on the small widget. Lock Screen and
+  Large widgets were offered and not chosen.
+  - *Medium:* ring (96pt) on the left with "eaten / goal" under it; on the right three rows,
+    each name + "92 / 150 g" (eaten bold, target muted) over a 6pt bar. 20pt between ring
+    and rows, 12pt between rows.
+  - *Small:* ring (92pt), then three 4pt bars labeled P / C / F.
+  - *Ring:* "kcal left"; past the goal "kcal over" in red plus a second red lap, like the
+    Daily Log's gauge (before, a negative number with "cal"). A macro bar and its eaten
+    number turn red when over.
+  - *Data change:* macros now show progress toward targets. Before, the medium widget showed
+    each macro's share of grams eaten, which didn't say how close you were to a goal.
+  - *Spacing:* removed an extra `.padding()` that stacked on top of WidgetKit's own content
+    margins. Digits are monospaced and grouped ("1,153"). VoiceOver reads each piece as one
+    sentence ("Protein, 92 of 150 grams"); bars and ring are `.widgetAccentable()` for tinted
+    home screens.
 
 ### What changed on 2026-10-09
 
@@ -1358,6 +1389,7 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P2 | Goals card: tapping the weight / steps row logs today's value; a small icon opens its history and stats (swap of today's + to log, tap value for history) | Suggestions → Goals (2026-10-09) | Done (b52a92a) — checked in the simulator |
 | P1 | A set's "Last:" line fills only its own box (reps or lb), not both; the set logs once both are filled | Dislikes → Training (2026-10-09) | Done (b52a92a) — `SetRowTests`, not seen live |
 | P1 | The steps reminder still fired after steps were logged that day — logging now removes that day's notification at once, and the background rebuild gets background time | Dislikes → General UI (2026-10-09) | Done (b52a92a) — `ReminderSchedulerTests`, notification not seen live |
+| P2 | Widgets redesigned for spacing: medium is ring + Protein / Carbs / Fat rows (eaten / target g, progress bars); small adds P / C / F mini bars; ring says "kcal left" / red "kcal over" | Dislikes → Widget (2026-10-10) | Done 2026-10-10 — checked on the simulator home screen; over-goal only in the Xcode preview |
 | P3 | Complete Exercise not tappable until every set is logged | Suggestions → Training (2026-09-25) | Won't Fix — decided 2026-09-25: Complete logging untouched rows at last session's numbers is the workout "Same as last time" above; disabling it would take that away. With sets logging themselves (P1 above) and the exercise completing on its last set, the button matters less anyway |
 
 Priority scale: **P1** (actively annoying, fix soon) / **P2** (worth doing, no rush) /
@@ -1378,6 +1410,8 @@ commit) / `No change needed` (verified the behavior already exists — say how y
 
 *(newest first)*
 
+- 2026-10-10 (Widget) — I don't like the widgets' UI; there should be enough spacing for the
+  information to be visually appealing.
 - 2026-10-09 (Training) — Tapping "Last:" under either box fills both lbs and reps. Each
   "Last:" should fill only its own section: the one under reps fills reps, the one under lbs
   fills lbs.

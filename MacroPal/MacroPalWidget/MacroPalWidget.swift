@@ -89,6 +89,13 @@ struct MacroPalWidgetEntryView: View {
     @Environment(\.widgetFamily) private var family
     var entry: Provider.Entry
 
+    // Same macro colors as the Daily Log, so the coding reads the same in both places.
+    private static let proteinColor = Color.orange
+    private static let carbColor = Color.green
+    private static let fatColor = Color.purple
+    private static let calorieColor = Color.teal
+    private static let trackOpacity = 0.15
+
     var body: some View {
         if !entry.hasProfile {
             emptyState
@@ -100,7 +107,7 @@ struct MacroPalWidgetEntryView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 8) {
             Image(systemName: "fork.knife")
                 .font(.title2)
                 .foregroundStyle(.secondary)
@@ -109,74 +116,166 @@ struct MacroPalWidgetEntryView: View {
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
         }
-        .padding()
     }
-
-    // Descriptive breakdown of what today's eaten food was made of, by weight — not tied to
-    // targets, so it stays meaningful even if someone hasn't set targets that match how they
-    // actually want to eat. Weighted by grams rather than calories so e.g. a small amount of
-    // fat (9 kcal/g) doesn't read as a bigger share than a larger amount of carbs (4 kcal/g).
-    private var totalGramsEaten: Double {
-        entry.eaten.proteinG + entry.eaten.carbG + entry.eaten.fatG
-    }
-    private var proteinPercent: Double { totalGramsEaten > 0 ? entry.eaten.proteinG / totalGramsEaten : 0 }
-    private var carbPercent: Double { totalGramsEaten > 0 ? entry.eaten.carbG / totalGramsEaten : 0 }
-    private var fatPercent: Double { totalGramsEaten > 0 ? entry.eaten.fatG / totalGramsEaten : 0 }
 
     private var remainingCalories: Double { entry.target.calories - entry.eaten.calories }
-    private var calorieFraction: Double {
-        entry.target.calories > 0 ? min(1, max(0, entry.eaten.calories / entry.target.calories)) : 0
+    private var isOverCalories: Bool { remainingCalories < 0 }
+
+    private var macros: [(name: String, short: String, eaten: Double, target: Double, color: Color)] {
+        [
+            ("Protein", "P", entry.eaten.proteinG, entry.target.proteinG, Self.proteinColor),
+            ("Carbs", "C", entry.eaten.carbG, entry.target.carbG, Self.carbColor),
+            ("Fat", "F", entry.eaten.fatG, entry.target.fatG, Self.fatColor),
+        ]
     }
 
+    // MARK: Small
+
+    /// The ring is the headline; three short bars underneath hint at where the macros stand
+    /// without competing with it for attention.
     private var smallView: some View {
-        calorieRing(diameter: 90)
-            .padding()
+        VStack(spacing: 12) {
+            calorieRing(diameter: 92, lineWidth: 9)
+            HStack(spacing: 8) {
+                ForEach(macros, id: \.name) { macro in
+                    VStack(spacing: 4) {
+                        progressBar(eaten: macro.eaten, target: macro.target, color: macro.color, height: 4)
+                        Text(macro.short)
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(macro.name)
+                    .accessibilityValue(macroAccessibilityValue(eaten: macro.eaten, target: macro.target))
+                }
+            }
+            .padding(.horizontal, 6)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
+
+    // MARK: Medium
 
     private var mediumView: some View {
-        HStack(spacing: 14) {
-            calorieRing(diameter: 74)
-            Spacer(minLength: 4)
-            macroColumn(name: "Protein", percent: proteinPercent, grams: entry.eaten.proteinG, color: .orange)
-            macroColumn(name: "Carbs", percent: carbPercent, grams: entry.eaten.carbG, color: .green)
-            macroColumn(name: "Fat", percent: fatPercent, grams: entry.eaten.fatG, color: .purple)
+        HStack(spacing: 20) {
+            VStack(spacing: 8) {
+                calorieRing(diameter: 96, lineWidth: 9)
+                calorieTotalCaption
+            }
+            VStack(alignment: .leading, spacing: 12) {
+                ForEach(macros, id: \.name) { macro in
+                    macroRow(name: macro.name, eaten: macro.eaten, target: macro.target, color: macro.color)
+                }
+            }
+            .frame(maxWidth: .infinity)
         }
-        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    private func calorieRing(diameter: CGFloat) -> some View {
-        ZStack {
-            Circle()
-                .stroke(Color.secondary.opacity(0.2), lineWidth: 8)
-            Circle()
-                .trim(from: 0, to: calorieFraction)
-                .stroke(Color.teal, style: StrokeStyle(lineWidth: 8, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-            VStack(spacing: 0) {
-                Text("\(Int(remainingCalories.rounded()))")
-                    .font(.system(size: diameter * 0.3, weight: .bold))
-                    .minimumScaleFactor(0.5)
-                Text("cal")
-                    .font(.system(size: diameter * 0.15))
-                    .foregroundStyle(.secondary)
+    private var calorieTotalCaption: some View {
+        HStack(spacing: 0) {
+            Text(Int(entry.eaten.calories.rounded()), format: .number)
+                .foregroundStyle(.primary)
+            Text(" / ")
+            Text(Int(entry.target.calories.rounded()), format: .number)
+        }
+        .font(.caption2.weight(.medium))
+        .monospacedDigit()
+        .foregroundStyle(.secondary)
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(Int(entry.eaten.calories.rounded())) of \(Int(entry.target.calories.rounded())) calories eaten")
+    }
+
+    private func macroRow(name: String, eaten: Double, target: Double, color: Color) -> some View {
+        let isOver = target > 0 && eaten > target
+        return VStack(alignment: .leading, spacing: 5) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(name)
+                    .font(.caption.weight(.semibold))
+                Spacer(minLength: 8)
+                HStack(spacing: 0) {
+                    Text(Int(eaten.rounded()), format: .number)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(isOver ? Color.red : Color.primary)
+                    Text(" / \(Int(target.rounded())) g")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                .monospacedDigit()
+                .lineLimit(1)
             }
+            progressBar(eaten: eaten, target: target, color: color, height: 6)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(name)
+        .accessibilityValue(macroAccessibilityValue(eaten: eaten, target: target))
+    }
+
+    // MARK: Shared pieces
+
+    /// Calories left in the middle; past the goal it flips to "over" in red, and the overshoot
+    /// is drawn as a second red lap the way the Daily Log's gauge does it.
+    private func calorieRing(diameter: CGFloat, lineWidth: CGFloat) -> some View {
+        let target = entry.target.calories
+        let fraction = target > 0 ? min(1, max(0, entry.eaten.calories / target)) : 0
+        let overFraction = target > 0 ? min(1, max(0, entry.eaten.calories / target - 1)) : 0
+        let value = Int(abs(remainingCalories).rounded())
+
+        return ZStack {
+            Circle()
+                .stroke(Color.secondary.opacity(Self.trackOpacity), lineWidth: lineWidth)
+            Circle()
+                .trim(from: 0, to: fraction)
+                .stroke(Self.calorieColor, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .widgetAccentable()
+            if overFraction > 0 {
+                Circle()
+                    .trim(from: 0, to: overFraction)
+                    .stroke(Color.red, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+            }
+            VStack(spacing: 1) {
+                Text(value, format: .number)
+                    .font(.system(size: diameter * 0.26, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                Text(isOverCalories ? "kcal over" : "kcal left")
+                    .font(.system(size: diameter * 0.12, weight: .medium))
+                    .foregroundStyle(isOverCalories ? Color.red : Color.secondary)
+            }
+            .padding(.horizontal, lineWidth + 4)
         }
         .frame(width: diameter, height: diameter)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Calories")
+        .accessibilityValue(isOverCalories ? "\(value) over goal" : "\(value) left")
     }
 
-    private func macroColumn(name: String, percent: Double, grams: Double, color: Color) -> some View {
-        VStack(spacing: 2) {
-            Text("\(Int((percent * 100).rounded()))%")
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundStyle(color)
-            Text(String(format: "%.1f g", grams))
-                .font(.system(size: 13, weight: .bold))
-                .minimumScaleFactor(0.7)
-            Text(name)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-        }
+    private func progressBar(eaten: Double, target: Double, color: Color, height: CGFloat) -> some View {
+        let fraction = target > 0 ? min(1, max(0, eaten / target)) : 0
+        let isOver = target > 0 && eaten > target
+        return Capsule()
+            .fill(Color.secondary.opacity(Self.trackOpacity))
+            .frame(height: height)
+            .overlay(alignment: .leading) {
+                GeometryReader { proxy in
+                    Capsule()
+                        .fill(isOver ? Color.red : color)
+                        .frame(width: max(fraction > 0 ? height : 0, proxy.size.width * fraction))
+                        .widgetAccentable()
+                }
+            }
+    }
+
+    private func macroAccessibilityValue(eaten: Double, target: Double) -> String {
+        let eatenG = Int(eaten.rounded())
+        let targetG = Int(target.rounded())
+        guard eaten > target, target > 0 else { return "\(eatenG) of \(targetG) grams" }
+        return "\(eatenG) of \(targetG) grams, \(eatenG - targetG) over"
     }
 }
 
@@ -209,6 +308,16 @@ struct MacroPalWidget: Widget {
 } timeline: {
     MacroWidgetEntry(
         eaten: MacroTotals(calories: 1200, proteinG: 80, carbG: 100, fatG: 40),
+        target: MacroTotals(calories: 2000, proteinG: 150, carbG: 200, fatG: 65),
+        hasProfile: true
+    )
+}
+
+#Preview("Over goal", as: .systemMedium) {
+    MacroPalWidget()
+} timeline: {
+    MacroWidgetEntry(
+        eaten: MacroTotals(calories: 2240, proteinG: 162, carbG: 210, fatG: 58),
         target: MacroTotals(calories: 2000, proteinG: 150, carbG: 200, fatG: 65),
         hasProfile: true
     )

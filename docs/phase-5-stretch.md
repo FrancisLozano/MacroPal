@@ -33,6 +33,8 @@ Definition of done: scanning a real barcode on a physical device either finds a 
 
 **Implementation status:** done and verified on a physical device (a real iPhone, not the Simulator). Network client, JSON decoding, local-catalog lookup, and the full UI flow (scan → loading → found/not-found/failed states) are covered by 7 unit tests (37 total passing) plus a live end-to-end scan.
 
+**Redesign (2026-10-10):** the macro breakdown is now tied to targets after all — eaten vs target grams with progress bars (medium) and P / C / F mini bars (small); the ring says "kcal left" / "kcal over". See [usability.md](usability.md), *What changed on 2026-10-10*.
+
 One bug found and fixed during device testing: the review form was hiding legitimate `0` macro values as blank text fields (meant to distinguish "never entered" from "entered as zero" for manual entry, but Open Food Facts genuinely reports 0 for some products' macros) — this made a successful scan look like nothing had been fetched, and blank fields also failed form validation. Fixed by always showing the real number, including zero.
 
 ### Scope note: Home-screen widget showing today's macro remaining
