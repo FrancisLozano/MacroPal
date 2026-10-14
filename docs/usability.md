@@ -5,6 +5,11 @@
 
 ## Start here (as of 2026-10-13)
 
+**V1.1 is done and tagged (`v1.1`).** The user installed the final build (`5e1e5b2`) on the
+iPhone on 10-13 and checked it: Save to Files from Export Data, the new drawings, Quick Add
+(log and edit), and "above goal" past the calorie goal. All fine. Next is V1.2, from the list
+under **Interview findings**. Nothing is being built right now.
+
 **2026-10-13: V1.1 round. Planned, two items built and pushed, and the user interviews read.**
 Details under **What changed on 2026-10-13**; the plan and what comes next are under **V1.1 plan**.
 1. **V1.1 plan written**, plus a table of what's deliberately not being built.
@@ -343,7 +348,8 @@ Order: drawings (done), export (built), then 1, then the interview items below.
      - **Correction:** the "Nothing logged lately" callout (`LoggingStreakRule`) isn't shown
        on any screen, so there was nothing to change there.
 
-V1.1 is tagged after these. The rest of the interview list is V1.2.
+**All done and checked on the iPhone 2026-10-13; tagged `v1.1`.** The rest of the interview
+list is V1.2.
 
 ### Deliberately not building yet
 
