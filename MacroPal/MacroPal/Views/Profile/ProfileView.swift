@@ -154,6 +154,14 @@ private struct ProfileOverview: View {
 
             Section {
                 NavigationLink {
+                    ExportDataView()
+                } label: {
+                    Label("Export Data", systemImage: "square.and.arrow.up")
+                }
+            }
+
+            Section {
+                NavigationLink {
                     AcknowledgementsView()
                 } label: {
                     Label("Acknowledgements", systemImage: "heart.text.square")

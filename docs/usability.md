@@ -260,7 +260,12 @@ export.
 
    Anything that fails becomes a Dislike and goes through the Backlog as usual. V1.1 is tagged
    once this list is clear.
-2. **Back up and export your data (proposed).** Everything lives in one SwiftData store on
+2. ~~**Back up and export your data**~~ — **built 2026-10-13.** Profile →
+   **Export Data** shows what the file holds (counts) and shares "MacroPal Export
+   YYYY-MM-DD.json". `DataExport` (Models) builds the file; `DataExportTests` cover an empty store,
+   every record type, plans and sets naming their exercise, and the JSON round trip. Dates are kept
+   to the second. Checked in the simulator: the counts, valid JSON in the app's tmp folder, and the
+   share sheet (Copy / Save to Files). Not yet: saving to Files on the iPhone. Was: Everything lives in one SwiftData store on
    one phone. iCloud sync is skipped (paid account), so losing or replacing the phone loses
    every food, weigh-in and set, and the muscle levels are built from lifetime volume. Add
    Profile → **Export Data**: one JSON file (foods, logged entries, weigh-ins, steps, plan,
@@ -282,7 +287,7 @@ export.
    Face Pull was checked in the simulator in dark mode; the other 8 were only seen as
    previews. Exercises the user creates still show none.
 
-Order: drawings (done), then 2 (export), then 1 before tagging V1.1.
+Order: drawings (done), export (built), then 1 before tagging V1.1.
 
 ### Deliberately not building yet
 
