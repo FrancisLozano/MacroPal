@@ -7,10 +7,11 @@ import SwiftUI
 import UIKit
 
 /// A line drawing of an exercise's start and end positions, side by side, above the sets on
-/// the Workout tab. The drawings are Everkinetic's (CC BY-SA 4.0 — credited in Profile →
-/// Acknowledgements), converted to template images so the lines take the text color in light
-/// and dark mode. 33 of the 38 starter exercises have one; the rest, and exercises you create,
-/// show nothing.
+/// the Workout tab. Most are Everkinetic's (CC BY-SA 4.0 — credited in Profile →
+/// Acknowledgements); the starters Everkinetic doesn't cover are drawn by
+/// `tools/exercise-drawings/draw.swift`. All are template images, so the lines take the text
+/// color in light and dark mode. Every starter exercise has one; exercises you create show
+/// nothing.
 struct ExerciseIllustration: View {
     let start: String
     let end: String

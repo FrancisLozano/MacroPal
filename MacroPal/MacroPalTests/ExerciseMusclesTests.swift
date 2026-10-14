@@ -47,16 +47,9 @@ struct ExerciseMusclesTests {
 
     // MARK: Drawings
 
-    /// Everkinetic has no fair drawing for these, so they show none.
-    static let startersWithoutDrawing: Set<String> = [
-        "Face Pull", "Hip Thrust", "Plank", "Hanging Leg Raise", "Dumbbell Shoulder Press",
-        "Cable Lateral Raise", "Machine Shoulder Press", "Chest-Supported Dumbbell Row", "Machine Ab Crunch",
-    ]
-
-    @Test func everyOtherStarterExerciseHasADrawing() {
+    @Test func everyStarterExerciseHasADrawing() {
         for name in StarterExerciseCatalog.names {
-            let hasDrawing = ExerciseIllustration(exerciseName: name) != nil
-            #expect(hasDrawing != Self.startersWithoutDrawing.contains(name), "\(name): drawing is \(hasDrawing ? "there" : "missing")")
+            #expect(ExerciseIllustration(exerciseName: name) != nil, "\(name) has no drawing")
         }
     }
 
