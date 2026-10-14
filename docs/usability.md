@@ -310,6 +310,21 @@ Order: drawings (done), export (built), then 1, then the interview items below.
    in the app (only Face Pull was).
 2. **Then the two interview items picked for V1.1** (see **Interview findings**): **Quick
    Add** and **no guilt cues**. Both are small and touch screens that already exist.
+   - ~~**Quick Add**~~ — **built 2026-10-13.** A "Quick Add" row at the top
+     of Choose Food (when logging to a meal) opens a short form: calories (required); protein,
+     carbs and fat (optional); a name (optional; blank reads "Quick Add"); and the meal. It
+     saves a normal `FoodEntry` with no food behind it and a 0 g serving, which is how
+     `FoodEntry.isQuickAdd` tells it apart (logging a real food needs more than 0 g, so no
+     schema change). The Daily Log labels it "Quick Add", and tapping it opens the same form
+     to edit. Day totals, the widget, Same as Last Time and Export Data work unchanged.
+     `QuickAddTests` (5) pass, as does the full suite. Checked in the simulator: Dinner +, then
+     Quick Add, 850 kcal / 40 g protein, "Party plate"; it showed under Dinner, edited, then
+     was deleted. Not seen on the iPhone.
+   - **Found while testing, fixed:** the Daily Log's meal + opened Choose Food for
+     **Breakfast** whatever meal was tapped (first time after opening the Daily Log), because
+     `sheet(isPresented:)` was built with the old meal. Now `sheet(item:)` with the tapped
+     meal (`FoodHistoryView.mealToLog`); checked with Dinner.
+   - **No guilt cues:** next. Ask before changing the widget's red "kcal over".
 
 V1.1 is tagged after these. The rest of the interview list is V1.2.
 

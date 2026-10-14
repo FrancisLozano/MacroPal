@@ -136,3 +136,16 @@ final class FoodEntry {
         self.ingredientSnapshots = ingredientSnapshots
     }
 }
+
+extension FoodEntry {
+    /// The name a Quick Add gets when none is typed.
+    static let quickAddName = "Quick Add"
+
+    /// Calories (and maybe macros) typed straight in, with no food behind them — for meals
+    /// nothing in the catalog fits (a buffet, takeout, family cooking). Marked by a 0 g
+    /// serving rather than a stored flag, so it needs no schema change: logging a real food
+    /// requires more than 0 g.
+    var isQuickAdd: Bool {
+        servingSizeG == 0 && ingredientSnapshots.isEmpty
+    }
+}

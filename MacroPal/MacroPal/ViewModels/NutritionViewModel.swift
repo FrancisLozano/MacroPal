@@ -133,6 +133,61 @@ final class NutritionViewModel {
         WidgetCenter.shared.reloadAllTimelines()
     }
 
+    /// Logs calories (and any macros given) to a meal with no food behind them — see
+    /// `FoodEntry.isQuickAdd`. A blank name becomes "Quick Add".
+    @discardableResult
+    func quickAdd(
+        name: String,
+        caloriesKcal: Double,
+        proteinG: Double = 0,
+        carbG: Double = 0,
+        fatG: Double = 0,
+        mealType: MealType,
+        date: Date,
+        context: ModelContext
+    ) -> FoodEntry {
+        let entry = FoodEntry(
+            date: date,
+            mealType: mealType,
+            servingSizeG: 0,
+            nameSnapshot: Self.quickAddName(name),
+            caloriesKcal: caloriesKcal,
+            proteinG: proteinG,
+            carbG: carbG,
+            fatG: fatG
+        )
+        context.insert(entry)
+        try? context.save()
+        WidgetCenter.shared.reloadAllTimelines()
+        return entry
+    }
+
+    /// Edits a Quick Add in place from the Daily Log.
+    func updateQuickAdd(
+        _ entry: FoodEntry,
+        name: String,
+        caloriesKcal: Double,
+        proteinG: Double,
+        carbG: Double,
+        fatG: Double,
+        mealType: MealType,
+        context: ModelContext
+    ) {
+        entry.nameSnapshot = Self.quickAddName(name)
+        entry.caloriesKcal = caloriesKcal
+        entry.proteinG = proteinG
+        entry.carbG = carbG
+        entry.fatG = fatG
+        entry.mealType = mealType
+        try? context.save()
+        WidgetCenter.shared.reloadAllTimelines()
+    }
+
+    private static func quickAddName(_ name: String) -> String {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? FoodEntry.quickAddName : trimmed
+    }
+
     /// Updates an already-logged `FoodEntry` in place — used when editing an entry from the
     /// Daily Log (as opposed to `logEntry`, which creates a new one). Re-snapshots macros
     /// from `foodItem` scaled to the new `servingSizeG`, so an edited serving size, meal, or

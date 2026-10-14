@@ -432,6 +432,7 @@ struct LogFoodFlowView: View {
 
     @State private var selectedFoodItem: FoodItem?
     @State private var isShowingEntry = false
+    @State private var isShowingQuickAdd = false
 
     init(initialMealType: MealType = .breakfast, initialDate: Date = .now) {
         self.initialMealType = initialMealType
@@ -445,9 +446,16 @@ struct LogFoodFlowView: View {
     }
 
     var body: some View {
-        FoodItemPickerView(dismissesAfterSelection: false, lastTime: lastTime) { item in
+        FoodItemPickerView(
+            dismissesAfterSelection: false,
+            lastTime: lastTime,
+            onQuickAdd: { isShowingQuickAdd = true }
+        ) { item in
             selectedFoodItem = item
             isShowingEntry = true
+        }
+        .navigationDestination(isPresented: $isShowingQuickAdd) {
+            QuickAddFoodView(mealType: initialMealType, date: initialDate, onSaved: { dismiss() })
         }
         .navigationDestination(isPresented: $isShowingEntry) {
             if let selectedFoodItem {

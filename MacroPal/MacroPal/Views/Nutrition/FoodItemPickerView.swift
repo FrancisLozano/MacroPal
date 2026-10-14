@@ -58,6 +58,9 @@ struct FoodItemPickerView: View {
     /// log again in one tap — only when logging for a meal (`LogFoodFlowView`) and that meal
     /// has been logged on an earlier day.
     var lastTime: LastTimeMeal? = nil
+    /// Opens Quick Add (calories without a food) — offered at the top of History only when
+    /// logging for a meal (`LogFoodFlowView`), which knows the meal and day to log under.
+    var onQuickAdd: (() -> Void)? = nil
     /// Declared after `dismissesAfterSelection` so it's the memberwise init's last parameter
     /// — callers pass it as a trailing closure (e.g. `FoodItemPickerView(dismissesAfterSelection: false) { item in ... }`),
     /// which only forward-matches (no deprecated backward-matching) when the closure param is last.
@@ -153,6 +156,11 @@ struct FoodItemPickerView: View {
                 } else {
                     switch selectedTab {
                     case .history:
+                        if let onQuickAdd {
+                            Section {
+                                quickAddRow(onQuickAdd)
+                            }
+                        }
                         if let lastTime {
                             Section("Same as Last Time") {
                                 lastTimeRow(lastTime)
@@ -352,6 +360,22 @@ struct FoodItemPickerView: View {
                 Text(subtitle(for: item, showSource: showSource))
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private func quickAddRow(_ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label {
+                VStack(alignment: .leading) {
+                    Text("Quick Add")
+                        .foregroundStyle(Color.primary)
+                    Text("Calories without looking up a food")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            } icon: {
+                Image(systemName: "plus.forwardslash.minus")
             }
         }
     }

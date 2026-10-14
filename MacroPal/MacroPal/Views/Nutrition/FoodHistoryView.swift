@@ -18,8 +18,10 @@ struct FoodHistoryView: View {
 
     @State private var date: Date
     @State private var isPresentingCalendar = false
-    @State private var isPresentingLogSheet = false
-    @State private var mealTypeToLog: MealType = .breakfast
+    /// The meal whose + was tapped. `sheet(item:)` rather than a flag plus a separate meal:
+    /// with `sheet(isPresented:)` the sheet could be built with the old meal (every + opened
+    /// as Breakfast the first time).
+    @State private var mealToLog: MealType?
     @State private var selectedMacro: Macro?
     @State private var isShowingMealCalories = false
     @AppStorage("foodHistoryShowPercent") private var showPercent = false
@@ -81,9 +83,9 @@ struct FoodHistoryView: View {
             }
             .presentationDetents([.medium])
         }
-        .sheet(isPresented: $isPresentingLogSheet) {
+        .sheet(item: $mealToLog) { meal in
             NavigationStack {
-                LogFoodFlowView(initialMealType: mealTypeToLog, initialDate: date)
+                LogFoodFlowView(initialMealType: meal, initialDate: date)
             }
         }
         .navigationDestination(item: $selectedMacro) { macro in
@@ -229,8 +231,7 @@ struct FoodHistoryView: View {
                                 .textCase(nil)
                         }
                         Button {
-                            mealTypeToLog = meal
-                            isPresentingLogSheet = true
+                            mealToLog = meal
                         } label: {
                             Image(systemName: "plus.circle")
                         }
@@ -373,6 +374,7 @@ struct FoodHistoryView: View {
     /// hand — lets someone tell apart, say, a Fairtrade banana from one they created
     /// themselves under the same name.
     private func sourceLabel(for entry: FoodEntry) -> String {
+        if entry.isQuickAdd { return "Quick Add" }
         if let brand = entry.brandSnapshot, !brand.isEmpty { return brand }
         return entry.ingredientSnapshots.isEmpty ? "Manually Added" : "My Meals"
     }
@@ -396,7 +398,11 @@ private struct EditFoodEntryDestination: View {
     let entry: FoodEntry
 
     var body: some View {
-        LogFoodEntryView(entry: entry, onSaved: { dismiss() })
+        if entry.isQuickAdd {
+            QuickAddFoodView(editing: entry, onSaved: { dismiss() })
+        } else {
+            LogFoodEntryView(entry: entry, onSaved: { dismiss() })
+        }
     }
 }
 
