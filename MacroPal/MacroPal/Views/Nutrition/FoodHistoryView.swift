@@ -277,9 +277,9 @@ struct FoodHistoryView: View {
                 }
                 .font(.caption)
                 Spacer()
-                Text(remaining >= 0 ? "\(Int(remaining.rounded())) left" : "\(Int(-remaining.rounded())) over")
+                Text(GoalWording.remaining(remaining))
                     .font(.caption2)
-                    .foregroundStyle(remaining >= 0 ? Color.secondary : Color.red)
+                    .foregroundStyle(Color.secondary)
             }
             Capsule()
                 .fill(Color.secondary.opacity(0.15))
@@ -374,7 +374,8 @@ struct FoodHistoryView: View {
     /// hand — lets someone tell apart, say, a Fairtrade banana from one they created
     /// themselves under the same name.
     private func sourceLabel(for entry: FoodEntry) -> String {
-        if entry.isQuickAdd { return "Quick Add" }
+        // An unnamed Quick Add is already titled "Quick Add".
+        if entry.isQuickAdd { return entry.nameSnapshot == FoodEntry.quickAddName ? "Typed in" : "Quick Add" }
         if let brand = entry.brandSnapshot, !brand.isEmpty { return brand }
         return entry.ingredientSnapshots.isEmpty ? "Manually Added" : "My Meals"
     }

@@ -59,7 +59,7 @@ struct MealCaloriesView: View {
                     let goal = Double(profile.calorieTarget)
                     totalRow("Goal", value: goal)
                     let remaining = goal - eaten
-                    totalRow(remaining >= 0 ? "Left" : "Over", value: abs(remaining), isOver: remaining < 0)
+                    totalRow(remaining >= 0 ? "Left" : "Above Goal", value: abs(remaining))
                 }
             }
         }
@@ -129,12 +129,12 @@ struct MealCaloriesView: View {
 
     // MARK: - Totals
 
-    private func totalRow(_ title: String, value: Double, isOver: Bool = false) -> some View {
+    private func totalRow(_ title: String, value: Double) -> some View {
         HStack {
             Text(title)
             Spacer()
             Text("\(Int(value.rounded())) kcal")
-                .foregroundStyle(isOver ? Color.red : Color.secondary)
+                .foregroundStyle(Color.secondary)
         }
     }
 }

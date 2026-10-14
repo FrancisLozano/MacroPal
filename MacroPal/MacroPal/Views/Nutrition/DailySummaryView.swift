@@ -544,7 +544,8 @@ struct DailySummaryView: View {
             if overFraction > 0 {
                 Circle()
                     .trim(from: 0, to: overFraction * 0.5)
-                    .stroke(Color.red, style: StrokeStyle(lineWidth: Self.ringLineWidth, lineCap: .round))
+                    // A quiet second lap, not red: see `GoalWording`.
+                    .stroke(Color.primary.opacity(0.3), style: StrokeStyle(lineWidth: Self.ringLineWidth, lineCap: .round))
                     .rotationEffect(.degrees(180))
             }
         }
@@ -574,14 +575,14 @@ struct DailySummaryView: View {
                 .font(.system(size: 44, weight: .bold))
                 .minimumScaleFactor(0.6)
                 .lineLimit(1)
-                // The number and its caption as one element; the red "over" caption is color
-                // only, so the value says it in words.
+                // The number and its caption as one element; the second lap past the goal is
+                // drawing only, so the value says it in words.
                 .accessibilityLabel("Calories")
                 .accessibilityValue(readoutValue(value: value, eatenCalories: eatenCalories, target: target, isOver: isOver))
             HStack(spacing: 5) {
                 Text(caption)
                     .font(.subheadline)
-                    .foregroundStyle(isOver ? Color.red : Color.secondary)
+                    .foregroundStyle(Color.secondary)
                     .accessibilityHidden(true)
                 Button {
                     showTotalCalories.toggle()
@@ -600,7 +601,7 @@ struct DailySummaryView: View {
             return "\(value) per day goal"
         }
         guard isOver else { return "\(value) eaten" }
-        return "\(value) eaten, \(Int((eatenCalories - target).rounded())) over goal"
+        return "\(value) eaten, \(GoalWording.remaining(target - eatenCalories))"
     }
 
     /// Draws each macro segment as its own trimmed arc within the top half of the circle
@@ -654,9 +655,9 @@ struct DailySummaryView: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
-            Text(remaining >= 0 ? "\(Int(remaining.rounded()))g remaining" : "\(Int(-remaining.rounded()))g over")
+            Text(GoalWording.remaining(remaining, unit: "g", underGoal: "remaining"))
                 .font(.caption2)
-                .foregroundStyle(remaining >= 0 ? Color.secondary : Color.red)
+                .foregroundStyle(Color.secondary)
         }
         // "32 of 150 grams, 118 grams remaining" instead of "32 slash 150 g".
         .accessibilityElement(children: .ignore)

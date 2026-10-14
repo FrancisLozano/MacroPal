@@ -49,7 +49,7 @@ enum ProteinIntakeRule {
         let insight = InsightFinding(
             category: .nutrition,
             severity: .suggestion,
-            message: "You've been under-eating protein — averaging \(Int(result.averageProteinG))g/day against a \(result.targetProteinG)g target. Try adding about \(Int(gapG))g more per day, e.g. an extra serving of chicken, Greek yogurt, or a protein shake.",
+            message: "Protein has averaged \(Int(result.averageProteinG))g a day this week, against a \(result.targetProteinG)g target. About \(Int(gapG))g more a day would get you there, e.g. an extra serving of chicken, Greek yogurt, or a protein shake.",
             supportingMetric: String(format: "7-day avg protein: %.0fg (%.0f%% of %dg target)", result.averageProteinG, result.percentOfTarget * 100, result.targetProteinG),
             ruleIdentifier: .underEatingProtein
         )

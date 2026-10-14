@@ -324,7 +324,24 @@ Order: drawings (done), export (built), then 1, then the interview items below.
      **Breakfast** whatever meal was tapped (first time after opening the Daily Log), because
      `sheet(isPresented:)` was built with the old meal. Now `sheet(item:)` with the tapped
      meal (`FoodHistoryView.mealToLog`); checked with Dinner.
-   - **No guilt cues:** next. Ask before changing the widget's red "kcal over".
+   - ~~**No guilt cues**~~ — **built 2026-10-13.** The user kept the
+     widget's red "kcal over" (their 10-10 pick); everything in the app went neutral:
+     - Past a goal, the text says "above goal" (not "over") in the same grey as "left":
+       the Daily Log calories bar ("300 above goal"), the Macros card and the macro
+       breakdown ("20g above goal"), and Calories by Meal ("Above Goal · 300 kcal"). One
+       helper, `GoalWording`, so every screen says it the same way.
+     - The Nutrition ring's second lap past the goal is a quiet lighter shade, not red, and
+       "kcal eaten" stays grey. VoiceOver says "300 above goal".
+     - Protein callout: "Protein has averaged 100g a day this week, against a 150g target.
+       About 50g more a day would get you there…" (was "You've been under-eating protein").
+     - Meal reminders: "Add lunch when you get a moment." (was "Nothing is logged for lunch
+       today.").
+     - Unnamed Quick Adds read "Quick Add / Typed in" in the Daily Log (was "Quick Add" twice).
+     - `GoalWordingTests` (4) pass, as does the full suite. Checked in the simulator with a
+       2,300 kcal / 170 g protein Quick Add (deleted after): Daily Log, Nutrition ring and
+       Macros card, Calories by Meal. Not seen: VoiceOver, a reminder firing.
+     - **Correction:** the "Nothing logged lately" callout (`LoggingStreakRule`) isn't shown
+       on any screen, so there was nothing to change there.
 
 V1.1 is tagged after these. The rest of the interview list is V1.2.
 
@@ -372,7 +389,7 @@ meals yet.
 |---|---|---|---|
 | Repeating meals is most of the work | #1, #2, #6, #8 | My Meals, Recents, Same as Last Time (Choose Food) | Re-log a recent meal from the Nutrition screen without opening Choose Food (#6, #8) → **V1.2**. My Meals "makes N servings" so a meal-prep batch divides itself (#8 got the math wrong by hand) → **V1.2** |
 | Some food can't be looked up, so people type a rough number | #2 (Korean BBQ, boba), #4 (family cooking), #5 (takeout), #6 (party buffet), #8 (drinks, oil) | Make a food with a named unit ("1 plate"); My Meals | **Quick Add**: calories (and protein, optional) to a meal, no food needed → **V1.1** |
-| No guilt: no streaks, no red, no nagging | #3, #4, #5, #8 | No streak counter; reminders are off by default and skip days already logged | Red "Over" on Calories by Meal; red "kcal over" and a red lap on the widget; a "Nothing logged lately" callout after 5 days. Make these neutral and restart-friendly → **V1.1** (the red widget was the user's pick on 10-10, so ask first) |
+| No guilt: no streaks, no red, no nagging | #3, #4, #5, #8 | No streak counter; reminders are off by default and skip days already logged | Red "Over" on Calories by Meal, red "over" on the Daily Log, Macros card and ring; red "kcal over" on the widget. → **V1.1, done 2026-10-13**: the app went neutral; the widget stays red (the user's choice). ("Nothing logged lately" was listed here too, but no screen shows it.) |
 | Show protein and calories left first | #2, #6, #8 | Macros card shows protein remaining; widget shows "kcal left"; the ring toggles eaten / goal | Nothing new. Fits what's there (a "calories left" ring was tried and rejected) |
 | Accurate beats fast | #2, #6, #8 | Open Food Facts with an editable review before saving | Watch: no complaints from use yet |
 | Free, no ads, no paywall | all | Free, no ads, no account | Nothing to build. Keep it that way |

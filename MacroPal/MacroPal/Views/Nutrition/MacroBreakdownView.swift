@@ -70,9 +70,9 @@ struct MacroBreakdownView: View {
                     Text("of \(Int(target.rounded()))g")
                         .foregroundStyle(.secondary)
                     Spacer()
-                    Text(remaining >= 0 ? "\(Int(remaining.rounded()))g remaining" : "\(Int(-remaining.rounded()))g over")
+                    Text(GoalWording.remaining(remaining, unit: "g", underGoal: "remaining"))
                         .font(.subheadline)
-                        .foregroundStyle(remaining >= 0 ? Color.secondary : Color.red)
+                        .foregroundStyle(Color.secondary)
                 }
                 ProgressView(value: target > 0 ? min(total / target, 1) : 0)
                     .tint(color)

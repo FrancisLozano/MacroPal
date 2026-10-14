@@ -64,7 +64,7 @@ enum Reminder: String, CaseIterable, Identifiable {
         switch self {
         case .steps: "Add today's step count before the day ends."
         case .weight: "Add today's weigh-in."
-        case .breakfast, .lunch, .dinner: "Nothing is logged for \(title.lowercased()) today."
+        case .breakfast, .lunch, .dinner: "Add \(title.lowercased()) when you get a moment."
         }
     }
 
