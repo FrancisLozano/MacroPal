@@ -3,7 +3,21 @@
 **Status:** Living document — ongoing, not tied to a phase
 **Started:** 2026-09-06 · **Last updated:** 2026-10-13
 
-## Start here (as of 2026-10-10)
+## Start here (as of 2026-10-13)
+
+**2026-10-13: V1.1 round. Planned, two items built and pushed, and the user interviews read.**
+Details under **What changed on 2026-10-13**; the plan and what comes next are under **V1.1 plan**.
+1. **V1.1 plan written**, plus a table of what's deliberately not being built.
+2. **Drawings for the 9 starters Everkinetic doesn't cover** (`b5ab862`). The user didn't want
+   to supply their own photos and asked for drawings instead. All 51 starters now have one.
+3. **Profile → Export Data** (`7154e47`): everything logged, as one JSON file through the
+   share sheet.
+4. **The 8 user interviews** (Google Doc "MacroPal User Interview Guide") were read and turned
+   into V1.1 / V1.2 items. See **Interview findings**.
+
+**The iPhone has today's build** (installed by the user on 10-13, after `7154e47`), so it has
+the new drawings and Export Data. Not recorded yet: whether the 10-05 → 10-10 "check on the
+iPhone" items below, Save to Files and the new drawings were checked on it.
 
 **2026-10-10: widgets redesigned, built and pushed.** From one dislike (top of **Dislikes**):
 the widgets felt cramped. The user chose the layout in chat; details under **What changed on
@@ -287,7 +301,17 @@ export.
    Face Pull was checked in the simulator in dark mode; the other 8 were only seen as
    previews. Exercises the user creates still show none.
 
-Order: drawings (done), export (built), then 1 before tagging V1.1.
+Order: drawings (done), export (built), then 1, then the interview items below.
+
+### Next (as of 2026-10-13)
+
+1. **Release gate (item 1), shortened.** Today's build is on the iPhone (10-13). Check: the 10-05 → 10-10 items in item 1 (if not already done),
+   **Save to Files** from Export Data and open the file, and the 8 new drawings not yet seen
+   in the app (only Face Pull was).
+2. **Then the two interview items picked for V1.1** (see **Interview findings**): **Quick
+   Add** and **no guilt cues**. Both are small and touch screens that already exist.
+
+V1.1 is tagged after these. The rest of the interview list is V1.2.
 
 ### Deliberately not building yet
 
@@ -311,6 +335,37 @@ reason.
 | "Calories left" redesign of the Nutrition ring | tried and rejected; the ⟳ eaten / goal toggle stays | reverted |
 | A Snack meal | Breakfast / Lunch / Dinner only; old Snack entries still count in the day's total | 2026-09-25 |
 | Widget extras: large size, options, tap-to-screen, interactive buttons | out of the widget's scope note; the two sizes were just redesigned | phase-5-stretch.md |
+| Photo logging (snap a plate) | needs an image model, which means a paid API or a weak on-device guess; #6 deleted an app that called pancit "spaghetti", so a wrong guess costs trust | interviews, 2026-10-13 |
+| Import from MyFitnessPal / Lose It! | asked for by #2, #6, #8, but it depends on another app's export format and on merge rules; comes after our own import | interviews, 2026-10-13 |
+| A cultural / home-cooked food database | no free, reliable source; saving your own dish once ("Mom's adobo, 1 plate") already works and is what #6 asked for | interviews, 2026-10-13 |
+
+## Interview findings (read 2026-10-13)
+
+From the Google Doc "MacroPal User Interview Guide" (8 interviews, last edited 2026-10-02).
+Who: #1 the developer's own notes on someone who doesn't track; #2 a lifter cutting with
+MyFitnessPal; #3 someone who has never tracked; #4 a former tracker who burned out; #5 a lapsed
+tracker with a new 9-to-5; #6 a Lose It! user who mostly eats home-cooked Filipino food; #7 a
+beginner; #8 a shift worker and parent on MyFitnessPal. **Caveat:** 8 people from one network,
+all in Southern California, describing their own habits. They're signal, not proof.
+
+**Benchmarks to beat** (timed in their own apps): 55 s for one chain-restaurant item (#2),
+1 min 30 s for one home-cooked dish (#6), 2 min 40 s for a homemade meal (#8). Most time they'll
+accept per day: about 3 min (#2) or 3–5 min (#6, #8). MacroPal hasn't been timed on the same
+meals yet.
+
+| Theme | Who said it | What MacroPal has | Gap → where it goes |
+|---|---|---|---|
+| Repeating meals is most of the work | #1, #2, #6, #8 | My Meals, Recents, Same as Last Time (Choose Food) | Re-log a recent meal from the Nutrition screen without opening Choose Food (#6, #8) → **V1.2**. My Meals "makes N servings" so a meal-prep batch divides itself (#8 got the math wrong by hand) → **V1.2** |
+| Some food can't be looked up, so people type a rough number | #2 (Korean BBQ, boba), #4 (family cooking), #5 (takeout), #6 (party buffet), #8 (drinks, oil) | Make a food with a named unit ("1 plate"); My Meals | **Quick Add**: calories (and protein, optional) to a meal, no food needed → **V1.1** |
+| No guilt: no streaks, no red, no nagging | #3, #4, #5, #8 | No streak counter; reminders are off by default and skip days already logged | Red "Over" on Calories by Meal; red "kcal over" and a red lap on the widget; a "Nothing logged lately" callout after 5 days. Make these neutral and restart-friendly → **V1.1** (the red widget was the user's pick on 10-10, so ask first) |
+| Show protein and calories left first | #2, #6, #8 | Macros card shows protein remaining; widget shows "kcal left"; the ring toggles eaten / goal | Nothing new. Fits what's there (a "calories left" ring was tried and rejected) |
+| Accurate beats fast | #2, #6, #8 | Open Food Facts with an editable review before saving | Watch: no complaints from use yet |
+| Free, no ads, no paywall | all | Free, no ads, no account | Nothing to build. Keep it that way |
+| Simple workout logging in the same app | #2, #5 | Training tab, "Last:" taps, auto-logging | Already there |
+| Something useful back, weekly not daily | #3, #4, #5 | Protein and weight callouts | A weekly check-in ("protein was low on weekdays") → **V1.2** |
+| Help for beginners: what my targets should be and why | #7 | Targets are typed in by hand (default 2,000 kcal) | Suggested starting targets with a one-line why → **V1.2** |
+| Big, clear text | #4 | System text styles | Check every screen at a large Dynamic Type size → **V1.2** check |
+| Import from another app, photo logging, Apple Health steps | #2, #3, #4, #5, #6, #8 | Export Data | **Not building**: see the table above |
 
 ## Next tasks (as of 2026-10-09)
 
@@ -661,6 +716,26 @@ user's whiteboard sketch — body map on top, Current Plan, Goals below. On 2026
 of that doc's success criteria were met, and in the evening the tab was restyled to match
 Nutrition. 2026-09-23 closed the last two P3s and the outstanding re-checks; in the afternoon
 the user logged the first Training suggestions and the layout ones were built.
+
+### What changed on 2026-10-13
+
+- **V1.1 plan** and **Deliberately not building yet** (`b5ab862`), under **V1.1 plan**.
+- **Drawings for the 9 starters without one** (`b5ab862`): Face Pull, Hip Thrust, Plank,
+  Hanging Leg Raise, Dumbbell Shoulder Press, Cable Lateral Raise, Machine Shoulder Press,
+  Chest-Supported Dumbbell Row, Machine Ab Crunch. Generated by
+  `tools/exercise-drawings/draw.swift`: a simple outlined figure plus equipment, posed by
+  joint angles, saved as white-on-transparent template PNGs like the Everkinetic ones. Simpler
+  than Everkinetic's hand-drawn style. The test is now `everyStarterExerciseHasADrawing`;
+  Acknowledgements says "Most of the drawings are from Everkinetic". Face Pull checked in the
+  simulator in dark mode; the other 8 only as previews.
+- **Profile → Export Data** (`7154e47`). `DataExport` (Models) reads the whole store into a
+  versioned JSON file: profile and targets, saved foods and meals, the food log, weigh-ins,
+  steps, exercises, the plan, and workouts with their sets. Records name each other ("exercise":
+  "Face Pull"); units are the stored ones (kg, g, kcal); dates to the second. `ExportDataView`
+  lists the counts and shares "MacroPal Export YYYY-MM-DD.json" through `ShareLink`.
+  `DataExportTests` (5) pass, as does the full suite. Checked in the simulator: counts, valid
+  JSON, share sheet (Copy / Save to Files); nothing saved. Not seen on the iPhone.
+- **User interviews read** and turned into items: **Interview findings**.
 
 ### What changed on 2026-10-10
 
