@@ -8,7 +8,8 @@
 **2026-10-16: four entries from a workout and a meal, all built and pushed
 in one commit after `68dd826`.** 1 dislike and 3 suggestions (top of
 **Dislikes** / **Suggestions**); Backlog rows marked Done. Details under **What changed on
-2026-10-16**. All 232 unit tests pass. **The iPhone doesn't have these yet**: install from Xcode.
+2026-10-16**. All 232 unit tests pass. **Installed on the iPhone 2026-10-16**; the user confirmed the
+unlogged set reminder fires there.
 1. **"Last:" fills in what it shows.** On set 2 of Single-Arm Triceps Extension, "Last: 12"
    filled in 11, set 1 from today (the grey numbers). Now each set's line and grey numbers come
    from one place, chosen in **Profile → Workout → "Last:" Shows** (ⓘ explains it): **Same
@@ -23,8 +24,8 @@ in one commit after `68dd826`.** 1 dislike and 3 suggestions (top of
    **New Variation** copies the meal so an ingredient can be swapped (nuts → berries) without
    changing the original; **Add Ingredient** adds to the meal shown.
 
-**Check on the iPhone after installing:** the reminder banner after 5 minutes (the simulator
-has notifications denied, so it hasn't been seen firing), and a real swap on a workout day.
+**Checked on the iPhone (2026-10-16):** the unlogged set reminder fires. **Still to check:** a
+real swap (Choose Alternate) on a workout day.
 
 **V1.1 is done and tagged (`v1.1`).** The user installed the final build (`5e1e5b2`) on the
 iPhone on 10-13 and checked it: Save to Files from Export Data, the new drawings, Quick Add
@@ -812,7 +813,7 @@ logged at 11 × 16.5 lb, set 2's lines reading "Last: 12 / Last: 11").
   set logged replaces it; the last set or Complete Exercise removes it. Only scheduled when
   notifications are already allowed (the rest timer asks). Shows as a banner in the app too.
   Switch: Profile → Workout → Timer → **Unlogged Set Reminder** (on by default). Copy
-  unit-tested; not seen firing (the simulator has notifications denied).
+  unit-tested; seen firing on the iPhone 2026-10-16 (the simulator has notifications denied).
 - **Choose Alternate.** `PlanExercise.alternate` / `alternateDate` (optional, so stores
   migrate) and `exercise(on:)`, `swap(to:on:)`, `replace(with:)`. ⟳ in the exercise screen's
   toolbar and **Choose Alternate** / **Back to …** in the plan-day row's ⋯ menu open Choose
@@ -1653,7 +1654,7 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P1 | The steps reminder still fired after steps were logged that day — logging now removes that day's notification at once, and the background rebuild gets background time | Dislikes → General UI (2026-10-09) | Done (b52a92a) — `ReminderSchedulerTests`, notification not seen live |
 | P2 | Widgets redesigned for spacing: medium is ring + Protein / Carbs / Fat rows (eaten / target g, progress bars); small adds P / C / F mini bars; ring says "kcal left" / red "kcal over" | Dislikes → Widget (2026-10-10) | Done 2026-10-10 — checked on the simulator home screen; over-goal only in the Xcode preview |
 | P1 | "Last:" filled in today's previous set while showing last workout's — the line and grey numbers now come from one set; Profile → Workout → "Last:" Shows picks Same Set Last Workout (default) or Set You Just Did, with an ⓘ | Dislikes → Training (2026-10-16) + Suggestions → Training (2026-10-16, "Last:" setting) | Done 2026-10-16 — `SetRowTests`, checked in the simulator |
-| P2 | A reminder when a set is logged and the next one isn't 5 minutes later | Suggestions → Training (2026-10-16, reminder) | Done 2026-10-16 — copy unit-tested; notification not seen live |
+| P2 | A reminder when a set is logged and the next one isn't 5 minutes later | Suggestions → Training (2026-10-16, reminder) | Done 2026-10-16 — copy unit-tested; checked on the iPhone |
 | P2 | Choose Alternate when an exercise can't be done: same-muscle picks, for this workout or the plan | Suggestions → Training (2026-10-16, alternate) | Done 2026-10-16 — `WorkoutAlternateTests`, checked in the simulator |
 | P2 | Meal variations: tap a meal to see its variations, make one with an ingredient swapped, or add to the meal | Suggestions → Nutrition (2026-10-16) | Done 2026-10-16 — `MealVariationTests`, checked in the simulator |
 | P3 | Complete Exercise not tappable until every set is logged | Suggestions → Training (2026-09-25) | Won't Fix — decided 2026-09-25: Complete logging untouched rows at last session's numbers is the workout "Same as last time" above; disabling it would take that away. With sets logging themselves (P1 above) and the exercise completing on its last set, the button matters less anyway |
