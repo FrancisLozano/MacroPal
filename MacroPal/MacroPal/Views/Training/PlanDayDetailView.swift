@@ -38,13 +38,13 @@ struct PlanDayDetailView: View {
     }
 
     private func setsLogged(for planExercise: PlanExercise) -> Int {
-        guard let exercise = planExercise.exercise else { return 0 }
+        guard let exercise = planExercise.exercise(on: date) else { return 0 }
         return session?.setEntries.filter { $0.exercise == exercise }.count ?? 0
     }
 
     /// The date's sets of the day's exercises.
     private var daySets: [WorkoutSetEntry] {
-        let exercises = day.exercises.compactMap(\.exercise)
+        let exercises = day.exercises.compactMap { $0.exercise(on: date) }
         return session?.setEntries.filter { entry in
             exercises.contains { $0 == entry.exercise }
         } ?? []

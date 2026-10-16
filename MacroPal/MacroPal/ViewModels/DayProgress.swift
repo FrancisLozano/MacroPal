@@ -30,12 +30,14 @@ struct DayProgress: Equatable {
     }
 
     init(day: PlanDay, session: WorkoutSession?, bodyweightKg: Double? = nil) {
-        let planned = day.exercises.filter { $0.exercise != nil }
+        // A slot swapped for an alternate that day counts the alternate's sets.
+        let date = session?.date ?? .now
+        let planned = day.exercises.filter { $0.exercise(on: date) != nil }
         let daySets = (session?.setEntries ?? []).filter { entry in
-            planned.contains { $0.exercise == entry.exercise }
+            planned.contains { $0.exercise(on: date) == entry.exercise }
         }
         func logged(_ planExercise: PlanExercise) -> Int {
-            daySets.filter { $0.exercise == planExercise.exercise }.count
+            daySets.filter { $0.exercise == planExercise.exercise(on: date) }.count
         }
         exercises = planned.count
         exercisesDone = planned.filter { logged($0) >= $0.targetSets }.count

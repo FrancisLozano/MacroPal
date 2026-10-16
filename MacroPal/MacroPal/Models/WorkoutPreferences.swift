@@ -31,6 +31,16 @@ enum WorkoutPreferences {
     static let autoRestTimerKey = "workoutAutoRestTimer"
     static let autoRestTimerDefault = true
 
+    /// A notification when a set logs and the exercise's next one isn't logged five minutes
+    /// later (`UnloggedSetReminder`). On unless turned off (usability.md, 2026-10-16).
+    static let unloggedSetReminderKey = "workoutUnloggedSetReminder"
+    static let unloggedSetReminderDefault = true
+
+    /// What a set's "Last:" line (and its grey numbers) repeat. Same Set Last Workout by
+    /// default, for progressive overload (usability.md, 2026-10-16).
+    static let lastSourceKey = "workoutLastSource"
+    static let lastSourceDefault = LastSetSource.lastWorkout
+
     /// "8–10" or "10".
     static func repsLabel(reps: Int, repsMax: Int) -> String {
         repsMax > reps ? "\(reps)–\(repsMax)" : "\(reps)"
@@ -43,6 +53,23 @@ enum WorkoutPreferences {
         case (0, _): return "\(rest) s"
         case (_, 0): return "\(minutes) min"
         default: return "\(minutes) min \(rest) s"
+        }
+    }
+}
+
+/// Where a set's "Last:" line comes from (Profile → Workout → "Last:" Shows).
+enum LastSetSource: String, CaseIterable, Identifiable {
+    /// Set 2 repeats set 2 of the previous session: beat each set where it was.
+    case lastWorkout
+    /// Set 2 repeats the set just logged above it today: keep the weight steady across sets.
+    case previousSet
+
+    var id: Self { self }
+
+    var title: String {
+        switch self {
+        case .lastWorkout: "Same Set Last Workout"
+        case .previousSet: "Set You Just Did"
         }
     }
 }

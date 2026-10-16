@@ -72,7 +72,8 @@ final class PlanDay {
 
     /// The day's exercises still short of their target sets, not counting `current`, in the
     /// order they come after it (wrapping round to the top) — so the first is what's next.
-    /// `setsLogged` is how many sets an exercise has today. Empty once `current` is the last.
+    /// `setsLogged` is how many sets an exercise has today (count its `exercise(on:)`). Empty once
+    /// `current` is the last.
     func exercisesLeft(after current: PlanExercise, setsLogged: (PlanExercise) -> Int) -> [PlanExercise] {
         let ordered = sortedExercises
         let rotated = ordered.firstIndex { $0 === current }
@@ -93,12 +94,46 @@ final class PlanExercise {
     var targetRepsMax: Int? = nil
     var exercise: Exercise?
     var day: PlanDay?
+    /// Done instead of `exercise` on `alternateDate` only, when its machine or bench isn't free
+    /// (usability.md, 2026-10-16). Both defaulted so existing stores migrate.
+    @Relationship(deleteRule: .nullify) var alternate: Exercise? = nil
+    var alternateDate: Date? = nil
 
     init(order: Int, exercise: Exercise, targetSets: Int = 3, targetReps: Int = 10) {
         self.order = order
         self.exercise = exercise
         self.targetSets = targetSets
         self.targetReps = targetReps
+    }
+
+    /// What this slot is on `date`: the alternate picked for that day, otherwise the planned one.
+    func exercise(on date: Date) -> Exercise? {
+        isSwapped(on: date) ? alternate : exercise
+    }
+
+    /// Whether an alternate stands in for the planned exercise on `date`.
+    func isSwapped(on date: Date) -> Bool {
+        guard alternate != nil, let alternateDate else { return false }
+        return Calendar.current.isDate(alternateDate, inSameDayAs: date)
+    }
+
+    /// Does `replacement` instead on `date` only; the plan keeps its exercise for other days.
+    /// Choosing the planned exercise again undoes the swap.
+    func swap(to replacement: Exercise, on date: Date) {
+        if replacement == exercise {
+            alternate = nil
+            alternateDate = nil
+        } else {
+            alternate = replacement
+            alternateDate = date
+        }
+    }
+
+    /// Puts `replacement` in the plan for good, dropping any one-day swap.
+    func replace(with replacement: Exercise) {
+        exercise = replacement
+        alternate = nil
+        alternateDate = nil
     }
 
     /// "10" or "8–10".

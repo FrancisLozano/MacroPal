@@ -15,6 +15,10 @@ struct SetRowTests {
         var row = SetRow(weightText: weight, repsText: reps)
         row.weightPlaceholder = suggesting.0
         row.repsPlaceholder = suggesting.1
+        // A full grey set came from an earlier set, so the "Last:" line shows it.
+        if let weight = Double(suggesting.0), let reps = Int(suggesting.1) {
+            row.suggested = SetValues(weight: weight, reps: reps)
+        }
         row.saved = saved
         return row
     }
@@ -141,7 +145,7 @@ struct SetRowTests {
     }
 
     @Test func aBodyweightRepsLastLineMakesTheSet() {
-        var bodyweight = row(suggesting: ("", "12"))
+        var bodyweight = row(suggesting: ("0", "12"))
         bodyweight.isBodyweight = true
         #expect(!bodyweight.canUseSuggestion(for: .weight))
         bodyweight.useSuggestion(for: .reps)
@@ -149,32 +153,53 @@ struct SetRowTests {
     }
 
     @Test func aLastLineIsOffWithNothingToFillOrOnceLogged() {
+        // Only the default reps: the line reads "Last: –", so it fills nothing.
         let firstEver = row(suggesting: ("", "10"))
         #expect(!firstEver.canUseSuggestion(for: .weight))
-        #expect(firstEver.canUseSuggestion(for: .reps))
+        #expect(!firstEver.canUseSuggestion(for: .reps))
         let logged = row(weight: "135", reps: "10", saved: SetValues(weight: 135, reps: 10))
         #expect(!logged.canUseSuggestion(for: .weight))
         #expect(!logged.canUseSuggestion(for: .reps))
     }
 
     @Test func aSavedSetIsSuggestedBelowWhenThereIsNoHistory() {
-        var rows = [row(suggesting: ("", "10")), row(suggesting: ("", "10")), row(weight: "50", suggesting: ("", "10"))]
-        SetRow.suggest(SetValues(weight: 95, reps: 8), below: 0, in: &rows)
-        #expect(rows[1].weightPlaceholder == "95")
-        #expect(rows[1].repsPlaceholder == "8")
-        // Something typed in is left alone.
-        #expect(rows[2].weightPlaceholder == "")
+        for source in LastSetSource.allCases {
+            var rows = [row(suggesting: ("", "10")), row(suggesting: ("", "10")), row(weight: "50", suggesting: ("", "10"))]
+            SetRow.suggest(SetValues(weight: 95, reps: 8), below: 0, in: &rows, source: source)
+            #expect(rows[1].weightPlaceholder == "95")
+            #expect(rows[1].repsPlaceholder == "8")
+            #expect(rows[1].suggested == SetValues(weight: 95, reps: 8))
+            // Something typed in is left alone.
+            #expect(rows[2].weightPlaceholder == "")
+        }
     }
 
-    @Test func todaysSetIsSuggestedOverLastSession() {
-        var withHistory = row()
-        withHistory.last = SetValues(weight: 135, reps: 10)
-        var rows = [row(), withHistory]
-        SetRow.suggest(SetValues(weight: 145, reps: 6), below: 0, in: &rows)
+    private func rowWithHistory(_ last: SetValues) -> SetRow {
+        var row = row()
+        row.last = last
+        row.suggest(last)
+        return row
+    }
+
+    @Test func setYouJustDidSuggestsTodaysSetOnTheLastLine() {
+        var rows = [row(), rowWithHistory(SetValues(weight: 135, reps: 10))]
+        SetRow.suggest(SetValues(weight: 145, reps: 6), below: 0, in: &rows, source: .previousSet)
         #expect(rows[1].weightPlaceholder == "145")
         #expect(rows[1].repsPlaceholder == "6")
-        // Last session's set stays on the "Last:" line.
-        #expect(rows[1].last == SetValues(weight: 135, reps: 10))
+        // The "Last:" line shows what a tap fills in.
+        #expect(rows[1].suggested == SetValues(weight: 145, reps: 6))
+        rows[1].useSuggestion(for: .reps)
+        #expect(rows[1].repsText == "6")
+    }
+
+    /// The 2026-10-16 bug: "Last: 12" filled in 11, today's set 1.
+    @Test func sameSetLastWorkoutKeepsLastSessionsSet() {
+        var rows = [row(), rowWithHistory(SetValues(weight: 11, reps: 12))]
+        SetRow.suggest(SetValues(weight: 16.5, reps: 11), below: 0, in: &rows, source: .lastWorkout)
+        #expect(rows[1].suggested == SetValues(weight: 11, reps: 12))
+        rows[1].useSuggestion(for: .reps)
+        rows[1].useSuggestion(for: .weight)
+        #expect(rows[1].typedValues == SetValues(weight: 11, reps: 12))
     }
 
     @Test func weightsFormatWithoutGrouping() {

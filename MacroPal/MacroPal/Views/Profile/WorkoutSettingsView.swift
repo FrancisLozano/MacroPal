@@ -5,8 +5,8 @@
 
 import SwiftUI
 
-/// Profile → Workout: how set rows read on the tracking screen, the targets new exercises start
-/// with, and the rest timer. All device preferences (see `WorkoutPreferences`).
+/// Profile → Workout: how set rows read on the tracking screen, what their "Last:" line repeats,
+/// the targets new exercises start with, and the rest timer. All device preferences (see `WorkoutPreferences`).
 struct WorkoutSettingsView: View {
     @AppStorage(WorkoutPreferences.weightFirstKey) private var weightFirst = WorkoutPreferences.weightFirstDefault
     @AppStorage(WorkoutPreferences.defaultSetsKey) private var defaultSets = WorkoutPreferences.defaultSetsDefault
@@ -14,6 +14,8 @@ struct WorkoutSettingsView: View {
     @AppStorage(WorkoutPreferences.defaultRepsMaxKey) private var defaultRepsMax = WorkoutPreferences.defaultRepsMaxDefault
     @AppStorage(WorkoutPreferences.restSecondsKey) private var restSeconds = WorkoutPreferences.restSecondsDefault
     @AppStorage(WorkoutPreferences.autoRestTimerKey) private var autoRestTimer = WorkoutPreferences.autoRestTimerDefault
+    @AppStorage(WorkoutPreferences.unloggedSetReminderKey) private var unloggedSetReminder = WorkoutPreferences.unloggedSetReminderDefault
+    @AppStorage(WorkoutPreferences.lastSourceKey) private var lastSource = WorkoutPreferences.lastSourceDefault
 
     /// On: a range starting two above the bottom (8 → 8–10), same as the plan's Sets & Reps editor.
     private var isRange: Binding<Bool> {
@@ -28,6 +30,18 @@ struct WorkoutSettingsView: View {
             Section("Display") {
                 orderRow("Show Reps First", isSelected: !weightFirst) { weightFirst = false }
                 orderRow("Show Weight First", isSelected: weightFirst) { weightFirst = true }
+            }
+
+            Section {
+                ForEach(LastSetSource.allCases) { source in
+                    orderRow(source.title, isSelected: lastSource == source) { lastSource = source }
+                }
+            } header: {
+                InfoLabel(
+                    "\"Last:\" Shows",
+                    info: "What each set's \"Last:\" line fills in when you tap it.\n\nSame Set Last Workout: set 2 shows what you did on set 2 last time. Best for progressive overload: you see the exact number to match or beat on every set, even as you tire.\n\nSet You Just Did: set 2 shows set 1 from today. Handy for straight sets at one weight."
+                )
+                .textCase(nil)
             }
 
             Section {
@@ -63,6 +77,12 @@ struct WorkoutSettingsView: View {
                     InfoLabel(
                         "Automatic Rest Timer",
                         info: "Starts the rest countdown as soon as you check off a set. With it off, start one from the timer button on the tracking screen."
+                    )
+                }
+                Toggle(isOn: $unloggedSetReminder) {
+                    InfoLabel(
+                        "Unlogged Set Reminder",
+                        info: "If you log a set and the exercise's next set isn't logged 5 minutes later, a notification reminds you. Logging the next set or tapping Complete Exercise clears it."
                     )
                 }
             }

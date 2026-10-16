@@ -120,8 +120,10 @@ struct FoodItemPickerView: View {
         viewModel.searchFoodItems(matching: "", in: modelContext).filter(Self.isManuallyAdded)
     }
 
+    /// Original meals only: a meal's variations are offered on its Log Meal screen, so they
+    /// don't each take a row here.
     private var myMealItems: [FoodItem] {
-        viewModel.searchFoodItems(matching: "", in: modelContext).filter { $0.isMeal }
+        viewModel.searchFoodItems(matching: "", in: modelContext).filter { $0.isMeal && $0.variantOf == nil }
     }
 
     /// A food typed in by hand rather than coming from Open Food Facts/a barcode scan —
@@ -427,7 +429,10 @@ struct FoodItemPickerView: View {
     /// a recipe, or "Manually Added" for a plain food typed in by hand. `showSource: false`
     /// drops this entirely (see `foodRow`).
     private func subtitle(for item: FoodItem, showSource: Bool = true) -> String {
-        let base = "\(Int(item.caloriesPer100g.rounded())) kcal / 100g"
+        var base = "\(Int(item.caloriesPer100g.rounded())) kcal / 100g"
+        if !item.variations.isEmpty {
+            base += item.variations.count == 1 ? " · 1 variation" : " · \(item.variations.count) variations"
+        }
         guard showSource else { return base }
         let source: String
         if let brand = item.brand, !brand.isEmpty {

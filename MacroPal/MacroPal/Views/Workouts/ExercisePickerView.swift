@@ -15,6 +15,7 @@ struct ExercisePickerView: View {
     @Environment(\.dismiss) private var dismiss
 
     var suggestedGroups: [MuscleGroup] = []
+    var title = "Choose Exercise"
     let onSelect: (Exercise) -> Void
 
     @State private var searchText = ""
@@ -98,7 +99,7 @@ struct ExercisePickerView: View {
             .id(sections.map(\.group))
         }
         .searchable(text: $searchText, prompt: "Search exercises")
-        .navigationTitle("Choose Exercise")
+        .navigationTitle(title)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") { dismiss() }

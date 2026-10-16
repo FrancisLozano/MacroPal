@@ -12,9 +12,10 @@ struct SetValues: Equatable {
 }
 
 /// One set on the exercise screen's Workout tab, and the rules for saving it as you type.
-/// Boxes start empty; the placeholders are what the set will be if left untouched (last
-/// session's set until a set above it is saved today, then that one), and `last` is last
-/// session's set for the "Last:" line. Kept free of SwiftData so the rules can be unit-tested;
+/// Boxes start empty; the placeholders are what the set will be if left untouched, and the
+/// "Last:" line shows `suggested`, the set those grey numbers came from, so tapping it fills in
+/// exactly what it says. Which set that is follows `LastSetSource`: last session's set with the
+/// same number, or the set just logged above it today. Kept free of SwiftData so the rules can be unit-tested;
 /// the view maps a `SetChange` onto the store.
 struct SetRow: Identifiable {
     let id = UUID()
@@ -24,6 +25,9 @@ struct SetRow: Identifiable {
     var repsPlaceholder = ""
     /// Last session's values for this set number, nil when there's no earlier session.
     var last: SetValues?
+    /// The set the placeholders come from, shown on the "Last:" line: `last`, or today's set
+    /// above this one. Nil while only the default reps are suggested.
+    var suggested: SetValues?
     /// What's in the store for this row, nil while it isn't logged.
     var saved: SetValues?
     /// A bodyweight move: there's no weight box, so only the reps count.
@@ -90,10 +94,11 @@ struct SetRow: Identifiable {
         case weight, reps
     }
 
-    /// Whether that box's "Last:" line can fill it: the set isn't logged yet and the box has a
-    /// valid grey number to take.
+    /// Whether that box's "Last:" line can fill it: the set isn't logged yet, the line shows a
+    /// set (not "–", which would fill in a number it doesn't show) and the box has a valid grey
+    /// number to take.
     func canUseSuggestion(for box: Box) -> Bool {
-        guard !isLogged else { return false }
+        guard !isLogged, suggested != nil else { return false }
         switch box {
         case .weight: return !isBodyweight && Double(weightPlaceholder).map { $0 >= 0 } == true
         case .reps: return Int(repsPlaceholder).map { $0 > 0 } == true
@@ -117,14 +122,22 @@ struct SetRow: Identifiable {
         return filled.typedValues != nil
     }
 
-    /// After a set is saved, the empty rows below it suggest the same weight × reps — today's
-    /// set over last session's, which stays on their "Last:" line — so a repeat set is a tap
-    /// on each "Last:" line, and on a first-ever session the weight only has to be typed once.
-    static func suggest(_ values: SetValues, below index: Int, in rows: inout [SetRow]) {
+    /// Makes `values` this row's suggestion: its grey numbers and its "Last:" line.
+    mutating func suggest(_ values: SetValues) {
+        suggested = values
+        weightPlaceholder = Self.format(values.weight)
+        repsPlaceholder = String(values.reps)
+    }
+
+    /// After a set is saved, the empty rows below it may suggest the same weight × reps, so a
+    /// repeat set is a tap on each "Last:" line. With `.previousSet` they all do; with
+    /// `.lastWorkout` only rows with no set from last session do (a first-ever session, or more
+    /// sets than last time), so the weight only has to be typed once.
+    static func suggest(_ values: SetValues, below index: Int, in rows: inout [SetRow], source: LastSetSource) {
         for later in rows.indices
         where later > index && !rows[later].isLogged && rows[later].isBlank {
-            rows[later].weightPlaceholder = format(values.weight)
-            rows[later].repsPlaceholder = String(values.reps)
+            if source == .lastWorkout && rows[later].last != nil { continue }
+            rows[later].suggest(values)
         }
     }
 

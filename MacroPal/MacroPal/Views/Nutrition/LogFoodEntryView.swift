@@ -27,6 +27,9 @@ struct LogFoodEntryView: View {
     /// carry ingredients (see `init(entry:)`). `@State` (not `let`) since deleting an
     /// ingredient here needs to remove it from this list too, to update the UI.
     @State private var ingredients: [MealIngredient]
+    @State private var isPresentingIngredientPicker = false
+    /// A just-made variation open in Edit Meal, to rename it and swap or add an ingredient.
+    @State private var variationToEdit: FoodItem?
 
     /// Closes the whole "Log Food" flow (the sheet it's presented in), called after a
     /// successful save. Not `@Environment(\.dismiss)` here — since this screen is pushed
@@ -197,6 +200,10 @@ struct LogFoodEntryView: View {
             .padding(.top, 4)
             .padding(.bottom, 8)
 
+            if isMeal && editingEntry == nil, let selectedFoodItem {
+                variationsRow(for: selectedFoodItem)
+            }
+
             Form {
                 if isMeal {
                     // A meal has no serving-size control (see `isMeal`), so Macronutrients
@@ -206,7 +213,7 @@ struct LogFoodEntryView: View {
                     Section("Macronutrients") {
                         macrosRow
                     }
-                    Section("Ingredients") {
+                    Section {
                         ForEach(ingredients) { ingredient in
                             NavigationLink {
                                 MealIngredientDetailView(ingredient: ingredient) {
@@ -222,6 +229,19 @@ struct LogFoodEntryView: View {
                                         .foregroundStyle(.secondary)
                                 }
                             }
+                        }
+                        if editingEntry == nil {
+                            Button {
+                                isPresentingIngredientPicker = true
+                            } label: {
+                                Label("Add Ingredient", systemImage: "plus")
+                            }
+                        }
+                    } header: {
+                        Text("Ingredients")
+                    } footer: {
+                        if editingEntry == nil {
+                            Text("Changes here are saved to this meal. To keep it as it is, make a new variation.")
                         }
                     }
                     Section("Serving") {
@@ -283,6 +303,102 @@ struct LogFoodEntryView: View {
                     .disabled(!isValid)
             }
         }
+        .sheet(isPresented: $isPresentingIngredientPicker) {
+            NavigationStack {
+                FoodItemPickerView { item in
+                    addIngredient(from: item)
+                }
+            }
+        }
+        // Edit Meal changes the variation's ingredients directly; pick them up once it closes.
+        .sheet(item: $variationToEdit, onDismiss: {
+            if let selectedFoodItem { ingredients = selectedFoodItem.ingredients }
+        }) { variation in
+            NavigationStack {
+                EditMealView(mealItem: variation)
+            }
+        }
+    }
+
+    /// The meal's variations as chips: the original, each variation (tap to log that one
+    /// instead), and New Variation, which copies the meal shown so an ingredient can be
+    /// swapped (nuts → berries) without changing the original (usability.md, 2026-10-16). A
+    /// sibling of the `Form` rather than rows in it, since its count changes as variations are
+    /// added (see the List button detachment note on the header above).
+    private func variationsRow(for meal: FoodItem) -> some View {
+        ScrollView(.horizontal) {
+            HStack(spacing: 8) {
+                ForEach(meal.mealFamily) { member in
+                    let isSelected = member == meal
+                    Button {
+                        select(variation: member)
+                    } label: {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(member.variationLabel)
+                                .font(.subheadline.weight(.semibold))
+                                .lineLimit(1)
+                            Text("\(Int(member.mealCalories.rounded())) kcal")
+                                .font(.caption)
+                                .foregroundStyle(isSelected ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(
+                            isSelected ? AnyShapeStyle(.tint.opacity(0.2)) : AnyShapeStyle(Color(.tertiarySystemFill)),
+                            in: RoundedRectangle(cornerRadius: 10)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityAddTraits(isSelected ? .isSelected : [])
+                }
+                Button {
+                    let variation = meal.makeVariation(in: modelContext)
+                    try? modelContext.save()
+                    select(variation: variation)
+                    variationToEdit = variation
+                } label: {
+                    Label("New Variation", systemImage: "plus")
+                        .font(.subheadline.weight(.semibold))
+                        .padding(.horizontal, 12)
+                        .frame(maxHeight: .infinity)
+                        .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 10))
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.tint)
+                .accessibilityHint("Copies this meal so you can swap or add an ingredient")
+            }
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal)
+        }
+        .scrollIndicators(.hidden)
+        .padding(.bottom, 8)
+    }
+
+    /// Logs `variation` instead of the meal shown.
+    private func select(variation: FoodItem) {
+        selectedFoodItem = variation
+        ingredients = variation.ingredients
+        variation.lastUsedAt = .now
+    }
+
+    /// Adds a picked food to this meal at its default serving, same as Edit Meal's Add
+    /// Ingredient; its amount can be changed from its row.
+    private func addIngredient(from item: FoodItem) {
+        guard let selectedFoodItem else { return }
+        let ingredient = MealIngredient(
+            nameSnapshot: item.name,
+            quantityG: item.defaultServingSizeG,
+            brandSnapshot: item.brand,
+            caloriesPer100gSnapshot: item.caloriesPer100g,
+            proteinPer100gSnapshot: item.proteinG,
+            carbPer100gSnapshot: item.carbG,
+            fatPer100gSnapshot: item.fatG,
+            foodItem: item
+        )
+        modelContext.insert(ingredient)
+        selectedFoodItem.ingredients.append(ingredient)
+        ingredients = selectedFoodItem.ingredients
+        handleIngredientsChanged()
     }
 
     /// Brand, meal-type picker, and date — shared between the meal and plain-food layouts of

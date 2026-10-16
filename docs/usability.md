@@ -1,9 +1,30 @@
 # Usability Notes & Feedback Log
 
 **Status:** Living document — ongoing, not tied to a phase
-**Started:** 2026-09-06 · **Last updated:** 2026-10-13
+**Started:** 2026-09-06 · **Last updated:** 2026-10-16
 
-## Start here (as of 2026-10-13)
+## Start here (as of 2026-10-16)
+
+**2026-10-16: four entries from a workout and a meal, all built and pushed
+in one commit after `68dd826`.** 1 dislike and 3 suggestions (top of
+**Dislikes** / **Suggestions**); Backlog rows marked Done. Details under **What changed on
+2026-10-16**. All 232 unit tests pass. **The iPhone doesn't have these yet**: install from Xcode.
+1. **"Last:" fills in what it shows.** On set 2 of Single-Arm Triceps Extension, "Last: 12"
+   filled in 11, set 1 from today (the grey numbers). Now each set's line and grey numbers come
+   from one place, chosen in **Profile → Workout → "Last:" Shows** (ⓘ explains it): **Same
+   Set Last Workout** (default, for progressive overload) or **Set You Just Did**.
+2. **Unlogged set reminder**: log a set and leave the next one unlogged for 5 minutes, and a
+   notification says "Set 2 isn't logged yet". On by default; a switch under Profile →
+   Workout → Timer.
+3. **Choose Alternate** when an exercise can't be done (machine taken): ⟳ on the exercise
+   screen, or ⋯ on its plan-day row. Pick from the same muscle group, then **Just This
+   Workout** or **Replace in Plan**.
+4. **Meal variations**: tapping a My Meals meal shows its variations as chips on Log Meal.
+   **New Variation** copies the meal so an ingredient can be swapped (nuts → berries) without
+   changing the original; **Add Ingredient** adds to the meal shown.
+
+**Check on the iPhone after installing:** the reminder banner after 5 minutes (the simulator
+has notifications denied, so it hasn't been seen firing), and a real swap on a workout day.
 
 **V1.1 is done and tagged (`v1.1`).** The user installed the final build (`5e1e5b2`) on the
 iPhone on 10-13 and checked it: Save to Files from Export Data, the new drawings, Quick Add
@@ -191,9 +212,10 @@ movement family; the user does the one in front of the body, not overhead.
   each with a + to log; tap the value for its history — steps swipe by day / week / month), Log an Unplanned Workout.
   The + beside the tab bar opens Log Food, Log Workout, Log Weight and Log Steps.
   No all-workouts history (removed on request); past sets live in each exercise's Progress.
-- **Exercise screen** — *Workout*: a start → end drawing of the exercise (42 starters), a row per set (reps and lb boxes, "Last:" from the
-  previous session), boxes start empty with the suggestion in gray (last session's set, or the
-  set just logged above it today), tapping "Last:" logs the set at that suggestion, sets save when you leave
+- **Exercise screen** — *Workout*: a start → end drawing of the exercise (all 51 starters), a row per set (reps and lb boxes, each with a
+  "Last:" line), boxes start empty with the suggestion in gray (the same set last workout, or
+  per Profile → Workout the set just logged above it today), the "Last:" line shows that same
+  suggestion and tapping it fills that box in, ⟳ chooses an alternate exercise, sets save when you leave
   the row, clearing both boxes unlogs a set, Complete Exercise logs untouched rows at their
   suggestion and goes back, ⓘ says where to change the set count, rest timer (its end: a banner
   in the background, a "Rest over" card from the bottom in the app). *Overview*:
@@ -579,10 +601,25 @@ Both messages were checked by forcing the first attempt to fail with a temporary
 
 ## Decisions worth remembering
 
+- **"Last:" shows exactly what a tap fills in** (2026-10-16). The line and the grey numbers
+  come from one set, `SetRow.suggested`. Which set is a setting (Profile → Workout → "Last:"
+  Shows): **Same Set Last Workout** by default, because the user progressive-overloads set by
+  set; **Set You Just Did** is the old behavior. With no earlier set, the line reads "Last: –"
+  and does nothing (before, it quietly filled in the default reps).
+- **An alternate is for one day unless you say otherwise** (2026-10-16). Choose Alternate asks
+  **Just This Workout** (the slot's `alternate` + `alternateDate`; the plan is unchanged next
+  week) or **Replace in Plan**. The day's progress, the rest between exercises and Workout
+  Complete count the alternate's sets.
+- **Meal variations are whole meals, one level deep** (2026-10-16). A variation is its own
+  `FoodItem` meal with `variantOf` pointing at the original; a variation of a variation joins
+  the original's family. My Meals lists originals only ("· 1 variation"); search finds both.
+  Deleting the original leaves its variations as meals of their own. Ingredient changes on Log
+  Meal still save to the meal shown, so the footer points to New Variation for one-off swaps.
 - **Repeating a set is a tap on its "Last:" line, not a ✓ button** (2026-10-05). Two versions
   were built first: a ✓ circle on every row, then a next row pre-filled with real values plus
   one big ✓. The user disliked both. Today's previous set is the suggestion for sets 2+, and
   last session's set stays on the "Last:" line. Don't bring back per-row log buttons.
+  **Revised 2026-10-16:** that split (line ≠ grey numbers) was the bug; see the entry above.
   **Revised 2026-10-09:** each box's "Last:" fills only that box (reps or lb), and the set
   logs once both are filled, so a repeat set is two taps (one on a bodyweight move).
 - **The rest copy doesn't name the next exercise** (2026-10-05): a day's exercises can be done
@@ -754,6 +791,45 @@ user's whiteboard sketch — body map on top, Current Plan, Goals below. On 2026
 of that doc's success criteria were met, and in the evening the tab was restyled to match
 Nutrition. 2026-09-23 closed the last two P3s and the outstanding re-checks; in the afternoon
 the user logged the first Training suggestions and the layout ones were built.
+
+### What changed on 2026-10-16
+
+From one workout and one meal swap (the user's screenshot: Single-Arm Triceps Extension, set 1
+logged at 11 × 16.5 lb, set 2's lines reading "Last: 12 / Last: 11").
+- **"Last:" fixed, plus a setting.** `SetRow.suggested` is the set behind a row's grey numbers
+  and its "Last:" line, so a tap fills in what the line says. `SetRow.suggest(_:below:in:source:)`
+  takes a `LastSetSource` (`WorkoutPreferences.lastSourceKey`, default `.lastWorkout`): with
+  `.lastWorkout`, a logged set only fills rows below it that have no set from last session
+  (first-ever session, or more sets than last time); with `.previousSet`, every empty row
+  below. `canUseSuggestion` is false while there's no suggested set ("Last: –"). Profile →
+  Workout has a **"Last:" Shows** section with an ⓘ. `SetRowTests`: the screenshot's case
+  (`sameSetLastWorkoutKeepsLastSessionsSet`) and the other mode. Checked in the simulator on
+  Bench (Push, Mon Oct 12): set 1 typed 8 × 95, sets 2 and 3 kept last workout's 10 × 1 and
+  10 × 135, matching their lines. The set was deleted after.
+- **Unlogged set reminder** (`UnloggedSetReminder`). After a set logs today, one pending
+  notification for the first unlogged set, 5 minutes out ("Set 2 isn't logged yet" /
+  "Single-Arm Triceps Extension: log it when you're done, or tap Complete Exercise."). Each
+  set logged replaces it; the last set or Complete Exercise removes it. Only scheduled when
+  notifications are already allowed (the rest timer asks). Shows as a banner in the app too.
+  Switch: Profile → Workout → Timer → **Unlogged Set Reminder** (on by default). Copy
+  unit-tested; not seen firing (the simulator has notifications denied).
+- **Choose Alternate.** `PlanExercise.alternate` / `alternateDate` (optional, so stores
+  migrate) and `exercise(on:)`, `swap(to:on:)`, `replace(with:)`. ⟳ in the exercise screen's
+  toolbar and **Choose Alternate** / **Back to …** in the plan-day row's ⋯ menu open Choose
+  Alternate (the exercise picker, Suggested = the same muscle group), then **Just This
+  Workout** / **Replace in Plan**. The screen title reads the alternate with "Instead of …"
+  under it, and so does the row. `DayProgress`, the plan day's set counts and the rest after an
+  exercise use `exercise(on:)`. `WorkoutAlternateTests` (4). Checked in the simulator: Bench →
+  Dumbbell Bench Press for Monday, the row and title, then Back to Barbell Bench Press.
+- **Meal variations.** `FoodItem.variantOf` / `variations` (optional, so stores migrate),
+  `mealFamily`, `variationLabel`, `makeVariation(in:)`. Log Meal (a meal picked from Choose
+  Food) has a row of chips under the name: **Original**, each variation (by what its name adds,
+  e.g. "with Berries"), and **New Variation**, which copies the meal shown and opens Edit Meal on
+  the copy. The Ingredients section gained **Add Ingredient**, and a footer saying changes save
+  to the meal shown. My Meals lists originals only, with "· N variations". Export Data gives a
+  variation's `variationOf`. `MealVariationTests` (3). Checked in the simulator with a test meal
+  (deleted after): New Variation, edit, switching chips, My Meals' "1 variation", and deleting
+  the original leaving the variation.
 
 ### What changed on 2026-10-13
 
@@ -1482,10 +1558,10 @@ actually improving or just accumulating complaints.
 | Metric | Count |
 |---|---|
 | Likes | 1 |
-| Dislikes | 23 |
-| Suggestions | 38 |
-| Triaged (in Backlog) | 79 |
-| Done | 75 |
+| Dislikes | 24 |
+| Suggestions | 42 |
+| Triaged (in Backlog) | 83 |
+| Done | 79 |
 | No change needed | 2 |
 | Won't Fix | 2 |
 
@@ -1576,6 +1652,10 @@ guidance for open questions), so they don't just rot in a markdown table.
 | P1 | A set's "Last:" line fills only its own box (reps or lb), not both; the set logs once both are filled | Dislikes → Training (2026-10-09) | Done (b52a92a) — `SetRowTests`, not seen live |
 | P1 | The steps reminder still fired after steps were logged that day — logging now removes that day's notification at once, and the background rebuild gets background time | Dislikes → General UI (2026-10-09) | Done (b52a92a) — `ReminderSchedulerTests`, notification not seen live |
 | P2 | Widgets redesigned for spacing: medium is ring + Protein / Carbs / Fat rows (eaten / target g, progress bars); small adds P / C / F mini bars; ring says "kcal left" / red "kcal over" | Dislikes → Widget (2026-10-10) | Done 2026-10-10 — checked on the simulator home screen; over-goal only in the Xcode preview |
+| P1 | "Last:" filled in today's previous set while showing last workout's — the line and grey numbers now come from one set; Profile → Workout → "Last:" Shows picks Same Set Last Workout (default) or Set You Just Did, with an ⓘ | Dislikes → Training (2026-10-16) + Suggestions → Training (2026-10-16, "Last:" setting) | Done 2026-10-16 — `SetRowTests`, checked in the simulator |
+| P2 | A reminder when a set is logged and the next one isn't 5 minutes later | Suggestions → Training (2026-10-16, reminder) | Done 2026-10-16 — copy unit-tested; notification not seen live |
+| P2 | Choose Alternate when an exercise can't be done: same-muscle picks, for this workout or the plan | Suggestions → Training (2026-10-16, alternate) | Done 2026-10-16 — `WorkoutAlternateTests`, checked in the simulator |
+| P2 | Meal variations: tap a meal to see its variations, make one with an ingredient swapped, or add to the meal | Suggestions → Nutrition (2026-10-16) | Done 2026-10-16 — `MealVariationTests`, checked in the simulator |
 | P3 | Complete Exercise not tappable until every set is logged | Suggestions → Training (2026-09-25) | Won't Fix — decided 2026-09-25: Complete logging untouched rows at last session's numbers is the workout "Same as last time" above; disabling it would take that away. With sets logging themselves (P1 above) and the exercise completing on its last set, the button matters less anyway |
 
 Priority scale: **P1** (actively annoying, fix soon) / **P2** (worth doing, no rush) /
@@ -1596,6 +1676,8 @@ commit) / `No change needed` (verified the behavior already exists — say how y
 
 *(newest first)*
 
+- 2026-10-16 (Training) — Pressing "Last:" doesn't fill in the last workout's number but the
+  previous set's (the grey numbers): on set 2, "Last: 12" filled in 11 from set 1.
 - 2026-10-10 (Widget) — I don't like the widgets' UI; there should be enough spacing for the
   information to be visually appealing.
 - 2026-10-09 (Training) — Tapping "Last:" under either box fills both lbs and reps. Each
@@ -1649,6 +1731,15 @@ commit) / `No change needed` (verified the behavior already exists — say how y
 
 *(newest first)*
 
+- 2026-10-16 (Nutrition) — I swapped the nuts in my meal for berries. Let me press my meal and
+  see its variations, add a variation, or add to it.
+- 2026-10-16 (Training) — If the exercise isn't there (machine taken), a button to select an
+  alternate.
+- 2026-10-16 (Training) — A reminder if I didn't log, e.g. did set 1 but not set 2 after 5
+  minutes.
+- 2026-10-16 (Training) — "Last:" should reference that set: what I did on set 2 last workout,
+  since I progressive-overload. Make it a setting under Workout (same set last workout, or the
+  set I just did), with an ⓘ explaining why it matters.
 - 2026-10-09 (Goals) — It's easier to press the weight / steps card itself to log today's
   value, with the small icon opening its history and stats.
 - 2026-10-05 (General UI) — The + button should include Log Steps and Log Weight.

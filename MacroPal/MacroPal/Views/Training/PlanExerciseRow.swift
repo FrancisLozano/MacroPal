@@ -6,7 +6,8 @@
 import SwiftUI
 
 /// One exercise in a plan day: thumbnail, name, and a "3 sets x 8–10 reps" chip. Tapping opens
-/// set tracking; the ellipsis menu edits the target, moves it within the day, or removes it.
+/// set tracking; the ellipsis menu edits the target, chooses an alternate (for the day or the
+/// plan), moves it within the day, or removes it.
 struct PlanExerciseRow: View {
     let planExercise: PlanExercise
     /// Sets of this exercise logged on `date`.
@@ -19,6 +20,12 @@ struct PlanExerciseRow: View {
     let onRemove: () -> Void
 
     @State private var isPresentingTargetEditor = false
+    @State private var isChoosingAlternate = false
+
+    /// What's done in this slot on `date`: an alternate if one was chosen for it.
+    private var exercise: Exercise? {
+        planExercise.exercise(on: date)
+    }
 
     private var isComplete: Bool {
         setsLogged >= planExercise.targetSets
@@ -30,11 +37,17 @@ struct PlanExerciseRow: View {
                 ExerciseScreen(planExercise: planExercise, date: date)
             } label: {
                 HStack(spacing: 12) {
-                    ExerciseThumbnail(exercise: planExercise.exercise)
+                    ExerciseThumbnail(exercise: exercise)
                     VStack(alignment: .leading, spacing: 6) {
-                        Text(planExercise.exercise?.name ?? "Unknown exercise")
+                        Text(exercise?.name ?? "Unknown exercise")
                             .font(.headline)
                             .multilineTextAlignment(.leading)
+                        if planExercise.isSwapped(on: date), let planned = planExercise.exercise {
+                            Text("Instead of \(planned.name)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.leading)
+                        }
                         HStack(spacing: 6) {
                             Text("\(planExercise.targetSets) sets x \(planExercise.repsLabel) reps")
                                 .font(.subheadline)
@@ -62,6 +75,14 @@ struct PlanExerciseRow: View {
                 Button("Edit Sets & Reps", systemImage: "slider.horizontal.3") {
                     isPresentingTargetEditor = true
                 }
+                Button("Choose Alternate", systemImage: "arrow.triangle.2.circlepath") {
+                    isChoosingAlternate = true
+                }
+                if planExercise.isSwapped(on: date), let planned = planExercise.exercise {
+                    Button("Back to \(planned.name)", systemImage: "arrow.uturn.backward") {
+                        planExercise.swap(to: planned, on: date)
+                    }
+                }
                 Button("Move Up", systemImage: "arrow.up") { onMove(-1) }
                     .disabled(!canMoveUp)
                 Button("Move Down", systemImage: "arrow.down") { onMove(1) }
@@ -77,6 +98,7 @@ struct PlanExerciseRow: View {
         }
         .padding()
         .background(.background.secondary, in: RoundedRectangle(cornerRadius: 14))
+        .alternateExercisePicker(isPresented: $isChoosingAlternate, planExercise: planExercise, date: date)
         .sheet(isPresented: $isPresentingTargetEditor) {
             NavigationStack {
                 TargetEditorView(planExercise: planExercise)

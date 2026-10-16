@@ -8,7 +8,8 @@ import SwiftData
 
 /// Track one exercise's sets for a day (today, unless an unplanned workout is back-dated): the
 /// Workout tab of `ExerciseScreen`. Each row is a set with a weight box and a reps box, and
-/// "Last:" under each from the previous session (a bodyweight move has just the reps box). A
+/// "Last:" under each (a bodyweight move has just the reps box): the same set last session, or
+/// the set just logged above it, per Profile → Workout. A
 /// set saves on its own a moment after you stop typing, and when you leave its row, so
 /// backing out midway loses nothing; when the last set logs, the exercise completes itself
 /// after a moment. Complete Exercise logs the untouched rows at their suggested values and
@@ -30,6 +31,8 @@ struct ExerciseTrackView: View {
     @AppStorage(WorkoutPreferences.defaultRepsKey) private var defaultReps = WorkoutPreferences.defaultRepsDefault
     @AppStorage(WorkoutPreferences.restSecondsKey) private var restSeconds = WorkoutPreferences.restSecondsDefault
     @AppStorage(WorkoutPreferences.autoRestTimerKey) private var autoRestTimer = WorkoutPreferences.autoRestTimerDefault
+    @AppStorage(WorkoutPreferences.unloggedSetReminderKey) private var unloggedSetReminder = WorkoutPreferences.unloggedSetReminderDefault
+    @AppStorage(WorkoutPreferences.lastSourceKey) private var lastSource = WorkoutPreferences.lastSourceDefault
     @Query(sort: \WorkoutSession.date, order: .reverse) private var sessions: [WorkoutSession]
 
     let exercise: Exercise?
@@ -45,7 +48,7 @@ struct ExerciseTrackView: View {
     /// `date` is the day whose sets these are: today, or an earlier day of the week reopened
     /// from the Current Plan card to fix or add a set.
     init(planExercise: PlanExercise, date: Date = .now) {
-        exercise = planExercise.exercise
+        exercise = planExercise.exercise(on: date)
         self.planExercise = planExercise
         target = (planExercise.targetSets, planExercise.targetReps, planExercise.repsLabel)
         self.date = date
@@ -307,7 +310,7 @@ struct ExerciseTrackView: View {
     private func weightBox(_ row: Binding<SetRow>, id: SetRow.ID) -> some View {
         box(
             text: row.weightText, placeholder: row.wrappedValue.weightPlaceholder,
-            suffix: unit.symbol, last: row.wrappedValue.last.map { SetRow.format($0.weight) },
+            suffix: unit.symbol, last: row.wrappedValue.suggested.map { SetRow.format($0.weight) },
             useSuggestion: useSuggestion(for: row.wrappedValue, box: .weight),
             suggestionHint: "Fills in the suggested weight", keyboard: .decimalPad, field: .weight(id)
         )
@@ -324,7 +327,7 @@ struct ExerciseTrackView: View {
     private func repsBox(_ row: Binding<SetRow>, id: SetRow.ID) -> some View {
         box(
             text: row.repsText, placeholder: row.wrappedValue.repsPlaceholder,
-            suffix: "reps", last: row.wrappedValue.last.map { String($0.reps) },
+            suffix: "reps", last: row.wrappedValue.suggested.map { String($0.reps) },
             useSuggestion: useSuggestion(for: row.wrappedValue, box: .reps),
             suggestionHint: "Fills in the suggested reps", keyboard: .numberPad, field: .reps(id)
         )
@@ -399,20 +402,32 @@ struct ExerciseTrackView: View {
                 on: date, planDayName: planDayName, context: modelContext
             )
             rows[index].saved = values
-            SetRow.suggest(values, below: index, in: &rows)
+            SetRow.suggest(values, below: index, in: &rows, source: lastSource)
             if startsRest && autoRestTimer && isToday {
                 restTimer.start(seconds: restSeconds)
             }
+            if startsRest { remindOfNextSet() }
         case .update(let values):
             entries[id]?.weightKg = unit.toKg(values.weight)
             entries[id]?.reps = values.reps
             rows[index].saved = values
-            SetRow.suggest(values, below: index, in: &rows)
+            SetRow.suggest(values, below: index, in: &rows, source: lastSource)
         case .delete:
             if let entry = entries.removeValue(forKey: id) {
                 modelContext.delete(entry)
             }
             rows[index].saved = nil
+        }
+    }
+
+    /// After a set logs today: a reminder for the first unlogged set if it's still unlogged in
+    /// five minutes, or none once every set is.
+    private func remindOfNextSet() {
+        guard isToday, unloggedSetReminder, let exercise else { return }
+        if let next = rows.firstIndex(where: { !$0.isLogged }) {
+            UnloggedSetReminder.schedule(exerciseName: exercise.name, setNumber: next + 1)
+        } else {
+            UnloggedSetReminder.cancel()
         }
     }
 
@@ -432,6 +447,7 @@ struct ExerciseTrackView: View {
     /// to the list.
     private func complete() {
         focus = nil
+        UnloggedSetReminder.cancel()
         for index in rows.indices where !rows[index].isLogged {
             rows[index].fillEmptyFromPlaceholders()
             commit(rows[index].id, startsRest: false)
@@ -449,7 +465,7 @@ struct ExerciseTrackView: View {
         if let planExercise, let day = planExercise.day {
             let todaysSets = sessions.first { Calendar.current.isDate($0.date, inSameDayAs: date) }?.setEntries ?? []
             let left = day.exercisesLeft(after: planExercise) { other in
-                todaysSets.filter { $0.exercise == other.exercise }.count
+                todaysSets.filter { $0.exercise == other.exercise(on: date) }.count
             }
             guard !left.isEmpty else {
                 restTimer.stop()
@@ -463,7 +479,8 @@ struct ExerciseTrackView: View {
     }
 
     /// The day's logged sets first, then empty rows up to the plan's (or the default) number of
-    /// sets, each suggesting last session's set with the same number.
+    /// sets, each suggesting last session's set with the same number (or, per `lastSource`, the
+    /// day's logged set above it).
     private func buildRows() {
         guard rows.isEmpty, let exercise else { return }
         let dayStart = Calendar.current.startOfDay(for: date)
@@ -478,8 +495,7 @@ struct ExerciseTrackView: View {
             row.isBodyweight = exercise.isBodyweight
             if let last = WorkoutViewModel.lastValue(forSet: index, in: lastSets) {
                 row.last = values(of: last)
-                row.weightPlaceholder = SetRow.format(row.last!.weight)
-                row.repsPlaceholder = String(last.reps)
+                row.suggest(row.last!)
             } else {
                 row.repsPlaceholder = String(target?.reps ?? defaultReps)
             }
@@ -494,7 +510,7 @@ struct ExerciseTrackView: View {
         for (index, entry) in logged.enumerated() {
             entries[rows[index].id] = entry
             if let saved = rows[index].saved {
-                SetRow.suggest(saved, below: index, in: &rows)
+                SetRow.suggest(saved, below: index, in: &rows, source: lastSource)
             }
         }
     }

@@ -56,6 +56,8 @@ struct DataExport: Codable, Equatable {
         var servingUnitLabel: String?
         var barcode: String?
         var isMeal: Bool
+        /// The original meal's name when this meal is a variation of it.
+        var variationOf: String? = nil
         var ingredients: [Ingredient]
     }
 
@@ -154,7 +156,7 @@ extension DataExport {
                 name: $0.name, brand: $0.brand, caloriesPer100g: $0.caloriesPer100g,
                 proteinPer100g: $0.proteinG, carbPer100g: $0.carbG, fatPer100g: $0.fatG,
                 defaultServingSizeG: $0.defaultServingSizeG, servingUnitLabel: $0.servingUnitLabel,
-                barcode: $0.barcode, isMeal: $0.isMeal,
+                barcode: $0.barcode, isMeal: $0.isMeal, variationOf: $0.variantOf?.name,
                 ingredients: Self.ingredients($0.ingredients)
             )
         }

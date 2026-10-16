@@ -42,6 +42,14 @@ final class FoodItem {
     /// `caloriesPer100g` etc. — search results, Recents — doesn't need to know about meals).
     @Relationship(deleteRule: .cascade)
     var ingredients: [MealIngredient] = []
+    /// The original meal this one is a variation of (e.g. the nuts yogurt bowl, for the one
+    /// with berries instead), nil for an original meal or a plain food. A variation is a whole
+    /// meal of its own, logged like any other; deleting the original leaves its variations as
+    /// meals in their own right. Defaulted so existing stores migrate.
+    var variantOf: FoodItem? = nil
+    /// The meals that are variations of this one (see `variantOf`); always flat, one level.
+    @Relationship(deleteRule: .nullify, inverse: \FoodItem.variantOf)
+    var variations: [FoodItem] = []
 
     init(
         name: String,
@@ -88,5 +96,65 @@ final class FoodItem {
         proteinG = totalProtein / totalGrams * 100
         carbG = totalCarb / totalGrams * 100
         fatG = totalFat / totalGrams * 100
+    }
+
+    /// The meal a family of variations hangs off: this one's original, or itself.
+    var originalMeal: FoodItem {
+        variantOf ?? self
+    }
+
+    /// The original meal first, then its variations by name: what Log Meal offers to switch
+    /// between.
+    var mealFamily: [FoodItem] {
+        let original = originalMeal
+        return [original] + original.variations.sorted {
+            $0.name.localizedStandardCompare($1.name) == .orderedAscending
+        }
+    }
+
+    /// The short name on Log Meal's variation chips: "Original", or what a variation adds to
+    /// the original's name ("Yogurt Bowl with Berries" → "with Berries"; "Yogurt Bowl
+    /// (Variation 1)" → "Variation 1"), or its whole name when it was renamed to something else.
+    var variationLabel: String {
+        guard let original = variantOf else { return "Original" }
+        guard name.hasPrefix(original.name) else { return name }
+        let rest = name.dropFirst(original.name.count)
+            .trimmingCharacters(in: .whitespaces.union(.punctuationCharacters))
+        return rest.isEmpty ? name : rest
+    }
+
+    /// Calories for the whole meal, at its ingredients' amounts.
+    var mealCalories: Double {
+        caloriesPer100g * defaultServingSizeG / 100
+    }
+
+    /// A copy of this meal (same ingredients and amounts) inserted as a new variation of its
+    /// original, named "<original> (Variation N)" until renamed, ready to have an ingredient
+    /// swapped or added. A variation of a variation joins the original's family.
+    func makeVariation(in context: ModelContext) -> FoodItem {
+        let original = originalMeal
+        let variation = FoodItem(
+            name: "\(original.name) (Variation \(original.variations.count + 1))",
+            caloriesPer100g: caloriesPer100g, proteinG: proteinG, carbG: carbG, fatG: fatG,
+            defaultServingSizeG: defaultServingSizeG, isMeal: true
+        )
+        context.insert(variation)
+        variation.ingredients = ingredients.map { ingredient in
+            let copy = MealIngredient(
+                nameSnapshot: ingredient.nameSnapshot,
+                quantityG: ingredient.quantityG,
+                brandSnapshot: ingredient.brandSnapshot,
+                caloriesPer100gSnapshot: ingredient.caloriesPer100gSnapshot,
+                proteinPer100gSnapshot: ingredient.proteinPer100gSnapshot,
+                carbPer100gSnapshot: ingredient.carbPer100gSnapshot,
+                fatPer100gSnapshot: ingredient.fatPer100gSnapshot,
+                foodItem: ingredient.foodItem
+            )
+            context.insert(copy)
+            return copy
+        }
+        variation.variantOf = original
+        variation.lastUsedAt = .now
+        return variation
     }
 }
